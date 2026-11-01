@@ -168,6 +168,7 @@ svg.chart { max-height: 68vh; }
 .sitefoot { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; color: var(--muted); font-size: .82rem; display: grid; gap: 8px; }
 .sitefoot p { margin: 0; }
 .sitefoot a { color: var(--accent); }
+.head > .tblnote { flex-basis: 100%; align-items: flex-end; }
 .colctl { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
 .btn-fill { background: var(--accent); color: var(--panel); border-color: var(--accent); font-weight: 700; }
 .btn-fill:hover { filter: brightness(1.1); }
@@ -289,13 +290,13 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <div class="head"><h2>年化報酬 × 最大回撤</h2><span class="zoom"><button type="button" data-zc="sc:in" aria-label="放大圖表">＋</button><button type="button" data-zc="sc:out" aria-label="縮小圖表">−</button><button type="button" data-zc="sc:reset">重設</button><span class="hint">Ctrl（⌘）＋滾輪縮放・拖曳移動</span></span></div>
       <div class="legend" id="legend"></div>
       <svg id="chart" class="chart" viewBox="0 0 900 420" role="img" aria-label="各 ETF 的年化報酬與最大回撤散點圖"></svg>
-      <p class="foot">虛線交叉點是 0050。<br>往上＝報酬比較高，往右＝跌得比較淺；淡色的右上角是「報酬更高、跌得更少」。<br>
-        <span style="color:var(--calmar)">綠色斜虛線＝划算線</span>：年化 ÷ 最大回撤（Calmar 比率）和 0050 相同，線的上方比 0050 划算。<br>類別就是這兩條線切出來的。<br>游標移到點上看名稱。</p>
+      <p class="foot">虛線交叉點是 0050。往上＝報酬比較高，往右＝跌得比較淺；淡色的右上角是「報酬更高、跌得更少」。<br>
+        <span style="color:var(--calmar)">綠色斜虛線＝划算線</span>：年化 ÷ 最大回撤（Calmar 比率）和 0050 相同，線的上方比 0050 划算。<br>類別就是這兩條線切出來的，游標移到點上看名稱。</p>
     </section>
 
     <section class="panel stack">
       <div class="head"><h2>每檔明細</h2>
-        <div class="row"><span class="foot">點整格表頭排序。<br>列底色＝類別；左側黑條＝類別和預設門檻不同。<br><span class="flag">高波動</span>　大跌時跌幅平均比 0050 多 <span class="hvval"></span> 以上（門檻在空頭頁）<br><span class="flag bu">靠爆發</span>　贏 0050 主要靠少數幾段急漲<br><span class="flag nv">未經空頭驗證</span>　穩強、猛強裡上市以來沒經歷過大空頭，或年化輸 0050 超過 1%</span>
+        <div class="row tblnote"><span class="foot">點整格表頭排序；列底色＝類別；左側黑條＝類別和預設門檻不同。<br><span class="flag">高波動</span>　大跌時跌幅平均比 0050 多 <span class="hvval"></span> 以上（門檻在空頭頁）<br><span class="flag bu">靠爆發</span>　贏 0050 主要靠少數幾段急漲<br><span class="flag nv">未經空頭驗證</span>　穩強、猛強裡上市以來沒經歷過大空頭，或年化輸 0050 超過 1%</span>
           <span class="colctl"><details class="cols"><summary class="btn btn-fill">顯示欄位 ▾</summary><div class="colbox" id="colbox"></div></details><button type="button" class="btn" id="colReset">回復預設欄位</button></span></div></div>
       <div class="topscroll" aria-hidden="true"><div></div></div>
       <div class="tblwrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
