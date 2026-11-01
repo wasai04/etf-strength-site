@@ -103,14 +103,14 @@ svg.chart text.q { font-family: var(--f-body); font-size: 12px; }
 .tip { position: fixed; white-space: pre-line; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .84rem; line-height: 1.5; box-shadow: 0 4px 16px var(--shadow); max-width: 300px; z-index: 30; }
 .topscroll { overflow-x: auto; overflow-y: hidden; }
 .topscroll > div { height: 1px; }
-.topscroll, .tblwrap { scrollbar-width: auto; scrollbar-color: color-mix(in srgb, var(--muted) 70%, transparent) color-mix(in srgb, var(--fg) 6%, transparent); }
+@supports not selector(::-webkit-scrollbar) { .topscroll, .tblwrap { scrollbar-width: auto; scrollbar-color: color-mix(in srgb, var(--muted) 70%, transparent) color-mix(in srgb, var(--fg) 6%, transparent); } }
 .topscroll::-webkit-scrollbar, .tblwrap::-webkit-scrollbar { height: 12px; width: 12px; }
 .topscroll::-webkit-scrollbar-track, .tblwrap::-webkit-scrollbar-track { background: color-mix(in srgb, var(--fg) 6%, transparent); border-radius: 6px; }
 .topscroll::-webkit-scrollbar-thumb, .tblwrap::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted) 70%, transparent); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
 .topscroll::-webkit-scrollbar-thumb:hover, .tblwrap::-webkit-scrollbar-thumb:hover { background-color: var(--muted); }
 #chart { cursor: grab; touch-action: pan-y; }
 .tblwrap { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: 4px; }
-table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: calc(.86rem * var(--tz, 1)); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: .86rem; }
 th, td { border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 td { padding: 6px 10px; font-family: var(--f-num); font-variant-numeric: tabular-nums; background: var(--panel); }
 th { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 0; }
@@ -168,6 +168,9 @@ svg.chart { max-height: 68vh; }
 .sitefoot { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; color: var(--muted); font-size: .82rem; display: grid; gap: 8px; }
 .sitefoot p { margin: 0; }
 .sitefoot a { color: var(--accent); }
+.colctl { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
+.btn-fill { background: var(--accent); color: var(--panel); border-color: var(--accent); font-weight: 700; }
+.btn-fill:hover { filter: brightness(1.1); }
 .viewset { display: grid; gap: 8px; justify-items: start; }
 .fzrow > span { margin-right: 4px; }
 .viewset .seg button { padding: 4px 10px; }
@@ -199,7 +202,7 @@ svg.chart { max-height: 68vh; }
 <script>
 // 主題（跟系統／亮／暗）與全頁字級，存在這個瀏覽器；先套用再畫面，避免閃爍
 try { const t = localStorage.getItem("etf-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
-try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) document.documentElement.style.setProperty("--fz", z); } catch (e) {}
+try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) document.documentElement.style.setProperty("--fz", z); } catch (e) {}
 </script>
 <div class="shell">
 <aside class="side" id="side" aria-label="分頁與設定">
@@ -248,8 +251,8 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
             <input type="range" id="weeks" min="1" max="13" step="1"><p class="hint">幾週算一段急漲。<br>預設 1 週。</p></div>
           <div class="ctl"><label for="burst"><span class="term" tabindex="0" data-tip="這幾週加起來漲到這個幅度，才算一段急漲。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;下面的「0050 符合段數」可以拿來校準：段數太多代表門檻太低。">爆發段門檻</span><output id="o-burst"></output></label>
             <input type="range" id="burst" min="3" max="60" step="0.5"><p class="hint">漲多少才算急漲。<br>預設 7.5%。</p><p class="hint" id="calib"></p></div>
-          <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和 0050 直接相減。&#10;例：設 ±1%、0050 年化 29% 時，28%～30% 都算持平，不分強弱。&#10;追蹤同一指數的 ETF（例如 006208）會落在這裡。">持平 0050 區間</span><output id="o-tie"></output></label>
-            <input type="range" id="tie" min="0" max="5" step="0.25"><p class="hint">報酬和 0050 差多少以內算持平。<br>預設 ±1%。</p></div>
+          <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和 0050 直接相減。&#10;例：設 ±1%、0050 年化 29% 時，年化 28%～30%、而且最大回撤和 0050 相差 3% 以內的，算接近 0050。&#10;追蹤同一指數的 ETF（例如 006208）會落在這裡；年化接近但回撤差很多的，照划算線分到其他四類。">接近 0050 的年化區間</span><output id="o-tie"></output></label>
+            <input type="range" id="tie" min="0" max="5" step="0.25"><p class="hint">報酬和 0050 差多少以內算接近（回撤也要相差 3% 以內）。<br>預設 ±1%。</p></div>
         </div>
         <div class="row"><button type="button" class="btn" id="reset">回到預設門檻</button><span class="hint">類別的定義見「說明」</span></div>
       </div>
@@ -293,8 +296,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
     <section class="panel stack">
       <div class="head"><h2>每檔明細</h2>
         <div class="row"><span class="foot">點整格表頭排序；列底色＝類別；左側黑條＝類別和預設門檻不同；<span class="flag">高波動</span>＝大跌時跌幅平均比 0050 多 <span class="hvval"></span> 以上（門檻在空頭頁）；<span class="flag bu">靠爆發</span>＝贏 0050 主要靠少數幾段急漲；<span class="flag nv">未經空頭驗證</span>＝穩強、猛強裡上市以來沒經歷過大空頭，或年化輸 0050 超過 1%</span>
-          <details class="cols"><summary class="btn">選擇欄位 ▾</summary><div class="colbox" id="colbox"></div></details>
-          <span class="zoom" data-t="tbl"><button type="button" data-z="-1" aria-label="表格字縮小">A−</button><output>100%</output><button type="button" data-z="1" aria-label="表格字放大">A+</button></span></div></div>
+          <span class="colctl"><details class="cols"><summary class="btn btn-fill">顯示欄位 ▾</summary><div class="colbox" id="colbox"></div></details><button type="button" class="btn" id="colReset">回復預設欄位</button></span></div></div>
       <div class="topscroll" aria-hidden="true"><div></div></div>
       <div class="tblwrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
     </section>
@@ -315,7 +317,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
         <span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button><span class="hint">Ctrl（⌘）＋滾輪縮放・拖曳移動</span></span></div>
       <svg id="epchart" class="chart" viewBox="0 0 900 360" role="img" aria-label="大跌期間各 ETF 的走勢，起點高點設為 100"></svg>
       <p class="foot">走勢以 0050 高點那天 = 100；淡色區＝0050 從高點跌到低點。<br>勾選下表的「畫圖」可以加減線（最多 8 條）。</p>
-      <div class="head"><span class="foot">點整格表頭排序；列底色＝總覽目前的類別</span><span class="zoom" data-t="eptbl"><button type="button" data-z="-1" aria-label="表格字縮小">A−</button><output>100%</output><button type="button" data-z="1" aria-label="表格字放大">A+</button></span></div>
+      <div class="head"><span class="foot">點整格表頭排序；列底色＝總覽目前的類別</span></div>
       <div class="topscroll" aria-hidden="true"><div></div></div>
       <div class="tblwrap"><table id="eptbl"><thead></thead><tbody></tbody></table></div>
     </section>
@@ -369,7 +371,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
       <p>5 年期間 54 檔海外 ETF 中，52 檔落在「弱」：報酬比 0050 少；<br>回撤比 0050 淺的有 21 檔，但少跌的部分補不回少賺的。<br>海外股票型 43 檔和加權指數的 R² 中位數只有 <span class="num">0.18</span>（國內股票型是 0.86），走勢本來就和台股不同，這段剛好是台股特別強的時期。</p>
 
       <h3>9. 1 年期間的右上角，幾乎都撐不久</h3>
-      <p>2025-10 到 2026-10 這一年是大多頭：0050 漲 <span class="num">66%</span>，最多只跌 <span class="num">15.4%</span>。<br>這一年落在右上角（報酬更高、跌得更少）的有 13 檔，大多是低 beta 的高股息、金融和生技 ETF，1 年的穩強 14 檔沒有一檔通過空頭驗證。<br>拉長到上市以來看，它們大多輸 0050：例如 00939 這一年年化 <span class="num">84.1%</span>，上市以來卻每年落後 0050 <span class="num">21.3%</span>；00878 落後 <span class="num">7.9%</span>。<br>在這份資料裡，只看一段行情挑出來的「強」，常常只是剛好碰上那段。</p>
+      <p>2025-10 到 2026-10 這一年是大多頭：0050 漲 <span class="num">66%</span>，最多只跌 <span class="num">15.4%</span>。<br>這一年落在右上角（報酬更高、跌得更少）的有 13 檔，大多是低 beta 的高股息、金融和生技 ETF，1 年的穩強 15 檔沒有一檔通過空頭驗證。<br>拉長到上市以來看，它們大多輸 0050：例如 00939 這一年年化 <span class="num">84.1%</span>，上市以來卻每年落後 0050 <span class="num">21.3%</span>；00878 落後 <span class="num">7.9%</span>。<br>在這份資料裡，只看一段行情挑出來的「強」，常常只是剛好碰上那段。</p>
     </article>
   </section>
 
@@ -383,7 +385,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
           <dt>划算線是什麼</dt>
           <dd>散點圖的綠色斜虛線。<br>線上每一點的「年化報酬 ÷ 最大回撤」都和 0050 一樣，這個比值叫 Calmar 比率，基金評比常用。<br>線的上方＝每承受 1% 回撤換到的報酬比 0050 多。<br>0050 年化是負的時候這個比值沒有意義，改成只看最大回撤有沒有比 0050 深。</dd>
           <dt>兩條線怎麼切出五類</dt>
-          <dd>先看年化有沒有贏 0050（相差 ±1% 內算持平），再看在划算線上方還是下方。<br>持平區以外，右上角（報酬更高、跌得更少）一定在線上方，所以是穩強；左下角一定在線下方，所以是弱。<br>追蹤同一指數的 006208 這類落在持平區，就算在右上角也算持平。</dd>
+          <dd>先看是不是接近 0050：年化相差 ±1% 以內，而且最大回撤相差 3% 以內。<br>不是的話，看年化比 0050 高或低，再看在划算線上方還是下方。<br>所以右上角（報酬更高、跌得更少）除了接近 0050 的，都是穩強；左下角除了接近 0050 的，都是弱。<br>年化差不多、回撤卻差很多的（例如 5 年的 0052，回撤深 8.4%），不算接近，照划算線分類。</dd>
           <dt>標記：靠爆發</dt>
           <dd>贏 0050 超過 1%，但拿掉少數幾段急漲（爆發段）、0050 也拿掉同樣那幾週之後就不贏。<br>這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。<br>beta 大於 1 的（例如正 2）比較容易被標到。</dd>
           <dt>標記：未經空頭驗證</dt>
@@ -477,7 +479,7 @@ function metrics(p, D, s, e, cache) {
 }
 // 爆發段：連續 n 週累積 ≥ th，從前往後找、不重疊
 function segments(r, n, th) { const sel = []; let i = 0; while (i + n <= r.length) { let m = 1; for (let k = i; k < i + n; k++) m *= 1 + r[k]; if (m - 1 >= th) { for (let k = i; k < i + n; k++) sel.push(k); i += n; } else i += 1; } return sel; }
-// 類別：0050 報酬線（±tie 內為持平）和划算線（Calmar 比率＝年化 ÷ 最大回撤幅度和 0050 相同）兩條線切；0050 年化 ≤ 0 時改用回撤深淺
+// 類別：年化相差 ±tie 內「而且」最大回撤相差 ±nearDd 內＝接近 0050；其餘用 0050 報酬線（高或低）和划算線（Calmar 比率＝年化 ÷ 最大回撤幅度和 0050 相同）切成四類；0050 年化 ≤ 0 時改用回撤深淺
 // 靠爆發（標記）：贏 0050 超過 tie，但拿掉爆發段、0050 也拿掉同幾週後不贏
 function classify(m, B, P) {
   const sel = segments(m.wr, P.weeks, P.burst);
@@ -485,7 +487,7 @@ function classify(m, B, P) {
   const ex = Math.pow(m.tot / pe, 1 / m.years) - 1, bex = Math.pow(m.btot / pb, 1 / m.years) - 1;
   const nb = sel.length / P.weeks, burst = m.cagr - B.cagr > P.tie && ex <= bex;
   let cat;
-  if (Math.abs(m.cagr - B.cagr) <= P.tie) cat = "約等於0050";
+  if (Math.abs(m.cagr - B.cagr) <= P.tie && Math.abs(m.mdd - B.mdd) <= P.nearDd) cat = "約等於0050";
   else {
     const above = B.cagr > 0 ? m.cagr * -B.mdd >= B.cagr * -m.mdd : m.mdd >= B.mdd;
     cat = m.cagr > B.cagr ? (above ? "穩強" : "猛強") : (above ? "穩但不強" : "弱");
@@ -543,7 +545,7 @@ if (typeof module !== "undefined") module.exports = { metrics, classify, lifeChe
 
 <script>
 const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["約等於0050","--c-tie"],["穩但不強","--c-safe"],["弱","--c-weak"]];
-const CAT_NAME = c => c === "約等於0050" ? "持平 0050" : c;
+const CAT_NAME = c => c === "約等於0050" ? "接近 0050" : c;
 const colorOf = c => `var(${CATS.find(x => x[0] === c)[1]})`;
 const REGIONS = ["國內", "海外"], TYPES = ["市值／主題", "高股息", "主動式", "槓桿"];
 const PAGES = ["overview", "bear", "notes", "about"];
@@ -562,18 +564,18 @@ let D = null, sortKey = "cagr", sortDir = -1, base = null, epSort = "sel", epDir
 const st = { win: "5" }, picks = new Set(["0050", "0056", "00878", "0052", "00631L"]);
 
 const PLAIN = {
-  "穩強": "贏 0050，而且多賺的對得起多承受的回撤。",
-  "猛強": "贏 0050，但多跌的部分沒換到等比例的報酬。",
-  "約等於0050": "報酬和 0050 差不多。",
+  "穩強": "報酬比 0050 多，而且多賺的對得起多承受的回撤。",
+  "猛強": "報酬比 0050 多，但多跌的部分沒換到等比例的報酬。",
+  "約等於0050": "報酬和回撤都和 0050 差不多。",
   "穩但不強": "報酬比 0050 少，但少跌得更多，一樣划算。",
   "弱": "報酬比 0050 少，少跌的也補不回來。"
 };
 const RULE = P => ({
-  "穩強": `規則：年化比 0050 高超過 ${f1(P.tie)}%，在划算線上方（年化 ÷ 最大回撤不低於 0050）。`,
-  "猛強": `規則：年化比 0050 高超過 ${f1(P.tie)}%，在划算線下方。`,
-  "約等於0050": `規則：年化和 0050 相差在 ±${f1(P.tie)}% 以內。<br>回撤可能差很多，要另外看。`,
-  "穩但不強": `規則：年化比 0050 低超過 ${f1(P.tie)}%，在划算線上方。`,
-  "弱": `規則：年化比 0050 低超過 ${f1(P.tie)}%，在划算線下方。`
+  "穩強": `規則：不屬於接近 0050，年化比 0050 高，在划算線上方（年化 ÷ 最大回撤不低於 0050）。`,
+  "猛強": `規則：不屬於接近 0050，年化比 0050 高，在划算線下方。`,
+  "約等於0050": `規則：年化相差 ±${f1(P.tie)}% 以內，而且最大回撤相差 ±${f1(P.nearDd)}% 以內。`,
+  "穩但不強": `規則：不屬於接近 0050，年化比 0050 低，在划算線上方。`,
+  "弱": `規則：不屬於接近 0050，年化比 0050 低，在划算線下方。`
 });
 const CRASH = () => (D.defaults.crash || 0.25);
 const TIPS = {
@@ -607,7 +609,8 @@ const TEXT_COLS = new Set(["c", "n", "t", "cat", "r"]);
 const LOCKED = new Set(["c", "n", "cat"]);
 // 視窗窄（小筆電、平板）時預設只開核心欄位；使用者自己勾過的照他的設定
 const CORE_COLS = ["c", "n", "t", "cat", "cagr", "mdd", "rr", "life", "beta"];
-let visible = new Set(innerWidth < 1366 ? CORE_COLS : COLS.filter(c => c[2]).map(c => c[0]));
+const defaultCols = () => new Set(innerWidth < 1366 ? CORE_COLS : COLS.filter(c => c[2]).map(c => c[0]));
+let visible = defaultCols();
 try { const v = JSON.parse(localStorage.getItem("etf-cols-v4") || "null"); if (Array.isArray(v)) visible = new Set([...v, ...LOCKED]); } catch (e) {}
 
 // ── 說明框（游標、鍵盤焦點、點一下都會開）
@@ -655,8 +658,8 @@ const mq = matchMedia("(max-width: 900px)");
 const syncWhere = () => document.querySelectorAll(".side-where").forEach(el => el.textContent = mq.matches ? "「設定」" : "左側欄");
 mq.addEventListener ? mq.addEventListener("change", syncWhere) : mq.addListener(syncWhere); syncWhere();
 
-function params() { return { weeks: +$("weeks").value, burst: +$("burst").value / 100, tie: +$("tie").value / 100 }; }
-function defaults() { const d = D.defaults; return { weeks: d.weeks, burst: d.burst, tie: d.tie }; }
+function params() { return { weeks: +$("weeks").value, burst: +$("burst").value / 100, tie: +$("tie").value / 100, nearDd: D.defaults.near_dd ?? 0.03 }; }
+function defaults() { const d = D.defaults; return { weeks: d.weeks, burst: d.burst, tie: d.tie, nearDd: d.near_dd ?? 0.03 }; }
 // 空頭驗證用的資料：大空頭（固定門檻 CRASH）和每檔上市以來的年化差，載入後只算一次
 let LIFE = null, CRASH_EPS = null;
 const lifeOf = c => { if (!LIFE) { LIFE = {}; D.etfs.forEach(x => { LIFE[x.c] = lifeCheck(x.p, D); }); } return LIFE[c]; };
@@ -783,7 +786,7 @@ function drawChart(rows, B) {
   rows.forEach(r => {
     const isB = r.x.c === "0050", ch = r.cat !== r.def, hollow = !isB && (r.cat === "穩強" || r.cat === "猛強") && !r.ok;
     const tags = [r.burst ? "靠爆發" : "", hollow ? "未經空頭驗證" : ""].filter(Boolean).join("・");
-    const tipText = `${r.x.c} ${r.x.n}｜${CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}・回撤 ${pct(r.m.mdd)}・上市以來 vs 0050 ${r.life == null ? "—" : sgn(r.life)}`;
+    const tipText = `${r.x.c} ${r.x.n}｜${CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}&#10;最大回撤 ${pct(r.m.mdd)}&#10;上市以來 vs 0050 ${r.life == null ? "—" : sgn(r.life)}`;
     if (ch) g += `<circle cx="${sx(r.m.mdd)}" cy="${sy(r.m.cagr)}" r="9" fill="none" stroke="var(--fg)" stroke-width="1.5"/>`;
     g += hollow
       ? `<circle cx="${sx(r.m.mdd)}" cy="${sy(r.m.cagr)}" r="4.5" fill="var(--panel)" stroke="${colorOf(r.cat)}" stroke-width="2" tabindex="0" data-tip="${tipText}"></circle>`
@@ -1037,6 +1040,11 @@ function buildControls() {
     try { localStorage.setItem("etf-cols-v4", JSON.stringify([...visible])); } catch (err) {}
     render();
   });
+  $("colReset").onclick = () => {
+    visible = defaultCols(); try { localStorage.removeItem("etf-cols-v4"); } catch (err) {}
+    $("colbox").querySelectorAll("input[data-k]").forEach(i => { i.checked = visible.has(i.dataset.k); });
+    render();
+  };
 }
 function setSeg(v) { document.querySelectorAll("#win button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v)); $("customBox").hidden = v !== "c"; }
 function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("burst").value = d.burst * 100; $("tie").value = d.tie * 100; $("bmax").value = 2.5; $("hv").value = 30; $("hvx").checked = false; $("epth").value = 15; epCache = null; }
@@ -1067,7 +1075,7 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   $("epchart").addEventListener("pointermove", epHover); $("epchart").addEventListener("pointerleave", epLeave); bindZoom();
   ["epFrom", "epTo"].forEach(id => $(id).addEventListener("change", () => { if ($("epTo").value > $("epFrom").value) { epView = { from: $("epFrom").value, to: $("epTo").value }; renderEps(); } }));
   $("epReset").onclick = () => { epView = null; renderEps(); };
-  // 主題按鈕：跟系統＝拿掉 data-theme；字級 85%～130%
+  // 主題按鈕：跟系統＝拿掉 data-theme；全頁字級 50%～150%（表格跟著變，不另設表格字級）
   const syncTheme = () => { const cur = document.documentElement.dataset.theme || "auto"; document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === cur)); };
   document.querySelectorAll("[data-th]").forEach(b => b.onclick = () => {
     const t = b.dataset.th; if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
@@ -1075,7 +1083,7 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
     syncTheme();
   });
   syncTheme();
-  const FZ = [0.85, 1, 1.1, 1.2, 1.3];
+  const FZ = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5];
   const syncFz = () => { $("fzOut").textContent = Math.round((+getComputedStyle(document.documentElement).getPropertyValue("--fz") || 1) * 100) + "%"; };
   document.querySelectorAll("[data-fz]").forEach(b => b.onclick = () => {
     const cur = +getComputedStyle(document.documentElement).getPropertyValue("--fz") || 1;
@@ -1084,15 +1092,6 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
     syncFz(); syncTopScroll();
   });
   syncFz();
-  // 表格字級縮放：75%～130%，每張表各自記住
-  const ZL = [0.75, 0.85, 1, 1.15, 1.3];
-  document.querySelectorAll(".zoom[data-t]").forEach(z => {
-    const t = z.dataset.t, key = "etf-zoom-" + t; let k = 2;
-    try { const v = +localStorage.getItem(key); if (ZL.includes(v)) k = ZL.indexOf(v); } catch (e) {}
-    const apply = () => { $(t).style.setProperty("--tz", ZL[k]); z.querySelector("output").textContent = Math.round(ZL[k] * 100) + "%"; try { localStorage.setItem(key, ZL[k]); } catch (e) {} };
-    z.querySelectorAll("button").forEach(b => b.onclick = () => { k = Math.max(0, Math.min(ZL.length - 1, k + +b.dataset.z)); apply(); });
-    apply();
-  });
   render();
 }).catch(err => { $("sub").innerHTML = `<span class="err">資料讀不到（${err.message}）。重新整理一次；還是不行的話，請重新發佈。</span>`; });
 </script>
