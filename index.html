@@ -157,6 +157,12 @@ svg.chart { max-height: 68vh; }
 .side .tabs button { border-radius: 0; font-size: 1rem; }
 .side .tabs button:nth-child(odd) { background: color-mix(in srgb, var(--fg) 5%, transparent); }
 .side .tabs button[aria-selected=true] { border-left-color: var(--fg); background: color-mix(in srgb, var(--accent) 14%, transparent); font-weight: 700; }
+.side .cbox, .side .ctl { background: color-mix(in srgb, var(--fg) 4.5%, transparent); border-radius: 4px; padding: 8px 10px; }
+.side .cbox { display: grid; gap: 6px; }
+.side-sec > h3 .term { color: var(--muted); }
+.sitefoot { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; color: var(--muted); font-size: .82rem; display: grid; gap: 8px; }
+.sitefoot p { margin: 0; }
+.sitefoot a { color: var(--accent); }
 .viewset { display: grid; gap: 8px; justify-items: start; }
 .fzrow > span { margin-right: 4px; }
 .viewset .seg button { padding: 4px 10px; }
@@ -207,23 +213,22 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
   <div class="side-sec" id="filterBox">
     <h3>篩選（總覽和空頭共用）</h3>
     <div class="stack">
-      <div class="row"><span class="lbl">地區</span><div class="checks" id="f-region"></div></div>
-      <div class="row"><span class="lbl">類型</span><div class="checks" id="f-type"></div></div>
-      <p class="hint">每檔只算一種類型（<span class="term" tabindex="0" data-tip="重疊時依序歸類：槓桿 → 主動式 → 高股息 → 市值／主題。例：主動式的高股息 ETF 歸主動式。台股目前沒有正 3，槓桿型都是正 2。">怎麼歸類</span>）。</p>
+      <div class="cbox"><div class="row"><span class="lbl">地區</span><div class="checks" id="f-region"></div></div></div>
+      <div class="cbox"><div class="row"><span class="lbl">類型</span><div class="checks" id="f-type"></div></div>
+      <p class="hint">每檔只算一種類型（<span class="term" tabindex="0" data-tip="重疊時依序歸類：槓桿 → 主動式 → 高股息 → 市值／主題。例：主動式的高股息 ETF 歸主動式。台股目前沒有正 3，槓桿型都是正 2。">怎麼歸類</span>）。</p></div>
       <div class="controls">
         <div class="ctl"><label for="bmax"><span class="term" tabindex="0" data-tip="beta＝0050 漲跌 1% 時，這檔平均動多少。例：beta 1.5＝0050 漲 1%，這檔平均漲 1.5%。用總覽選的期間計算；拉到最右邊＝不限制。">beta 上限</span><output id="o-bmax"></output></label>
           <input type="range" id="bmax" min="0.5" max="2.5" step="0.1"><p class="hint">只看漲跌沒那麼猛的。預設不限制。</p></div>
         <div class="ctl"><label for="hvx" style="justify-content:flex-start;gap:8px"><input type="checkbox" id="hvx"> <span class="term" tabindex="0" data-tip="在 0050 的幾次大跌裡，平均跌幅超過 0050 一定比例的 ETF 會被拿掉。比例就是空頭頁的「高波動門檻」。">排除高波動的 ETF</span></label>
-          <p class="hint">拿掉大跌時跌特別深的。目前：比 0050 多跌 <span class="hvval"></span> 以上・<button type="button" class="linkbtn" data-go="bear">到空頭頁調整</button></p></div>
+          <p class="hint">拿掉大跌時跌特別深的。<br>目前：比 0050 多跌 <span class="hvval"></span> 以上・<button type="button" class="linkbtn" data-go="bear">到空頭頁調整</button></p></div>
       </div>
     </div>
   </div>
 
   <div class="side-sec" data-for="overview">
-    <h3>回看期間與分類門檻（總覽）</h3>
+    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。">回看期間</span>與分類門檻（總覽）</h3>
       <div class="stack">
-        <div class="row">
-          <span class="lbl"><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。">回看期間</span></span>
+        <div class="cbox"><div class="row">
           <div class="seg" id="win" role="group" aria-label="回看期間">
             <button type="button" data-v="1">1 年</button><button type="button" data-v="3">3 年</button><button type="button" data-v="5" aria-pressed="true">5 年</button><button type="button" data-v="c">自訂</button>
           </div>
@@ -232,7 +237,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
             <label>迄 <input type="date" id="dEnd"></label>
           </span>
         </div>
-        <p class="hint" id="cover"></p>
+        <p class="hint" id="cover"></p></div>
         <div class="controls">
           <div class="ctl"><label for="weeks"><span class="term" tabindex="0" data-tip="連續幾週加起來漲很多，算一段急漲（爆發段）。1 週＝單週大漲；拉長可以抓到「連漲好幾週、但每週都不算大」的段落。上限 13 週（一季），再長就比較像趨勢。參考：1 週配 7.5%、4 週配 20%。">爆發段長度</span><output id="o-weeks"></output></label>
             <input type="range" id="weeks" min="1" max="13" step="1"><p class="hint">幾週算一段急漲。預設 1 週。</p></div>
@@ -263,7 +268,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
   </header>
 
   <div class="note"><strong>這是歷史資料，不代表往後會一樣，也不是買賣建議。</strong>
-    所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）；進進出出的人，實際報酬可能差很多。名單只有目前掛牌的 ETF，已下市的不在裡面。詳見「說明」。</div>
+    <br>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）；進進出出的人，實際報酬可能差很多。<br>名單只有目前掛牌的 ETF，已下市的不在裡面。詳見「說明」。</div>
 
   <!-- ── 總覽 -->
   <section class="page" id="page-overview" role="tabpanel" aria-label="總覽">
@@ -294,7 +299,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
   <section class="page" id="page-bear" role="tabpanel" aria-label="空頭" hidden>
     <section class="panel stack">
       <h2>0050 大跌時，各檔跌多少</h2>
-      <p class="hint">用 0050 的大跌當共同時間表：每一次都從 0050 的高點算起，看各檔在同一段日期裡最多跌多少、跌幅是 0050 的幾倍、多久回到原來的高點。「是 0050 的幾倍」顯示各檔過去大跌時跌得多深；下一次不一定一樣。大跌門檻和高波動門檻在<span class="side-where">左側欄</span>。</p>
+      <p class="hint">用 0050 的大跌當共同時間表：每一次都從 0050 的高點算起，看各檔在同一段日期裡最多跌多少、跌幅是 0050 的幾倍、多久回到原來的高點。<br>「是 0050 的幾倍」顯示各檔過去大跌時跌得多深；下一次不一定一樣。<br>大跌門檻和高波動門檻在<span class="side-where">左側欄</span>。</p>
       <div class="row"><span class="lbl">選一次大跌</span><div class="chips" id="eps" role="group" aria-label="選一次大跌"></div></div>
     </section>
     <section class="panel stack">
@@ -304,7 +309,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
         <button type="button" class="btn" id="epReset">回到這次大跌</button>
         <span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button><span class="hint">Ctrl（⌘）＋滾輪縮放・拖曳移動</span></span></div>
       <svg id="epchart" class="chart" viewBox="0 0 900 360" role="img" aria-label="大跌期間各 ETF 的走勢，起點高點設為 100"></svg>
-      <p class="foot">走勢以 0050 高點那天 = 100；淡色區＝0050 從高點跌到低點。勾選下表的「畫圖」可以加減線（最多 8 條）。</p>
+      <p class="foot">走勢以 0050 高點那天 = 100；淡色區＝0050 從高點跌到低點。<br>勾選下表的「畫圖」可以加減線（最多 8 條）。</p>
       <div class="head"><span class="foot">點整格表頭排序；列底色＝總覽目前的類別</span><span class="zoom" data-t="eptbl"><button type="button" data-z="-1" aria-label="表格字縮小">A−</button><output>100%</output><button type="button" data-z="1" aria-label="表格字放大">A+</button></span></div>
       <div class="topscroll" aria-hidden="true"><div></div></div>
       <div class="tblwrap"><table id="eptbl"><thead></thead><tbody></tbody></table></div>
@@ -315,7 +320,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
   <section class="page" id="page-notes" role="tabpanel" aria-label="觀察" hidden>
     <article class="panel article">
       <h2>這份資料看到的幾件事</h2>
-      <p class="hint">資料截至 2026-10-30 收盤，用預設門檻。文章裡的數字是寫作當時算的，不會跟著拉桿變；想驗證可以到總覽、空頭頁自己調。歷史資料，不是買賣建議。</p>
+      <p class="hint">資料截至 2026-10-30 收盤，用預設門檻。<br>文章裡的數字是寫作當時算的，不會跟著拉桿變；想驗證可以到總覽、空頭頁自己調。<br>歷史資料，不是買賣建議。</p>
 
       <h3>先看限制</h3>
       <ul>
@@ -326,13 +331,13 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
       </ul>
 
       <h3>1. 0050 本身就很難贏</h3>
-      <p>2021-10 到 2026-10 這 5 年，0050 年化 <span class="num">29.0%</span>，最大回撤 <span class="num">−33.8%</span>。同期有完整資料的另外 84 檔裡，年化比它高 1% 以上的只有 9 檔，其中 4 檔是正 2。0050 偏重台積電和科技股，對加權指數的 beta 是 <span class="num">1.08</span>，本身就比大盤積極，在這段多頭裡「跑贏 0050」比「跑贏大盤」難。</p>
+      <p>2021-10 到 2026-10 這 5 年，0050 年化 <span class="num">29.0%</span>，最大回撤 <span class="num">−33.8%</span>。<br>同期有完整資料的另外 84 檔裡，年化比它高 1% 以上的只有 9 檔，其中 4 檔是正 2。<br>0050 偏重台積電和科技股，對加權指數的 beta 是 <span class="num">1.08</span>，本身就比大盤積極，在這段多頭裡「跑贏 0050」比「跑贏大盤」難。</p>
 
       <h3>2. 「報酬更高、跌得更少」幾乎不存在</h3>
-      <p>散點圖右上角那一格大家都想找。5 年期間落在裡面的只有 2 檔，都是擦邊：00881（國泰台灣科技龍頭）年化 <span class="num">32.3%</span>，回撤 <span class="num">−33.4%</span>，只比 0050 淺 <span class="num">0.4%</span>；006208 和 0050 追蹤同一個指數，兩項都只差不到 0.1%。天下沒有白吃的午餐，在這份資料裡也成立。</p>
+      <p>散點圖右上角那一格大家都想找。<br>5 年期間落在裡面的只有 2 檔，都是擦邊：00881（國泰台灣科技龍頭）年化 <span class="num">32.3%</span>，回撤 <span class="num">−33.4%</span>，只比 0050 淺 <span class="num">0.4%</span>；006208 和 0050 追蹤同一個指數，兩項都只差不到 0.1%。<br>天下沒有白吃的午餐，在這份資料裡也成立。</p>
 
       <h3>3. 穩強很少，而且只是小幅領先</h3>
-      <p>5 年期間的穩強只有 3 檔：0053（元大科技市值）、00881（國泰台灣科技龍頭）和 00735（國泰臺韓科技，標靠爆發）。報酬／回撤分別是 <span class="num">0.92</span>、<span class="num">0.97</span>、<span class="num">0.88</span>，只比 0050 的 <span class="num">0.86</span> 高一點。3 年期間一檔穩強都沒有：0052、0053、00881 年化多 1.4～2.5%，但回撤也深 2.5～4.2%，報酬／回撤 <span class="num">1.80～1.86</span>，略低於 0050 的 <span class="num">1.98</span>，落在划算線下方。0053、00881 的成分和大盤很像（R² 約 0.92），只是 beta 稍高，大盤漲時多賺一點、跌時也多跌一點。</p>
+      <p>5 年期間的穩強只有 3 檔：0053（元大科技市值）、00881（國泰台灣科技龍頭）和 00735（國泰臺韓科技，標靠爆發）。報酬／回撤分別是 <span class="num">0.92</span>、<span class="num">0.97</span>、<span class="num">0.88</span>，只比 0050 的 <span class="num">0.86</span> 高一點。<br>3 年期間一檔穩強都沒有：0052、0053、00881 年化多 1.4～2.5%，但回撤也深 2.5～4.2%，報酬／回撤 <span class="num">1.80～1.86</span>，略低於 0050 的 <span class="num">1.98</span>，落在划算線下方。<br>0053、00881 的成分和大盤很像（R² 約 0.92），只是 beta 稍高，大盤漲時多賺一點、跌時也多跌一點。</p>
 
       <h3>4. 正 2：報酬最高，但全靠那幾段急漲</h3>
       <ul>
@@ -350,16 +355,16 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
       </ul>
 
       <h3>6. 多扛的波動不一定換得到等比例的報酬</h3>
-      <p>用「年化報酬 ÷ 最大回撤」（Calmar 比率）看每承受 1% 回撤換到多少報酬：5 年期間 0050 是 <span class="num">0.86</span>，00894 是 <span class="num">0.79</span>，正 2 是 <span class="num">0.78～0.81</span>。報酬比較高，但跌得更深，算下來反而不划算，所以都是猛強。總覽散點圖的划算線就是 0050 的這個比值。</p>
+      <p>用「年化報酬 ÷ 最大回撤」（Calmar 比率）看每承受 1% 回撤換到多少報酬：5 年期間 0050 是 <span class="num">0.86</span>，00894 是 <span class="num">0.79</span>，正 2 是 <span class="num">0.78～0.81</span>。<br>報酬比較高，但跌得更深，算下來反而不划算，所以都是猛強。<br>總覽散點圖的划算線就是 0050 的這個比值。</p>
 
       <h3>7. 定期定額和一次投入</h3>
-      <p>5 年期間，定期定額的年化減一次投入的年化：0050 是 <span class="num">+13.0%</span>，正 2 是 <span class="num">+18.4%～+19.3%</span>。主要因為 2022 年的大跌落在期間中間，跌得愈深，定期定額在低點買到的股數愈多。這只是一條歷史路徑，換一個起點可能相反；共同的前提還是不中途賣出。</p>
+      <p>5 年期間，定期定額的年化減一次投入的年化：0050 是 <span class="num">+13.0%</span>，正 2 是 <span class="num">+18.4%～+19.3%</span>。<br>主要因為 2022 年的大跌落在期間中間，跌得愈深，定期定額在低點買到的股數愈多。<br>這只是一條歷史路徑，換一個起點可能相反；共同的前提還是不中途賣出。</p>
 
       <h3>8. 海外 ETF 走的是另一條路</h3>
-      <p>5 年期間 54 檔海外 ETF 中，52 檔落在「弱」：報酬比 0050 少；回撤比 0050 淺的有 21 檔，但少跌的部分補不回少賺的。海外股票型 43 檔和加權指數的 R² 中位數只有 <span class="num">0.18</span>（國內股票型是 0.86），走勢本來就和台股不同，這段剛好是台股特別強的時期。</p>
+      <p>5 年期間 54 檔海外 ETF 中，52 檔落在「弱」：報酬比 0050 少；回撤比 0050 淺的有 21 檔，但少跌的部分補不回少賺的。<br>海外股票型 43 檔和加權指數的 R² 中位數只有 <span class="num">0.18</span>（國內股票型是 0.86），走勢本來就和台股不同，這段剛好是台股特別強的時期。</p>
 
       <h3>9. 1 年期間的右上角，幾乎都撐不久</h3>
-      <p>2025-10 到 2026-10 這一年是大多頭：0050 漲 <span class="num">66%</span>，最多只跌 <span class="num">15.4%</span>。這一年落在右上角（報酬更高、跌得更少）的有 13 檔，大多是低 beta 的高股息、金融和生技 ETF，1 年的穩強 14 檔沒有一檔通過空頭驗證。拉長到上市以來看，它們大多輸 0050：例如 00939 這一年年化 <span class="num">84.1%</span>，上市以來卻每年落後 0050 <span class="num">21.3%</span>；00878 落後 <span class="num">7.9%</span>。在這份資料裡，只看一段行情挑出來的「強」，常常只是剛好碰上那段。</p>
+      <p>2025-10 到 2026-10 這一年是大多頭：0050 漲 <span class="num">66%</span>，最多只跌 <span class="num">15.4%</span>。<br>這一年落在右上角（報酬更高、跌得更少）的有 13 檔，大多是低 beta 的高股息、金融和生技 ETF，1 年的穩強 14 檔沒有一檔通過空頭驗證。<br>拉長到上市以來看，它們大多輸 0050：例如 00939 這一年年化 <span class="num">84.1%</span>，上市以來卻每年落後 0050 <span class="num">21.3%</span>；00878 落後 <span class="num">7.9%</span>。<br>在這份資料裡，只看一段行情挑出來的「強」，常常只是剛好碰上那段。</p>
     </article>
   </section>
 
@@ -371,13 +376,13 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
         <dl id="catdefs"></dl>
         <dl>
           <dt>划算線是什麼</dt>
-          <dd>散點圖的綠色斜虛線。線上每一點的「年化報酬 ÷ 最大回撤」都和 0050 一樣，這個比值叫 Calmar 比率，基金評比常用。線的上方＝每承受 1% 回撤換到的報酬比 0050 多。0050 年化是負的時候這個比值沒有意義，改成只看最大回撤有沒有比 0050 深。</dd>
+          <dd>散點圖的綠色斜虛線。線上每一點的「年化報酬 ÷ 最大回撤」都和 0050 一樣，這個比值叫 Calmar 比率，基金評比常用。<br>線的上方＝每承受 1% 回撤換到的報酬比 0050 多。<br>0050 年化是負的時候這個比值沒有意義，改成只看最大回撤有沒有比 0050 深。</dd>
           <dt>兩條線怎麼切出五類</dt>
-          <dd>先看年化有沒有贏 0050（相差 ±1% 內算持平），再看在划算線上方還是下方。持平區以外，右上角（報酬更高、跌得更少）一定在線上方，所以是穩強；左下角一定在線下方，所以是弱。追蹤同一指數的 006208 這類落在持平區，就算在右上角也算持平。</dd>
+          <dd>先看年化有沒有贏 0050（相差 ±1% 內算持平），再看在划算線上方還是下方。<br>持平區以外，右上角（報酬更高、跌得更少）一定在線上方，所以是穩強；左下角一定在線下方，所以是弱。<br>追蹤同一指數的 006208 這類落在持平區，就算在右上角也算持平。</dd>
           <dt>標記：靠爆發</dt>
-          <dd>贏 0050 超過 1%，但拿掉少數幾段急漲（爆發段）、0050 也拿掉同樣那幾週之後就不贏。這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。beta 大於 1 的（例如正 2）比較容易被標到。</dd>
+          <dd>贏 0050 超過 1%，但拿掉少數幾段急漲（爆發段）、0050 也拿掉同樣那幾週之後就不贏。<br>這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。<br>beta 大於 1 的（例如正 2）比較容易被標到。</dd>
           <dt>標記：未經空頭驗證</dt>
-          <dd>穩強、猛強要長期也站得住才可信。上市以來（最早從 2015 年初算）至少經歷過一次 0050 跌 ≥ 25% 再回到高點的大空頭（2020、2022、2025 這三次），而且上市以來的年化沒有輸 0050 超過 1%，才算通過。沒通過的在散點圖畫成空心點。</dd>
+          <dd>穩強、猛強要長期也站得住才可信。<br>上市以來（最早從 2015 年初算）至少經歷過一次 0050 跌 ≥ 25% 再回到高點的大空頭（2020、2022、2025 這三次），而且上市以來的年化沒有輸 0050 超過 1%，才算通過。<br>沒通過的在散點圖畫成空心點。</dd>
         </dl>
       </div>
       <p class="hint">規則裡的數字是總覽目前的拉桿設定；大空頭門檻固定 25%。</p>
@@ -385,14 +390,22 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) docu
     <section class="panel stack">
       <h2>使用前要知道的事</h2>
       <ul class="hint" style="font-size:.9rem;margin:0;padding-left:1.2em;display:grid;gap:4px">
-        <li>這是歷史資料，不代表往後會一樣，也不是買賣建議。2021～2026 剛好是台灣半導體與 AI 的大多頭，換一段期間（例如 2022 年）結果可能完全相反。</li>
-        <li>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）。進進出出的人，實際報酬可能差很多：例如標「靠爆發」的，領先全靠少數幾段急漲，剛好錯過那幾段就不會贏 0050。</li>
-        <li>期間愈短，分類愈只代表那一段行情。1 年（2025-10 起）是一段大多頭，0050 最多只跌約 15%；3 年（2023-10 起）沒包含 2022 的大空頭；要看經過 2022 的，選 5 年或自訂從 2021 年底起。</li>
+        <li>這是歷史資料，不代表往後會一樣，也不是買賣建議。<br>2021～2026 剛好是台灣半導體與 AI 的大多頭，換一段期間（例如 2022 年）結果可能完全相反。</li>
+        <li>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）。<br>進進出出的人，實際報酬可能差很多：例如標「靠爆發」的，領先全靠少數幾段急漲，剛好錯過那幾段就不會贏 0050。</li>
+        <li>期間愈短，分類愈只代表那一段行情。<br>1 年（2025-10 起）是一段大多頭，0050 最多只跌約 15%；3 年（2023-10 起）沒包含 2022 的大空頭；要看經過 2022 的，選 5 年或自訂從 2021 年底起。</li>
         <li>名單只有目前掛牌的 ETF，已下市的不在裡面（存活者偏差）。</li>
       </ul>
       <p class="foot" id="foot"></p>
     </section>
   </section>
+
+  <footer class="sitefoot">
+    <p><strong>免責聲明</strong><br>
+      本站整理公開市場的歷史價格，只供參考，不構成投資建議，也不是任何證券的買賣邀約或推介。<br>
+      作者不是證券投資顧問。資料可能有誤差或延遲，使用前請自行查證；投資決定與盈虧由使用者自行負責。</p>
+    <p>資料截至 <span id="footEnd">—</span> 收盤。<br>
+      原始碼與錯誤回報在 <a href="https://github.com/wasai04/etf-strength-site" rel="noopener">GitHub</a>，覺得有用可以在那裡按個星號。</p>
+  </footer>
 </div>
 </div>
 <nav class="bottombar" aria-label="分頁">
@@ -695,10 +708,10 @@ function render() {
   const all = bs.list.map(({ x, m }) => { const L = lifeOf(x.c); return { x, m, ...classify(m, B, P), def: classify(m, B, DP).cat, av: computeEps().per[x.c].av, life: L ? L.diff : null, ok: verified(L, crashEps(), DP.tie) }; });
   // 這段期間 0050 沒跌到大空頭門檻：分類只代表這段行情
   $("regime").hidden = B.mdd <= -CRASH();
-  $("regime").textContent = `這段期間 0050 最多只跌 ${pct(-B.mdd)}，沒有經過大空頭（跌 ≥ ${f1(CRASH())}%），分類只代表這段行情。長期有沒有贏，看「上市以來 vs 0050」欄和散點圖的空心點。`;
+  $("regime").innerHTML = `這段期間 0050 最多只跌 ${pct(-B.mdd)}，沒有經過大空頭（跌 ≥ ${f1(CRASH())}%），分類只代表這段行情。<br>長期有沒有贏，看「上市以來 vs 0050」欄和散點圖的空心點。`;
   const rows = all.filter(r => passFilters(r.x, r.m));
   ovMap = new Map(all.map(r => [r.x.c, r]));
-  $("cover").textContent = `${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}：全期都有資料的 ${all.length} 檔（上市晚於起點超過 7 天的不列入；名單共 ${D.etfs.length} 檔）。自訂期間最早 ${D.export_start}。`;
+  $("cover").innerHTML = `${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}：全期都有資料的 ${all.length} 檔（上市晚於起點超過 7 天的不列入；名單共 ${D.etfs.length} 檔）。<br>自訂期間最早 ${D.export_start}。`;
   // 符合篩選、但上市不滿這段期間而沒列入的：依上市滿 1 年／半年／3 個月各給一個按鈕，把起點改到那群都有資料的那天（期間愈短、列入愈多）
   const inList = new Set(all.map(r => r.x.c)), firstI = x => x.p.findIndex(v => v != null);
   const miss = D.etfs.filter(x => !inList.has(x.c) && firstI(x) >= 0 && passFilters(x, null));
@@ -711,8 +724,8 @@ function render() {
       if (f.length && f.length !== (opts.at(-1) || {}).n) opts.push({ s1: Math.max(...f.map(firstI)), n: f.length, lab });
     }
     $("missing").innerHTML = `目前篩選有 ${miss.length} 檔上市不滿這段期間，沒有列入（${byType}）。`
-      + (opts.length ? "改看：" + opts.map(o => `<button type="button" class="linkbtn" data-s1="${o.s1}">${iso(D.dates[o.s1])} 以來（上市${o.lab}，多 ${o.n} 檔）</button>`).join("・") : "")
-      + (miss.length > n3 ? `。上市不到 3 個月的 ${miss.length - n3} 檔期間太短，不提供。` : "");
+      + (opts.length ? "<br>改看：" + opts.map(o => `<button type="button" class="linkbtn" data-s1="${o.s1}">${iso(D.dates[o.s1])} 以來（上市${o.lab}，多 ${o.n} 檔）</button>`).join("・") : "")
+      + (miss.length > n3 ? `<br>上市不到 3 個月的 ${miss.length - n3} 檔期間太短，不提供。` : "");
     $("missing").querySelectorAll("[data-s1]").forEach(b => b.onclick = () => { st.win = "c"; setSeg("c"); $("dStart").value = iso(D.dates[+b.dataset.s1]); $("dEnd").value = iso(D.dates[bs.e]); render(); });
   }
   const cnt = {}, cnt0 = {}, cntOk = {}; CATS.forEach(([c]) => { cnt[c] = 0; cnt0[c] = 0; cntOk[c] = 0; });
@@ -722,7 +735,7 @@ function render() {
     return `<div class="cnt" style="--c:var(${v})"><span class="name">${CAT_NAME(c)}</span><span class="plain">${PLAIN[c]}</span><span class="rule">${RULE(P)[c]}</span><span class="bottom"><span class="num">${cnt[c]}</span><span class="delta">${d === 0 ? "與預設相同" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span>${win && cnt[c] ? `<span class="okn">通過空頭驗證 ${cntOk[c]} 檔</span>` : ""}</span></div>`;
   }).join("");
   const q1 = rows.filter(r => r.x.c !== "0050" && r.m.cagr > B.cagr && r.m.mdd > B.mdd), q1ok = q1.filter(r => r.ok);
-  $("countnote").textContent = `顯示 ${rows.length} 檔（含 0050 自己）。0050：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的：${q1ok.length ? q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : "沒有"}` : ""}。和預設門檻相比換類別的有 ${rows.filter(r => r.cat !== r.def).length} 檔。`;
+  $("countnote").innerHTML = `顯示 ${rows.length} 檔（含 0050 自己）。0050：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。<br>右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的：${q1ok.length ? q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : "沒有"}` : ""}。<br>和預設門檻相比換類別的有 ${rows.filter(r => r.cat !== r.def).length} 檔。`;
   drawChart(rows, B);
   drawTable(rows); syncTopScroll();
   renderEps();
@@ -825,7 +838,7 @@ function renderEps() {
   if (epSel == null) { $("epchart").innerHTML = ""; $("eptbl").querySelector("tbody").innerHTML = ""; $("epnote").textContent = ""; return; }
   const ep = eps[epSel], Bst = E.B[epSel];
   const exp = D.etfs.filter(x => E.per[x.c].s[epSel]).length;
-  $("epnote").textContent = `0050：${iso(D.dates[ep.pk])} 高點 → ${iso(D.dates[ep.tr])} 低點，跌 ${pct(ep.depth)}；${ep.rec == null ? "到資料截止還沒回到高點" : `${iso(D.dates[ep.rec])} 回到高點（${Math.round(Bst.rec)} 個月）`}。這次有 ${exp} 檔已上市。`;
+  $("epnote").innerHTML = `0050：${iso(D.dates[ep.pk])} 高點 → ${iso(D.dates[ep.tr])} 低點，跌 ${pct(ep.depth)}；${ep.rec == null ? "到資料截止還沒回到高點" : `${iso(D.dates[ep.rec])} 回到高點（${Math.round(Bst.rec)} 個月）`}。<br>這次有 ${exp} 檔已上市。`;
   drawEpChart(ep);
   drawEpTable(E, ep); syncTopScroll();
 }
@@ -1026,10 +1039,11 @@ function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("b
 showPage((location.hash || "").slice(1), false);
 fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
   D = d;
+  $("footEnd").textContent = d.end;
   $("sub").textContent = `資料截至 ${d.end} 收盤・標竿 0050（含息）・大盤判讀用加權指數（不含息）`;
   const ring = `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4" fill="var(--muted)"/><circle cx="10" cy="10" r="8" fill="none" stroke="var(--fg)" stroke-width="1.5"/></svg>`;
   $("legend").innerHTML = CATS.map(([c, v]) => `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--c-steady)" stroke-width="2"/></svg>空心＝未經空頭驗證的穩強／猛強</span><span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span>`;
-  $("foot").textContent = `資料來源：證交所 ISIN 名單與開放資料、Yahoo 含息還原價（台股 ETF）、加權指數 ^TWII。備註：各檔對齊到 0050 的交易日，上櫃 ETF 的數字可能有些微誤差；Yahoo 對少數 ETF 有上市前的孤立價格（例：00637L 上市前 3 個月有一筆 9.13），資料整理時已去掉；多數新 ETF 上市頭幾天固定在發行價附近，沒有漲跌，不影響報酬。`;
+  $("foot").innerHTML = `資料來源：證交所 ISIN 名單與開放資料、Yahoo 含息還原價（台股 ETF）、加權指數 ^TWII。<br>備註：各檔對齊到 0050 的交易日，上櫃 ETF 的數字可能有些微誤差。<br>Yahoo 對少數 ETF 有上市前的孤立價格（例：00637L 上市前 3 個月有一筆 9.13），資料整理時已去掉；多數新 ETF 上市頭幾天固定在發行價附近，沒有漲跌，不影響報酬。`;
   $("dStart").min = $("dEnd").min = d.export_start; $("dStart").max = $("dEnd").max = d.end;
   $("epFrom").min = $("epTo").min = d.export_start; $("epFrom").max = $("epTo").max = d.end;
   $("dEnd").value = d.end; $("dStart").value = iso(presetStart(d, d.dates.length - 1, 5));
