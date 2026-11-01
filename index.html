@@ -7,38 +7,42 @@
 <style>
 /* 版面（ui/side-panel）：電腦版左側固定欄（分頁＋共用篩選＋目前分頁的拉桿），右側內容；手機版改底部分頁列，拉桿收進「設定」抽屜 */
 :root {
-  --bg: #f6f7f5; --panel: #ffffff; --fg: #1d2421; --muted: #5f6b66; --line: #dde2df; --accent: #1f6f5c; --quad: rgba(31,111,92,.08);
-  --c-steady: #1f7a64; --c-strong: #c27a12; --c-burst: #b0418a; --c-tie: #7b5ea7; --c-safe: #2f78b5; --c-weak: #9aa39f;
-  --l1: #2f78b5; --l2: #c27a12; --l3: #b0418a; --l4: #1f7a64; --l5: #7a5bc4; --l6: #c4473a; --l7: #4a8f2a; --l8: #8a6a3a;
-  --warn-bg: #fff7e6; --warn-fg: #6b4a00; --hl: #fff3c4; --shadow: rgba(0,0,0,.12); --band: rgba(176,65,138,.08);
+  --bg: #eef1f2; --panel: #fbfcfc; --fg: #1b2531; --muted: #5c6976; --line: #cfd6dc; --accent: #24467f; --quad: rgba(36,70,127,.06);
+  --c-steady: #2f7d7a; --c-strong: #b9740f; --c-burst: #a3477e; --c-tie: #76699a; --c-safe: #5a88bd; --c-weak: #9aa3ab;
+  --l1: #24467f; --l2: #b9740f; --l3: #a3477e; --l4: #2f7d7a; --l5: #76699a; --l6: #c23b2e; --l7: #5a88bd; --l8: #7d6a4c;
+  --up: #c23b2e; --dn: #1f8a55; --calmar: #2e8b57; --burstflag: #9a6a00;
+  --warn-bg: #fbfcfc; --warn-fg: #1b2531; --hl: #fff3c4; --shadow: rgba(27,37,49,.14); --band: rgba(185,116,15,.09);
   /* 字型統一：英文與數字用 IBM Plex Sans，中文落到 Noto Sans TC；數字欄另外開等寬數字（tabular-nums）對齊，不換字型 */
   --f-body: "IBM Plex Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   --f-num: var(--f-body);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #121614; --panel: #1a201d; --fg: #e4ebe7; --muted: #9aa7a1; --line: #2d3531; --accent: #5cc4a6; --quad: rgba(92,196,166,.10);
-  --c-steady: #4cc29f; --c-strong: #e5a33c; --c-burst: #e07bbd; --c-tie: #b49be0; --c-safe: #6aaee6; --c-weak: #6d7772;
-  --l1: #6aaee6; --l2: #e5a33c; --l3: #e07bbd; --l4: #4cc29f; --l5: #a58cf0; --l6: #ef7f72; --l7: #8fce6a; --l8: #d0aa70;
-  --warn-bg: #2b2414; --warn-fg: #f0d58f; --hl: #3a3417; --shadow: rgba(0,0,0,.5); --band: rgba(224,123,189,.10); color-scheme: dark } }
+  --bg: #121922; --panel: #18212c; --fg: #e3e8ee; --muted: #93a1af; --line: #2b3746; --accent: #8fb0e6; --quad: rgba(143,176,230,.07);
+  --c-steady: #5fb3ae; --c-strong: #e0a345; --c-burst: #d483b3; --c-tie: #ab9fd0; --c-safe: #86b2e3; --c-weak: #6f7a86;
+  --l1: #8fb0e6; --l2: #e0a345; --l3: #d483b3; --l4: #5fb3ae; --l5: #ab9fd0; --l6: #ee7b6e; --l7: #86b2e3; --l8: #c8ad82;
+  --up: #ee7b6e; --dn: #5cc28c; --calmar: #5cc28c; --burstflag: #d9b05c;
+  --warn-bg: #18212c; --warn-fg: #e3e8ee; --hl: #3a3417; --shadow: rgba(0,0,0,.5); --band: rgba(224,163,69,.10); color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #121614; --panel: #1a201d; --fg: #e4ebe7; --muted: #9aa7a1; --line: #2d3531; --accent: #5cc4a6; --quad: rgba(92,196,166,.10);
-  --c-steady: #4cc29f; --c-strong: #e5a33c; --c-burst: #e07bbd; --c-tie: #b49be0; --c-safe: #6aaee6; --c-weak: #6d7772;
-  --l1: #6aaee6; --l2: #e5a33c; --l3: #e07bbd; --l4: #4cc29f; --l5: #a58cf0; --l6: #ef7f72; --l7: #8fce6a; --l8: #d0aa70;
-  --warn-bg: #2b2414; --warn-fg: #f0d58f; --hl: #3a3417; --shadow: rgba(0,0,0,.5); --band: rgba(224,123,189,.10); color-scheme: dark }
+  --bg: #121922; --panel: #18212c; --fg: #e3e8ee; --muted: #93a1af; --line: #2b3746; --accent: #8fb0e6; --quad: rgba(143,176,230,.07);
+  --c-steady: #5fb3ae; --c-strong: #e0a345; --c-burst: #d483b3; --c-tie: #ab9fd0; --c-safe: #86b2e3; --c-weak: #6f7a86;
+  --l1: #8fb0e6; --l2: #e0a345; --l3: #d483b3; --l4: #5fb3ae; --l5: #ab9fd0; --l6: #ee7b6e; --l7: #86b2e3; --l8: #c8ad82;
+  --up: #ee7b6e; --dn: #5cc28c;
+  --warn-bg: #18212c; --warn-fg: #e3e8ee; --hl: #3a3417; --shadow: rgba(0,0,0,.5); --band: rgba(224,163,69,.10); color-scheme: dark }
 /* 獨立部署（GitHub Pages）時沒有 Artifact 外殼的基本設定，這裡自己補上 */
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 img { max-width: 100%; }
-body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: clamp(14px, 0.25vw + 11px, 16px); line-height: 1.6;
+html { font-size: calc(100% * var(--fz, 1)); }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: calc(clamp(14px, 0.25vw + 11px, 16px) * var(--fz, 1)); line-height: 1.6;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
-h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: .02em; }
-h2 { font-size: 1.05rem; margin: 0; }
+h1 { font-size: clamp(1.75rem, 1.2vw + 1.2rem, 2.35rem); font-weight: 700; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+h2 { font-size: 1.15rem; font-weight: 700; margin: 0; }
 h3 { font-size: 1rem; margin: 0; }
 .sub { color: var(--muted); margin: 4px 0 0; }
-.note { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 14px; font-size: .9rem; }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.note { background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--line); border-left: 3px solid var(--fg); border-radius: 2px; padding: 10px 14px; font-size: .9rem; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 18px; min-width: 0; }
 .term { border-bottom: 1px dotted var(--muted); cursor: help; }
 .term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* 分頁列 */
@@ -59,27 +63,34 @@ details.box[open] > summary { margin-bottom: 12px; }
 .ctl > label { display: flex; justify-content: space-between; gap: 8px; font-weight: 500; font-size: .92rem; }
 .ctl output { font-family: var(--f-num); color: var(--accent); white-space: nowrap; }
 .hint { color: var(--muted); font-size: .8rem; margin: 2px 0 0; }
-.missing { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; font-size: .86rem; margin: 0 0 12px; }
+.missing { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 8px 14px; font-size: .86rem; margin: 0 0 12px; }
 .missing .linkbtn { font-size: inherit; }
+.missing.regime { border-left: 4px solid var(--c-strong); }
+.okn { font-size: .76rem; color: var(--muted); }
+.flag.nv { border-color: var(--muted); color: var(--muted); }
+.flag.bu { border-color: var(--burstflag); color: var(--burstflag); }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 input[type=date] { font: inherit; font-size: .9rem; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; flex-wrap: wrap; }
 .seg button { font: inherit; font-size: .88rem; background: transparent; color: var(--fg); border: 0; padding: 6px 12px; cursor: pointer; }
 .seg button[aria-pressed=true] { background: var(--accent); color: var(--panel); }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
 .row .lbl { color: var(--muted); font-size: .85rem; min-width: 4.5em; }
 .checks { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: .9rem; }
-.btn { font: inherit; font-size: .88rem; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.btn { font: inherit; font-size: .88rem; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
 .linkbtn { font: inherit; font-size: .8rem; background: none; border: 0; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
 .stack { display: grid; gap: 10px; }
-.counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
-.cnt { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--panel); border-left: 5px solid var(--c); display: flex; flex-direction: column; gap: 3px; }
+.counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.cnt { border-top: 4px solid var(--c); background: color-mix(in srgb, var(--c) 9%, var(--panel)); box-shadow: -1px 0 0 var(--line); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
 .cnt .name { font-weight: 700; font-size: .92rem; }
 .cnt .plain { font-size: .82rem; line-height: 1.45; }
+@media (min-width: 1100px) { .counts { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .cnt .rule { font-size: .74rem; color: var(--muted); line-height: 1.4; }
-.cnt .bottom { margin-top: auto; padding-top: 6px; border-top: 1px dashed var(--line); }
-.cnt .num { font-family: var(--f-num); font-size: 1.5rem; font-weight: 500; }
+.cnt .bottom { margin-top: auto; padding-top: 6px; border-top: 1px dashed var(--line); display: grid; grid-template-columns: 2.6em 1fr; align-items: center; column-gap: 8px; }
+.cnt .bottom .num { grid-row: 1 / span 2; }
+.cnt .bottom .delta, .cnt .bottom .okn { grid-column: 2; margin: 0; }
+.cnt .num { font-family: var(--f-num); font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
 .cnt .delta { font-family: var(--f-num); font-size: .8rem; color: var(--muted); margin-left: 6px; }
 .head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; align-items: baseline; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: .82rem; color: var(--muted); align-items: center; }
@@ -93,7 +104,7 @@ svg.chart text.q { font-family: var(--f-body); font-size: 12px; }
 .topscroll { overflow-x: auto; overflow-y: hidden; }
 .topscroll > div { height: 1px; }
 #chart { cursor: grab; touch-action: pan-y; }
-.tblwrap { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: 8px; }
+.tblwrap { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: 4px; }
 table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: calc(.86rem * var(--tz, 1)); }
 th, td { border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 td { padding: 6px 10px; font-family: var(--f-num); font-variant-numeric: tabular-nums; background: var(--panel); }
@@ -101,13 +112,15 @@ th { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 0;
 th button { font: inherit; font-weight: 500; color: var(--muted); background: none; border: 0; cursor: pointer; width: 100%; padding: 8px 10px; text-align: inherit; white-space: nowrap; }
 th button:hover { color: var(--fg); background: var(--bg); }
 .left { text-align: left; }
+td.up { color: var(--up); }
+td.dn { color: var(--dn); }
 th:first-child, td:first-child { position: sticky; left: 0; z-index: 1; border-right: 1px solid var(--line); }
 th:first-child { z-index: 3; }
 td.txt { font-family: var(--f-body); }
-tr[data-cat] td { background: color-mix(in srgb, var(--c) 14%, var(--panel)); }
+tr[data-cat] td { background: color-mix(in srgb, var(--c) 10%, var(--panel)); }
 tr.changed td:first-child { box-shadow: inset 4px 0 0 var(--fg); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chips button { font: inherit; font-family: var(--f-num); font-size: .84rem; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.chips button { font: inherit; font-family: var(--f-num); font-size: .84rem; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
 .chips button:hover { border-color: var(--accent); }
 .chips button[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
 #epchart { cursor: crosshair; touch-action: pan-y; }
@@ -133,7 +146,7 @@ details.cols summary::-webkit-details-marker { display: none; }
 /* 左側欄 */
 /* 側欄寬度隨視窗調整（280～380px），內容區吃剩下的寬度；很寬的螢幕整體置中，圖表不超過視窗高度 */
 .shell { display: grid; grid-template-columns: clamp(280px, 24vw, 380px) minmax(0, 1fr); gap: clamp(16px, 2vw, 28px); max-width: 1800px; margin: 0 auto; align-items: start; }
-.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; scrollbar-width: none; display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; scrollbar-width: none; display: grid; gap: 14px; border-right: 1px solid var(--line); padding: 4px 20px 16px 2px; }
 .side::-webkit-scrollbar { display: none; }
 svg.chart { max-height: 68vh; }
 .zoom { display: inline-flex; align-items: center; gap: 4px; font-size: .82rem; color: var(--muted); }
@@ -141,7 +154,12 @@ svg.chart { max-height: 68vh; }
 .zoom output { font-family: var(--f-num); min-width: 3.2em; text-align: center; }
 .side .tabs { position: static; flex-direction: column; border: 0; padding: 0; gap: 2px; background: none; }
 .side .tabs button { text-align: left; border-bottom: 0; border-left: 3px solid transparent; border-radius: 6px; padding: 8px 10px; }
-.side .tabs button[aria-selected=true] { border-left-color: var(--accent); background: var(--bg); }
+.side .tabs button { border-radius: 0; font-size: 1rem; }
+.side .tabs button:nth-child(odd) { background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.side .tabs button[aria-selected=true] { border-left-color: var(--fg); background: color-mix(in srgb, var(--accent) 14%, transparent); font-weight: 700; }
+.viewset { display: grid; gap: 8px; justify-items: start; }
+.fzrow > span { margin-right: 4px; }
+.viewset .seg button { padding: 4px 10px; }
 .side .controls { grid-template-columns: 1fr; gap: 14px; }
 .side-sec { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
 .side-sec > h3 { font-size: .88rem; color: var(--muted); font-weight: 500; }
@@ -167,9 +185,18 @@ svg.chart { max-height: 68vh; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
+<script>
+// 主題（跟系統／亮／暗）與全頁字級，存在這個瀏覽器；先套用再畫面，避免閃爍
+try { const t = localStorage.getItem("etf-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.85 && z <= 1.3) document.documentElement.style.setProperty("--fz", z); } catch (e) {}
+</script>
 <div class="shell">
 <aside class="side" id="side" aria-label="分頁與設定">
   <div class="side-head"><strong>設定</strong><button type="button" class="btn closeset" id="closeSet">完成</button></div>
+  <div class="viewset" aria-label="顯示設定">
+    <div class="seg" id="themeSeg" role="group" aria-label="主題"><button type="button" data-th="auto">跟系統</button><button type="button" data-th="light">亮色</button><button type="button" data-th="dark">暗色</button></div>
+    <div class="zoom fzrow" role="group" aria-label="文字大小"><span>文字大小</span><button type="button" data-fz="-1" aria-label="縮小文字">A−</button><output id="fzOut">100%</output><button type="button" data-fz="1" aria-label="放大文字">A+</button></div>
+  </div>
   <nav class="tabs" role="tablist" aria-label="分頁">
     <button type="button" role="tab" data-page="overview" aria-selected="true">總覽</button>
     <button type="button" role="tab" data-page="bear" aria-selected="false">空頭</button>
@@ -196,7 +223,7 @@ svg.chart { max-height: 68vh; }
     <h3>回看期間與分類門檻（總覽）</h3>
       <div class="stack">
         <div class="row">
-          <span class="lbl"><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。">回看期間</span></span>
+          <span class="lbl"><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。">回看期間</span></span>
           <div class="seg" id="win" role="group" aria-label="回看期間">
             <button type="button" data-v="1">1 年</button><button type="button" data-v="3">3 年</button><button type="button" data-v="5" aria-pressed="true">5 年</button><button type="button" data-v="c">自訂</button>
           </div>
@@ -211,8 +238,6 @@ svg.chart { max-height: 68vh; }
             <input type="range" id="weeks" min="1" max="13" step="1"><p class="hint">幾週算一段急漲。預設 1 週。</p></div>
           <div class="ctl"><label for="burst"><span class="term" tabindex="0" data-tip="這幾週加起來漲到這個幅度，才算一段急漲。從前往後找，找到一段就跳過那幾週，不重複計算。下面的「0050 符合段數」可以拿來校準：段數太多代表門檻太低。">爆發段門檻</span><output id="o-burst"></output></label>
             <input type="range" id="burst" min="3" max="60" step="0.5"><p class="hint">漲多少才算急漲。預設 7.5%。</p><p class="hint" id="calib"></p></div>
-          <div class="ctl"><label for="dd"><span class="term" tabindex="0" data-tip="最大回撤和 0050 直接相減。例：設 5%、0050 最大跌 −30% 時，這檔跌超過 −35% 才算「明顯比較深」，淺於 −25% 才算「明顯比較淺」。用來分猛強／穩強，以及穩但不強／弱。">回撤差距</span><output id="o-dd"></output></label>
-            <input type="range" id="dd" min="0" max="15" step="0.5"><p class="hint">跌得比 0050 深或淺多少才算明顯。預設 5%。</p></div>
           <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和 0050 直接相減。例：設 ±1%、0050 年化 29% 時，28%～30% 都算持平，不分強弱。追蹤同一指數的 ETF（例如 006208）會落在這裡。">持平 0050 區間</span><output id="o-tie"></output></label>
             <input type="range" id="tie" min="0" max="5" step="0.25"><p class="hint">報酬和 0050 差多少以內算持平。預設 ±1%。</p></div>
         </div>
@@ -242,6 +267,7 @@ svg.chart { max-height: 68vh; }
 
   <!-- ── 總覽 -->
   <section class="page" id="page-overview" role="tabpanel" aria-label="總覽">
+    <p class="missing regime" id="regime" hidden></p>
     <p class="missing" id="missing" hidden></p>
     <section aria-label="各類別檔數" class="stack"><div class="counts" id="counts"></div>
       <p class="foot" id="countnote"></p></section>
@@ -251,12 +277,12 @@ svg.chart { max-height: 68vh; }
       <div class="legend" id="legend"></div>
       <svg id="chart" class="chart" viewBox="0 0 900 420" role="img" aria-label="各 ETF 的年化報酬與最大回撤散點圖"></svg>
       <p class="foot">虛線交叉點是 0050。往上＝報酬比較高，往右＝跌得比較淺；淡色的右上角是「報酬更高、跌得更少」。<br>
-        <span style="color:var(--accent)">綠色斜虛線</span>＝和 0050 一樣划算（每承受 1% 回撤換到的年化報酬相同），線的上方比 0050 划算。游標移到點上看名稱。</p>
+        <span style="color:var(--calmar)">綠色斜虛線＝划算線</span>：年化 ÷ 最大回撤（Calmar 比率）和 0050 相同，線的上方比 0050 划算。類別就是這兩條線切出來的。游標移到點上看名稱。</p>
     </section>
 
     <section class="panel stack">
       <div class="head"><h2>每檔明細</h2>
-        <div class="row"><span class="foot">點整格表頭排序；列底色＝類別；左側黑條＝類別和預設門檻不同；<span class="flag">高波動</span>＝大跌時跌幅平均比 0050 多 <span class="hvval"></span> 以上（門檻在空頭頁）</span>
+        <div class="row"><span class="foot">點整格表頭排序；列底色＝類別；左側黑條＝類別和預設門檻不同；<span class="flag">高波動</span>＝大跌時跌幅平均比 0050 多 <span class="hvval"></span> 以上（門檻在空頭頁）；<span class="flag bu">靠爆發</span>＝贏 0050 主要靠少數幾段急漲；<span class="flag nv">未經空頭驗證</span>＝穩強、猛強裡上市以來沒經歷過大空頭，或年化輸 0050 超過 1%</span>
           <span class="zoom" data-t="tbl"><button type="button" data-z="-1" aria-label="表格字縮小">A−</button><output>100%</output><button type="button" data-z="1" aria-label="表格字放大">A+</button></span>
           <details class="cols"><summary class="btn">顯示欄位</summary><div class="colbox" id="colbox"></div></details></div></div>
       <div class="topscroll" aria-hidden="true"><div></div></div>
@@ -268,7 +294,7 @@ svg.chart { max-height: 68vh; }
   <section class="page" id="page-bear" role="tabpanel" aria-label="空頭" hidden>
     <section class="panel stack">
       <h2>0050 大跌時，各檔跌多少</h2>
-      <p class="hint">用 0050 的大跌當共同時間表：每一次都從 0050 的高點算起，看各檔在同一段日期裡最多跌多少、跌幅是 0050 的幾倍、多久回到原來的高點。想在低點買的人，可以看「是 0050 的幾倍」估計別檔大概會跌到哪裡。大跌門檻和高波動門檻在<span class="side-where">左側欄</span>。</p>
+      <p class="hint">用 0050 的大跌當共同時間表：每一次都從 0050 的高點算起，看各檔在同一段日期裡最多跌多少、跌幅是 0050 的幾倍、多久回到原來的高點。「是 0050 的幾倍」顯示各檔過去大跌時跌得多深；下一次不一定一樣。大跌門檻和高波動門檻在<span class="side-where">左側欄</span>。</p>
       <div class="row"><span class="lbl">選一次大跌</span><div class="chips" id="eps" role="group" aria-label="選一次大跌"></div></div>
     </section>
     <section class="panel stack">
@@ -300,13 +326,13 @@ svg.chart { max-height: 68vh; }
       </ul>
 
       <h3>1. 0050 本身就很難贏</h3>
-      <p>2021-10 到 2026-10 這 5 年，0050 年化 <span class="num">29.0%</span>，最大回撤 <span class="num">−33.8%</span>。同期有完整資料的另外 84 檔裡，年化比它高 1% 以上的只有 9 檔，其中 4 檔是正 2。0050 偏重台積電和科技股，對加權指數的 beta 是 <span class="num">1.08</span>，本身就比大盤積極，所以「跑贏 0050」比「跑贏大盤」難。</p>
+      <p>2021-10 到 2026-10 這 5 年，0050 年化 <span class="num">29.0%</span>，最大回撤 <span class="num">−33.8%</span>。同期有完整資料的另外 84 檔裡，年化比它高 1% 以上的只有 9 檔，其中 4 檔是正 2。0050 偏重台積電和科技股，對加權指數的 beta 是 <span class="num">1.08</span>，本身就比大盤積極，在這段多頭裡「跑贏 0050」比「跑贏大盤」難。</p>
 
       <h3>2. 「報酬更高、跌得更少」幾乎不存在</h3>
-      <p>散點圖右上角那一格大家都想找。5 年期間只有 00881（國泰台灣科技龍頭）落在裡面：年化 <span class="num">32.3%</span>，回撤 <span class="num">−33.4%</span>，只比 0050 淺 <span class="num">0.4%</span>，算是擦邊。天下沒有白吃的午餐，在這份資料裡也成立。</p>
+      <p>散點圖右上角那一格大家都想找。5 年期間落在裡面的只有 2 檔，都是擦邊：00881（國泰台灣科技龍頭）年化 <span class="num">32.3%</span>，回撤 <span class="num">−33.4%</span>，只比 0050 淺 <span class="num">0.4%</span>；006208 和 0050 追蹤同一個指數，兩項都只差不到 0.1%。天下沒有白吃的午餐，在這份資料裡也成立。</p>
 
       <h3>3. 穩強很少，而且只是小幅領先</h3>
-      <p>5 年期間的穩強只有 0053（元大科技市值）和 00881。扣掉大漲那幾週之後，它們只比 0050 多 <span class="num">1.9%</span> 和 <span class="num">2.5%</span>；3 年期間的穩強只多約 <span class="num">0.6%</span>。成分和大盤很像（R² 約 0.92），只是 beta 稍高，大盤漲時多賺一點。</p>
+      <p>5 年期間的穩強只有 3 檔：0053（元大科技市值）、00881（國泰台灣科技龍頭）和 00735（國泰臺韓科技，標靠爆發）。報酬／回撤分別是 <span class="num">0.92</span>、<span class="num">0.97</span>、<span class="num">0.88</span>，只比 0050 的 <span class="num">0.86</span> 高一點。3 年期間一檔穩強都沒有：0052、0053、00881 年化多 1.4～2.5%，但回撤也深 2.5～4.2%，報酬／回撤 <span class="num">1.80～1.86</span>，略低於 0050 的 <span class="num">1.98</span>，落在划算線下方。0053、00881 的成分和大盤很像（R² 約 0.92），只是 beta 稍高，大盤漲時多賺一點、跌時也多跌一點。</p>
 
       <h3>4. 正 2：報酬最高，但全靠那幾段急漲</h3>
       <ul>
@@ -324,40 +350,44 @@ svg.chart { max-height: 68vh; }
       </ul>
 
       <h3>6. 多扛的波動不一定換得到等比例的報酬</h3>
-      <p>用「年化報酬 ÷ 最大回撤」看每承受 1% 回撤換到多少報酬：5 年期間 0050 是 <span class="num">0.86</span>，猛強的 00894 是 <span class="num">0.79</span>。報酬比較高，但跌得更深，算下來反而不划算。總覽散點圖的綠色斜線就是 0050 的划算程度。</p>
+      <p>用「年化報酬 ÷ 最大回撤」（Calmar 比率）看每承受 1% 回撤換到多少報酬：5 年期間 0050 是 <span class="num">0.86</span>，00894 是 <span class="num">0.79</span>，正 2 是 <span class="num">0.78～0.81</span>。報酬比較高，但跌得更深，算下來反而不划算，所以都是猛強。總覽散點圖的划算線就是 0050 的這個比值。</p>
 
       <h3>7. 定期定額和一次投入</h3>
-      <p>5 年期間，定期定額的年化減一次投入的年化：0050 是 <span class="num">+13.0%</span>，正 2 是 <span class="num">+19.3%</span>。原因是 2022 年的大跌落在期間中間，跌得愈深，定期定額在低點買到的股數愈多。這只是一條歷史路徑，換一個起點可能相反；共同的前提還是不中途賣出。</p>
+      <p>5 年期間，定期定額的年化減一次投入的年化：0050 是 <span class="num">+13.0%</span>，正 2 是 <span class="num">+18.4%～+19.3%</span>。主要因為 2022 年的大跌落在期間中間，跌得愈深，定期定額在低點買到的股數愈多。這只是一條歷史路徑，換一個起點可能相反；共同的前提還是不中途賣出。</p>
 
       <h3>8. 海外 ETF 走的是另一條路</h3>
-      <p>5 年期間 54 檔海外 ETF 中，39 檔落在「弱」。它們和加權指數的 R² 中位數只有 <span class="num">0.18</span>（國內股票型是 0.86），走勢本來就和台股不同，這段剛好是台股特別強的時期。</p>
+      <p>5 年期間 54 檔海外 ETF 中，52 檔落在「弱」：報酬比 0050 少；回撤比 0050 淺的有 21 檔，但少跌的部分補不回少賺的。海外股票型 43 檔和加權指數的 R² 中位數只有 <span class="num">0.18</span>（國內股票型是 0.86），走勢本來就和台股不同，這段剛好是台股特別強的時期。</p>
+
+      <h3>9. 1 年期間的右上角，幾乎都撐不久</h3>
+      <p>2025-10 到 2026-10 這一年是大多頭：0050 漲 <span class="num">66%</span>，最多只跌 <span class="num">15.4%</span>。這一年落在右上角（報酬更高、跌得更少）的有 13 檔，大多是低 beta 的高股息、金融和生技 ETF，1 年的穩強 14 檔沒有一檔通過空頭驗證。拉長到上市以來看，它們大多輸 0050：例如 00939 這一年年化 <span class="num">84.1%</span>，上市以來卻每年落後 0050 <span class="num">21.3%</span>；00878 落後 <span class="num">7.9%</span>。在這份資料裡，只看一段行情挑出來的「強」，常常只是剛好碰上那段。</p>
     </article>
   </section>
 
   <!-- ── 說明 -->
   <section class="page" id="page-about" role="tabpanel" aria-label="說明" hidden>
     <section class="panel stack">
-      <h2>六種類別（都是和 0050 比）</h2>
+      <h2>五種類別（都是和 0050 比）</h2>
       <div class="defs-grid">
         <dl id="catdefs"></dl>
         <dl>
-          <dt>猛強和爆發型差在哪</dt>
-          <dd>兩種都賺得比 0050 多。猛強是平常就比較強，只是跌起來比較深；爆發型是靠少數幾段急漲才贏，那幾段拿掉就不贏。</dd>
-          <dt>右上角那一格</dt>
-          <dd>散點圖右上角＝報酬比 0050 高、跌得又比 0050 少。大家都想找，但很少見，而且通常只是剛好擦邊。</dd>
-          <dt>「爆發段」是什麼</dt>
-          <dd>連續幾週加起來漲了很多的那幾段。判斷爆發型時，這檔和 0050 都把同樣那幾週拿掉再比，才公平。</dd>
-          <dt>看分類時一起看 beta</dt>
-          <dd>beta 大於 1 的（例如正 2），大盤大漲時漲更多，也比較容易被判成爆發型。</dd>
+          <dt>划算線是什麼</dt>
+          <dd>散點圖的綠色斜虛線。線上每一點的「年化報酬 ÷ 最大回撤」都和 0050 一樣，這個比值叫 Calmar 比率，基金評比常用。線的上方＝每承受 1% 回撤換到的報酬比 0050 多。0050 年化是負的時候這個比值沒有意義，改成只看最大回撤有沒有比 0050 深。</dd>
+          <dt>兩條線怎麼切出五類</dt>
+          <dd>先看年化有沒有贏 0050（相差 ±1% 內算持平），再看在划算線上方還是下方。持平區以外，右上角（報酬更高、跌得更少）一定在線上方，所以是穩強；左下角一定在線下方，所以是弱。追蹤同一指數的 006208 這類落在持平區，就算在右上角也算持平。</dd>
+          <dt>標記：靠爆發</dt>
+          <dd>贏 0050 超過 1%，但拿掉少數幾段急漲（爆發段）、0050 也拿掉同樣那幾週之後就不贏。這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。beta 大於 1 的（例如正 2）比較容易被標到。</dd>
+          <dt>標記：未經空頭驗證</dt>
+          <dd>穩強、猛強要長期也站得住才可信。上市以來（最早從 2015 年初算）至少經歷過一次 0050 跌 ≥ 25% 再回到高點的大空頭（2020、2022、2025 這三次），而且上市以來的年化沒有輸 0050 超過 1%，才算通過。沒通過的在散點圖畫成空心點。</dd>
         </dl>
       </div>
-      <p class="hint">規則裡的數字是總覽目前的拉桿設定。</p>
+      <p class="hint">規則裡的數字是總覽目前的拉桿設定；大空頭門檻固定 25%。</p>
     </section>
     <section class="panel stack">
       <h2>使用前要知道的事</h2>
       <ul class="hint" style="font-size:.9rem;margin:0;padding-left:1.2em;display:grid;gap:4px">
         <li>這是歷史資料，不代表往後會一樣，也不是買賣建議。2021～2026 剛好是台灣半導體與 AI 的大多頭，換一段期間（例如 2022 年）結果可能完全相反。</li>
-        <li>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）。進進出出的人，實際報酬可能差很多：例如爆發型的領先全靠少數幾段急漲，剛好錯過那幾段就不會贏 0050。</li>
+        <li>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）。進進出出的人，實際報酬可能差很多：例如標「靠爆發」的，領先全靠少數幾段急漲，剛好錯過那幾段就不會贏 0050。</li>
+        <li>期間愈短，分類愈只代表那一段行情。1 年（2025-10 起）是一段大多頭，0050 最多只跌約 15%；3 年（2023-10 起）沒包含 2022 的大空頭；要看經過 2022 的，選 5 年或自訂從 2021 年底起。</li>
         <li>名單只有目前掛牌的 ETF，已下市的不在裡面（存活者偏差）。</li>
       </ul>
       <p class="foot" id="foot"></p>
@@ -429,17 +459,29 @@ function metrics(p, D, s, e, cache) {
 }
 // 爆發段：連續 n 週累積 ≥ th，從前往後找、不重疊
 function segments(r, n, th) { const sel = []; let i = 0; while (i + n <= r.length) { let m = 1; for (let k = i; k < i + n; k++) m *= 1 + r[k]; if (m - 1 >= th) { for (let k = i; k < i + n; k++) sel.push(k); i += n; } else i += 1; } return sel; }
+// 類別：0050 報酬線（±tie 內為持平）和划算線（Calmar 比率＝年化 ÷ 最大回撤幅度和 0050 相同）兩條線切；0050 年化 ≤ 0 時改用回撤深淺
+// 靠爆發（標記）：贏 0050 超過 tie，但拿掉爆發段、0050 也拿掉同幾週後不贏
 function classify(m, B, P) {
-  if (Math.abs(m.cagr - B.cagr) <= P.tie) return { cat: "約等於0050", nb: null, ex: null, bex: null };
   const sel = segments(m.wr, P.weeks, P.burst);
   let pe = 1, pb = 1; for (const k of sel) { pe *= 1 + m.wr[k]; pb *= 1 + m.bwr[k]; }
   const ex = Math.pow(m.tot / pe, 1 / m.years) - 1, bex = Math.pow(m.btot / pb, 1 / m.years) - 1;
-  const nb = sel.length / P.weeks;
+  const nb = sel.length / P.weeks, burst = m.cagr - B.cagr > P.tie && ex <= bex;
   let cat;
-  if (m.cagr > B.cagr) cat = ex <= bex ? "爆發型" : (m.mdd < B.mdd - P.dd ? "猛強" : "穩強");
-  else cat = m.mdd > B.mdd + P.dd ? "穩但不強" : "弱";
-  return { cat, nb, ex, bex };
+  if (Math.abs(m.cagr - B.cagr) <= P.tie) cat = "約等於0050";
+  else {
+    const above = B.cagr > 0 ? m.cagr * -B.mdd >= B.cagr * -m.mdd : m.mdd >= B.mdd;
+    cat = m.cagr > B.cagr ? (above ? "穩強" : "猛強") : (above ? "穩但不強" : "弱");
+  }
+  return { cat, nb, ex, bex, burst };
 }
+// 空頭驗證（每檔一個值、不分期間）：上市以來（最早資料起點）經歷過已回到高點的大空頭（eps），且年化不輸 0050 超過 tie
+function lifeCheck(p, D) {
+  const f = p.findIndex(v => v != null), e = D.dates.length - 1;
+  if (f < 0 || e - f < 30) return null;
+  const c = {}, m = metrics(p, D, f, e, c), b = metrics(D.bench_p, D, f, e, c);
+  return m && b ? { f, diff: m.cagr - b.cagr } : null;
+}
+const verified = (L, eps, tie) => !!L && L.diff >= -tie && eps.some(ep => ep.rec != null && L.f <= ep.pk);
 function windowIdx(D, startDay, endDay) { return { s: lastIdxLE(D.dates, startDay), e: lastIdxLE(D.dates, endDay) }; }
 function presetStart(D, endIdx, n) { const d = new Date(D.dates[endIdx] * DAY); d.setUTCFullYear(d.getUTCFullYear() - n); return Math.round(d.getTime() / DAY); }
 // 0050 的大跌：從高點跌超過 th、之後回到高點（最後一次可能還沒回到）
@@ -478,11 +520,11 @@ function epCross(p, ep, D, hold = 20) {
   }
   return { lead, idx: null };
 }
-if (typeof module !== "undefined") module.exports = { metrics, classify, segments, windowIdx, presetStart, lastIdxLE, episodes, epStats, epCross };
+if (typeof module !== "undefined") module.exports = { metrics, classify, lifeCheck, verified, segments, windowIdx, presetStart, lastIdxLE, episodes, epStats, epCross };
 </script>
 
 <script>
-const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["爆發型","--c-burst"],["約等於0050","--c-tie"],["穩但不強","--c-safe"],["弱","--c-weak"]];
+const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["約等於0050","--c-tie"],["穩但不強","--c-safe"],["弱","--c-weak"]];
 const CAT_NAME = c => c === "約等於0050" ? "持平 0050" : c;
 const colorOf = c => `var(${CATS.find(x => x[0] === c)[1]})`;
 const REGIONS = ["國內", "海外"], TYPES = ["市值／主題", "高股息", "主動式", "槓桿"];
@@ -494,36 +536,39 @@ const num = (x, d = 2) => x == null ? "—" : x.toFixed(d).replace("-", "−");
 const iso = d => new Date(d * DAY).toISOString().slice(0, 10);
 const ym = d => iso(d).slice(0, 7);
 const toDay = s => Math.round(Date.parse(s + "T00:00:00Z") / DAY);
+// 有正負號的數字照台股慣例上色：紅漲綠跌
+const ud = x => x == null || Math.abs(x) < 5e-4 ? "" : x > 0 ? "up" : "dn";
+const sgn = x => (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(1) + "%";
 const f1 = x => { const v = x * 100; return Number.isInteger(v) ? String(v) : v.toFixed(v * 10 % 1 ? 2 : 1); };
 let D = null, sortKey = "cagr", sortDir = -1, base = null, epSort = "sel", epDir = 1, epSel = null, ovMap = new Map(), epState = null, epView = null, scView = null, scState = null, scDrag = null, epDrag = null;
 const st = { win: "5" }, picks = new Set(["0050", "0056", "00878", "0052", "00631L"]);
 
 const PLAIN = {
-  "穩強": "波動和 0050 差不多，但報酬略多，且扣掉大漲區段後仍領先 0050。",
-  "猛強": "基於穩強之上，但跌幅明顯比 0050 深。",
-  "爆發型": "贏 0050，主要靠少數幾段急漲。",
+  "穩強": "贏 0050，而且多賺的對得起多承受的回撤。",
+  "猛強": "贏 0050，但多跌的部分沒換到等比例的報酬。",
   "約等於0050": "報酬和 0050 差不多。",
-  "穩但不強": "跌得比 0050 少，但報酬也比較少。",
-  "弱": "報酬比 0050 少，跌得也沒比較少。"
+  "穩但不強": "報酬比 0050 少，但少跌得更多，一樣划算。",
+  "弱": "報酬比 0050 少，少跌的也補不回來。"
 };
 const RULE = P => ({
-  "穩強": `規則：年化比 0050 高超過 ${f1(P.tie)}%；拿掉爆發段後仍贏 0050；最大回撤沒有比 0050 深超過 ${f1(P.dd)}%。`,
-  "猛強": `規則：同穩強，但最大回撤比 0050 深超過 ${f1(P.dd)}%。`,
-  "爆發型": `規則：年化比 0050 高超過 ${f1(P.tie)}%，但拿掉爆發段（${P.weeks} 週累積漲 ≥ ${f1(P.burst)}%）、0050 也拿掉同幾週後，不贏 0050。`,
+  "穩強": `規則：年化比 0050 高超過 ${f1(P.tie)}%，在划算線上方（年化 ÷ 最大回撤不低於 0050）。`,
+  "猛強": `規則：年化比 0050 高超過 ${f1(P.tie)}%，在划算線下方。`,
   "約等於0050": `規則：年化和 0050 相差在 ±${f1(P.tie)}% 以內。回撤可能差很多，要另外看。`,
-  "穩但不強": `規則：年化比 0050 低超過 ${f1(P.tie)}%，最大回撤比 0050 淺超過 ${f1(P.dd)}%。`,
-  "弱": `規則：年化比 0050 低超過 ${f1(P.tie)}%，最大回撤沒有淺超過 ${f1(P.dd)}%。`
+  "穩但不強": `規則：年化比 0050 低超過 ${f1(P.tie)}%，在划算線上方。`,
+  "弱": `規則：年化比 0050 低超過 ${f1(P.tie)}%，在划算線下方。`
 });
+const CRASH = () => (D.defaults.crash || 0.25);
 const TIPS = {
   cagr: "年化報酬：一次投入、配息再投入（含息還原價），換算成每年平均報酬。",
   dca: "定投年化：起點投入 1 元，之後每月第一個交易日各投 1 元，依實際日期算的年化報酬率（XIRR）。期間短時會把差距放大，不宜直接和一次投入比。",
   mdd: "最大回撤：期間內從高點往下跌的最大幅度。",
   rec: "回到前高：最大回撤那次，從跌前高點到重新站回高點花了幾個月。「未回復」＝到期末還沒回到高點。",
-  rr: "報酬／回撤：年化報酬 ÷ 最大回撤的幅度。每承受 1% 的回撤，換到多少年化報酬；愈高愈划算。散點圖的斜虛線＝和 0050 一樣划算，線的上方比 0050 划算。",
+  rr: "報酬／回撤（Calmar 比率）：年化報酬 ÷ 最大回撤的幅度。每承受 1% 的回撤，換到多少年化報酬；愈高愈划算。不低於 0050 的，在散點圖的划算線上方。",
+  life: "上市以來 vs 0050：從上市日（最早 2015 年初）到資料最後一天，年化減 0050 同期的年化。不受上面選的期間影響，用來看這檔長期有沒有贏。",
   lead: "平時領先：扣掉爆發段後的年化，減掉 0050 扣同幾週後的年化，兩者直接相減。正數＝大漲那幾段以外的時間也比 0050 好，數字就是好多少；只有報酬高於 0050 的才算。",
   nb: "爆發段數：符合「連續 N 週累積漲幅 ≥ 門檻」的段數（不重疊）。",
   ex: "拿掉爆發段的年化：把這些爆發段的漲幅當成 0 重算的年化。",
-  bex: "0050 拿掉同幾週：0050 在同樣那幾週的漲幅也當成 0 重算的年化。左邊那欄不高於它，就是爆發型。",
+  bex: "0050 拿掉同幾週：0050 在同樣那幾週的漲幅也當成 0 重算的年化。贏 0050 超過 1% 的檔，左邊那欄不高於它就標「靠爆發」。",
   beta: "beta（0050）：0050 每漲跌 1%，這檔平均跟著動多少（週報酬迴歸）。大於 1＝比 0050 敏感。",
   bm: "beta（大盤）：加權指數每漲跌 1%，這檔平均跟著動多少。",
   r2: "R²（大盤）：這檔的週漲跌有多少比例能用加權指數解釋。愈接近 1，成分愈像大盤；低於約 0.7 時，上漲／下跌捕獲率參考價值低。",
@@ -531,21 +576,21 @@ const TIPS = {
   dn: "下跌捕獲：加權指數下跌的那些週，這檔平均跟著跌大盤跌幅的幾倍。愈小愈抗跌。",
   av: "空頭跌幅比：在 0050 的幾次大跌裡，這檔的跌幅平均是 0050 的幾倍（只算有經歷到的那幾次）。",
   t: "類型：槓桿＝正 2；主動式＝代號 A 結尾；高股息＝名稱含「息」或「收益」；其餘為市值／主題。",
-  cat: "類別：依「說明」頁六種類別的規則，用目前的拉桿數字判定。",
+  cat: "類別：依「說明」頁五種類別的規則，用目前的拉桿數字判定。名稱旁的標記：靠爆發＝贏 0050 主要靠少數幾段急漲；未經空頭驗證＝上市以來沒經歷過大空頭，或上市以來年化輸 0050 超過 1%。",
   r: "地區：上市依證交所基金類型（國內／國外成分），上櫃為人工標記。"
 };
 
 const COLS = [
   ["c", "代號", 1], ["n", "名稱", 1], ["t", "類型", 1], ["cat", "類別", 1], ["r", "地區", 0], ["cagr", "年化", 1], ["dca", "定投年化", 1], ["mdd", "最大回撤", 1],
-  ["rr", "報酬／回撤", 1], ["lead", "平時領先", 1], ["rec", "回到前高", 1], ["nb", "爆發段數", 0], ["ex", "拿掉爆發段的年化", 0], ["bex", "0050 拿掉同幾週", 0],
+  ["rr", "報酬／回撤", 1], ["life", "上市以來 vs 0050", 1], ["lead", "平時領先", 1], ["rec", "回到前高", 1], ["nb", "爆發段數", 0], ["ex", "拿掉爆發段的年化", 0], ["bex", "0050 拿掉同幾週", 0],
   ["beta", "beta（0050）", 1], ["bm", "beta（大盤）", 0], ["r2", "R²（大盤）", 0], ["up", "上漲捕獲", 0], ["dn", "下跌捕獲", 0], ["av", "空頭跌幅比", 1]
 ];
 const TEXT_COLS = new Set(["c", "n", "t", "cat", "r"]);
 const LOCKED = new Set(["c", "n", "cat"]);
 // 視窗窄（小筆電、平板）時預設只開核心欄位；使用者自己勾過的照他的設定
-const CORE_COLS = ["c", "n", "t", "cat", "cagr", "mdd", "rr", "beta"];
+const CORE_COLS = ["c", "n", "t", "cat", "cagr", "mdd", "rr", "life", "beta"];
 let visible = new Set(innerWidth < 1366 ? CORE_COLS : COLS.filter(c => c[2]).map(c => c[0]));
-try { const v = JSON.parse(localStorage.getItem("etf-cols-v3") || "null"); if (Array.isArray(v)) visible = new Set([...v, ...LOCKED]); } catch (e) {}
+try { const v = JSON.parse(localStorage.getItem("etf-cols-v4") || "null"); if (Array.isArray(v)) visible = new Set([...v, ...LOCKED]); } catch (e) {}
 
 // ── 說明框（游標、鍵盤焦點、點一下都會開）
 const tip = $("tip");
@@ -592,8 +637,12 @@ const mq = matchMedia("(max-width: 900px)");
 const syncWhere = () => document.querySelectorAll(".side-where").forEach(el => el.textContent = mq.matches ? "「設定」" : "左側欄");
 mq.addEventListener ? mq.addEventListener("change", syncWhere) : mq.addListener(syncWhere); syncWhere();
 
-function params() { return { weeks: +$("weeks").value, burst: +$("burst").value / 100, dd: +$("dd").value / 100, tie: +$("tie").value / 100 }; }
-function defaults() { const d = D.defaults; return { weeks: d.weeks, burst: d.burst, dd: d.dd_gap, tie: d.tie }; }
+function params() { return { weeks: +$("weeks").value, burst: +$("burst").value / 100, tie: +$("tie").value / 100 }; }
+function defaults() { const d = D.defaults; return { weeks: d.weeks, burst: d.burst, tie: d.tie }; }
+// 空頭驗證用的資料：大空頭（固定門檻 CRASH）和每檔上市以來的年化差，載入後只算一次
+let LIFE = null, CRASH_EPS = null;
+const lifeOf = c => { if (!LIFE) { LIFE = {}; D.etfs.forEach(x => { LIFE[x.c] = lifeCheck(x.p, D); }); } return LIFE[c]; };
+const crashEps = () => CRASH_EPS || (CRASH_EPS = episodes(D, CRASH()));
 function currentWindow() {
   const endIdx = D.dates.length - 1;
   if (st.win !== "c") return windowIdx(D, presetStart(D, endIdx, +st.win), D.dates[endIdx]);
@@ -634,7 +683,6 @@ function render() {
   const P = params();
   $("o-weeks").textContent = P.weeks + " 週";
   $("o-burst").textContent = (P.burst * 100).toFixed(1) + "%";
-  $("o-dd").textContent = (P.dd * 100).toFixed(1) + "%";
   $("o-tie").textContent = "±" + (P.tie * 100).toFixed(2) + "%";
   $("o-bmax").textContent = +$("bmax").value >= 2.5 ? "不限制" : (+$("bmax").value).toFixed(1);
   $("o-hv").textContent = $("hv").value + "%";
@@ -642,9 +690,12 @@ function render() {
   $("o-epth").textContent = $("epth").value + "%";
   $("catdefs").innerHTML = CATS.map(([c, v]) => `<dt><span class="dot" style="--c:var(${v})"></span>${CAT_NAME(c)}</dt><dd>${PLAIN[c]}<small>${RULE(P)[c]}</small></dd>`).join("");
   const bs = computeBase(), B = bs.B, DP = defaults();
-  if (!B || bs.e - bs.s < 30) { $("countnote").textContent = "期間太短，至少要約一個半月的交易日。"; $("missing").hidden = true; renderEps(); return; }
+  if (!B || bs.e - bs.s < 30) { $("countnote").textContent = "期間太短，至少要約一個半月的交易日。"; $("missing").hidden = true; $("regime").hidden = true; renderEps(); return; }
   $("calib").textContent = `0050 在這段期間符合的段數：${segments(B.wr, P.weeks, P.burst).length / P.weeks}`;
-  const all = bs.list.map(({ x, m }) => ({ x, m, ...classify(m, B, P), def: classify(m, B, DP).cat, av: computeEps().per[x.c].av }));
+  const all = bs.list.map(({ x, m }) => { const L = lifeOf(x.c); return { x, m, ...classify(m, B, P), def: classify(m, B, DP).cat, av: computeEps().per[x.c].av, life: L ? L.diff : null, ok: verified(L, crashEps(), DP.tie) }; });
+  // 這段期間 0050 沒跌到大空頭門檻：分類只代表這段行情
+  $("regime").hidden = B.mdd <= -CRASH();
+  $("regime").textContent = `這段期間 0050 最多只跌 ${pct(-B.mdd)}，沒有經過大空頭（跌 ≥ ${f1(CRASH())}%），分類只代表這段行情。長期有沒有贏，看「上市以來 vs 0050」欄和散點圖的空心點。`;
   const rows = all.filter(r => passFilters(r.x, r.m));
   ovMap = new Map(all.map(r => [r.x.c, r]));
   $("cover").textContent = `${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}：全期都有資料的 ${all.length} 檔（上市晚於起點超過 7 天的不列入；名單共 ${D.etfs.length} 檔）。自訂期間最早 ${D.export_start}。`;
@@ -664,14 +715,14 @@ function render() {
       + (miss.length > n3 ? `。上市不到 3 個月的 ${miss.length - n3} 檔期間太短，不提供。` : "");
     $("missing").querySelectorAll("[data-s1]").forEach(b => b.onclick = () => { st.win = "c"; setSeg("c"); $("dStart").value = iso(D.dates[+b.dataset.s1]); $("dEnd").value = iso(D.dates[bs.e]); render(); });
   }
-  const cnt = {}, cnt0 = {}; CATS.forEach(([c]) => { cnt[c] = 0; cnt0[c] = 0; });
-  rows.forEach(r => { cnt[r.cat]++; cnt0[r.def]++; });
+  const cnt = {}, cnt0 = {}, cntOk = {}; CATS.forEach(([c]) => { cnt[c] = 0; cnt0[c] = 0; cntOk[c] = 0; });
+  rows.forEach(r => { cnt[r.cat]++; cnt0[r.def]++; if (r.ok) cntOk[r.cat]++; });
   $("counts").innerHTML = CATS.map(([c, v]) => {
-    const d = cnt[c] - cnt0[c];
-    return `<div class="cnt" style="--c:var(${v})"><span class="name">${CAT_NAME(c)}</span><span class="plain">${PLAIN[c]}</span><span class="rule">${RULE(P)[c]}</span><span class="bottom"><span class="num">${cnt[c]}</span><span class="delta">${d === 0 ? "與預設相同" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span></span></div>`;
+    const d = cnt[c] - cnt0[c], win = c === "穩強" || c === "猛強";
+    return `<div class="cnt" style="--c:var(${v})"><span class="name">${CAT_NAME(c)}</span><span class="plain">${PLAIN[c]}</span><span class="rule">${RULE(P)[c]}</span><span class="bottom"><span class="num">${cnt[c]}</span><span class="delta">${d === 0 ? "與預設相同" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span>${win && cnt[c] ? `<span class="okn">通過空頭驗證 ${cntOk[c]} 檔</span>` : ""}</span></div>`;
   }).join("");
-  const q1 = rows.filter(r => r.x.c !== "0050" && r.m.cagr > B.cagr && r.m.mdd > B.mdd);
-  $("countnote").textContent = `顯示 ${rows.length} 檔（含 0050 自己）。0050：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。右上角（報酬更高、跌得更少）：${q1.length ? q1.map(r => `${r.x.c} ${r.x.n}`).join("、") : "沒有"}。和預設門檻相比換類別的有 ${rows.filter(r => r.cat !== r.def).length} 檔。`;
+  const q1 = rows.filter(r => r.x.c !== "0050" && r.m.cagr > B.cagr && r.m.mdd > B.mdd), q1ok = q1.filter(r => r.ok);
+  $("countnote").textContent = `顯示 ${rows.length} 檔（含 0050 自己）。0050：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的：${q1ok.length ? q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : "沒有"}` : ""}。和預設門檻相比換類別的有 ${rows.filter(r => r.cat !== r.def).length} 檔。`;
   drawChart(rows, B);
   drawTable(rows); syncTopScroll();
   renderEps();
@@ -699,7 +750,12 @@ function drawChart(rows, B) {
   g += `<g clip-path="url(#scClip)"><rect x="${sx(B.mdd)}" y="${sy(y1 + 10)}" width="${Math.max(0, sx(x1 + 10) - sx(B.mdd))}" height="${Math.max(0, sy(B.cagr) - sy(y1 + 10))}" fill="var(--quad)"/>`;
   g += `<line x1="${sx(B.mdd)}" x2="${sx(B.mdd)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-dasharray="4 4" opacity=".55"/><line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(B.cagr)}" y2="${sy(B.cagr)}" stroke="var(--fg)" stroke-dasharray="4 4" opacity=".55"/>`;
   // 和 0050 一樣划算的線：年化 = 0050 的報酬／回撤 × 回撤幅度；線上方比 0050 划算
-  if (B.rr > 0) g += `<line x1="${sx(-2)}" y1="${sy(B.rr * 2)}" x2="${sx(0)}" y2="${sy(0)}" stroke="var(--accent)" stroke-dasharray="6 5" stroke-width="1.4"/>`;
+  if (B.rr > 0) {
+    g += `<line x1="${sx(-2)}" y1="${sy(B.rr * 2)}" x2="${sx(0)}" y2="${sy(0)}" stroke="var(--calmar)" stroke-dasharray="6 5" stroke-width="1.4"/>`;
+    // 線名標在線進入畫面的那一端（左邊或上緣）
+    const xl = Math.max(x0, -y1 / B.rr) + (x1 - x0) * 0.06, yl = B.rr * -xl;
+    if (yl > y0 && yl < y1) g += `<text class="q" x="${sx(xl) + 6}" y="${Math.max(sy(yl) - 6, m.t + 12)}" style="fill:var(--calmar)">划算線</text>`;
+  }
   g += `</g>`;
   if (!scView) {
     g += `<text class="q" x="${Wd - m.r - 6}" y="${m.t + 16}" text-anchor="end">報酬更高、跌得更少</text><text class="q" x="${m.l + 6}" y="${m.t + 16}">報酬更高、跌得更深</text>`;
@@ -707,12 +763,18 @@ function drawChart(rows, B) {
   }
   g += `<g clip-path="url(#scClip)">`;
   rows.forEach(r => {
-    const isB = r.x.c === "0050", ch = r.cat !== r.def;
-    const tipText = `${r.x.c} ${r.x.n}｜${CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}&#10;年化 ${pct(r.m.cagr)}・回撤 ${pct(r.m.mdd)}・beta ${num(r.m.beta)}`;
+    const isB = r.x.c === "0050", ch = r.cat !== r.def, hollow = !isB && (r.cat === "穩強" || r.cat === "猛強") && !r.ok;
+    const tags = [r.burst ? "靠爆發" : "", hollow ? "未經空頭驗證" : ""].filter(Boolean).join("・");
+    const tipText = `${r.x.c} ${r.x.n}｜${CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}・回撤 ${pct(r.m.mdd)}・上市以來 vs 0050 ${r.life == null ? "—" : sgn(r.life)}`;
     if (ch) g += `<circle cx="${sx(r.m.mdd)}" cy="${sy(r.m.cagr)}" r="9" fill="none" stroke="var(--fg)" stroke-width="1.5"/>`;
-    g += `<circle cx="${sx(r.m.mdd)}" cy="${sy(r.m.cagr)}" r="${isB ? 7 : 5}" fill="${colorOf(r.cat)}" fill-opacity="${isB ? 1 : .85}" stroke="${isB ? "var(--fg)" : "none"}" stroke-width="2" tabindex="0" data-tip="${tipText}"></circle>`;
+    g += hollow
+      ? `<circle cx="${sx(r.m.mdd)}" cy="${sy(r.m.cagr)}" r="4.5" fill="var(--panel)" stroke="${colorOf(r.cat)}" stroke-width="2" tabindex="0" data-tip="${tipText}"></circle>`
+      : `<circle cx="${sx(r.m.mdd)}" cy="${sy(r.m.cagr)}" r="${isB ? 7 : 5}" fill="${colorOf(r.cat)}" fill-opacity="${isB ? 1 : .85}" stroke="${isB ? "var(--fg)" : "none"}" stroke-width="2" tabindex="0" data-tip="${tipText}"></circle>`;
   });
   g += `</g>`;
+  // 0050 基準的方框標籤（像對帳單上的基準戳記），交點在畫面內才畫
+  const bx = sx(B.mdd), by = sy(B.cagr);
+  if (bx > m.l && bx < Wd - m.r - 50 && by > m.t + 24 && by < H - m.b) g += `<g pointer-events="none"><rect x="${bx + 9}" y="${by - 25}" width="40" height="17" fill="var(--fg)"/><text x="${bx + 29}" y="${by - 12.5}" text-anchor="middle" style="fill:var(--panel);font-weight:700;font-size:11px">0050</text></g>`;
   svg.innerHTML = g;
 }
 
@@ -722,7 +784,7 @@ function sortRows(rows, key, dir, getter) {
 function cellVal(r, k) {
   if (k === "cat") return CATS.findIndex(x => x[0] === r.cat);
   if (k === "lead") return r.ex == null || r.m.cagr <= base.B.cagr ? null : r.ex - r.bex;
-  if (k === "nb" || k === "ex" || k === "bex" || k === "av") return r[k];
+  if (k === "nb" || k === "ex" || k === "bex" || k === "av" || k === "life") return r[k];
   if (TEXT_COLS.has(k)) return r.x[k];
   return r.m[k];
 }
@@ -735,13 +797,15 @@ function drawTable(rows) {
   const cell = (r, k) => {
     const x = r.x, m = r.m;
     switch (k) {
-      case "c": case "n": case "t": case "r": return `<td class="txt left">${x[k]}${k === "n" && isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}</td>`;
+      case "c": case "t": case "r": return `<td class="txt left">${x[k]}</td>`;
+      case "n": return `<td class="txt left">${x.n}${isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}${r.burst ? ` <span class="flag bu">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv">未經空頭驗證</span>` : ""}</td>`;
+      case "life": return `<td class="${ud(r.life)}">${r.life == null ? "—" : sgn(r.life)}</td>`;
       case "cat": return `<td class="txt left"><span class="pill" style="--c:${colorOf(r.cat)}">${CAT_NAME(r.cat)}</span>${r.cat !== r.def ? `<span class="was">預設：${CAT_NAME(r.def)}</span>` : ""}</td>`;
       case "rec": return `<td>${m.rec == null ? "未回復" : Math.round(m.rec) + " 個月"}</td>`;
       case "nb": return `<td>${r.nb == null ? "—" : r.nb}</td>`;
       case "ex": case "bex": return `<td>${pct(r[k])}</td>`;
       case "av": return `<td>${r.av == null ? "—" : num(r.av) + " 倍"}</td>`;
-      case "lead": { const v = cellVal(r, "lead"); return `<td>${v == null ? "—" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%"}</td>`; }
+      case "lead": { const v = cellVal(r, "lead"); return `<td class="${ud(v)}">${v == null ? "—" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%"}</td>`; }
       case "cagr": case "dca": case "mdd": return `<td>${pct(m[k])}</td>`;
       default: return `<td>${num(m[k])}</td>`;
     }
@@ -947,30 +1011,30 @@ function drawEpTable(E, ep) {
 
 function buildControls() {
   $("f-region").innerHTML = REGIONS.map(r => `<label><input type="checkbox" id="r-${r}" checked> ${r}</label>`).join("");
-  const TT = { "市值／主題": "不屬於下面三種的：市值型（0050 等）、產業與主題型。", "高股息": "名稱含「息」或「收益」的被動式 ETF。", "主動式": "代號 A 結尾、由經理人選股的 ETF；最早在 2025-05 上市，所以 3 年以上的期間還沒有。", "槓桿": "每日追蹤指數 2 倍報酬的正 2 ETF；含國內與海外指數。" };
+  const TT = { "市值／主題": "市值型（0050 等）和產業、主題型。槓桿、主動式、高股息以外的都歸這類。", "高股息": "名稱含「息」或「收益」的被動式 ETF。", "主動式": "代號 A 結尾、由經理人選股的 ETF；最早在 2025 年 4～5 月上市，所以 3 年以上的期間還沒有。", "槓桿": "每日追蹤指數 2 倍報酬的正 2 ETF；含國內與海外指數。" };
   $("f-type").innerHTML = TYPES.map(t => `<label><input type="checkbox" id="t-${t}" checked> <span class="term" tabindex="0" data-tip="${TT[t]}">${t === "槓桿" ? "槓桿（正 2）" : t}</span></label>`).join("");
   $("colbox").innerHTML = COLS.map(([k, t]) => `<label><input type="checkbox" data-k="${k}" ${visible.has(k) ? "checked" : ""} ${LOCKED.has(k) ? "disabled" : ""}> ${t}</label>`).join("");
   $("colbox").addEventListener("change", e => {
     const k = e.target.dataset.k; if (!k) return; e.target.checked ? visible.add(k) : visible.delete(k);
-    try { localStorage.setItem("etf-cols-v3", JSON.stringify([...visible])); } catch (err) {}
+    try { localStorage.setItem("etf-cols-v4", JSON.stringify([...visible])); } catch (err) {}
     render();
   });
 }
 function setSeg(v) { document.querySelectorAll("#win button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v)); $("customBox").hidden = v !== "c"; }
-function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("burst").value = d.burst * 100; $("dd").value = d.dd_gap * 100; $("tie").value = d.tie * 100; $("bmax").value = 2.5; $("hv").value = 30; $("hvx").checked = false; $("epth").value = 15; epCache = null; }
+function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("burst").value = d.burst * 100; $("tie").value = d.tie * 100; $("bmax").value = 2.5; $("hv").value = 30; $("hvx").checked = false; $("epth").value = 15; epCache = null; }
 
 showPage((location.hash || "").slice(1), false);
 fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
   D = d;
   $("sub").textContent = `資料截至 ${d.end} 收盤・標竿 0050（含息）・大盤判讀用加權指數（不含息）`;
   const ring = `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4" fill="var(--muted)"/><circle cx="10" cy="10" r="8" fill="none" stroke="var(--fg)" stroke-width="1.5"/></svg>`;
-  $("legend").innerHTML = CATS.map(([c, v]) => `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span>`;
-  $("foot").textContent = `資料來源：證交所 ISIN 名單與開放資料、Yahoo 含息還原價（台股 ETF）、加權指數 ^TWII。備註：各檔對齊到 0050 的交易日，上櫃 ETF 的數字可能有些微誤差；Yahoo 對少數 ETF 有上市前的固定價格（例：00637L 2015-05-18 上市，之前幾天固定 20.0），起點早於上市日的期間會受影響。`;
+  $("legend").innerHTML = CATS.map(([c, v]) => `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--c-steady)" stroke-width="2"/></svg>空心＝未經空頭驗證的穩強／猛強</span><span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span>`;
+  $("foot").textContent = `資料來源：證交所 ISIN 名單與開放資料、Yahoo 含息還原價（台股 ETF）、加權指數 ^TWII。備註：各檔對齊到 0050 的交易日，上櫃 ETF 的數字可能有些微誤差；Yahoo 對少數 ETF 有上市前的孤立價格（例：00637L 上市前 3 個月有一筆 9.13），資料整理時已去掉；多數新 ETF 上市頭幾天固定在發行價附近，沒有漲跌，不影響報酬。`;
   $("dStart").min = $("dEnd").min = d.export_start; $("dStart").max = $("dEnd").max = d.end;
   $("epFrom").min = $("epTo").min = d.export_start; $("epFrom").max = $("epTo").max = d.end;
   $("dEnd").value = d.end; $("dStart").value = iso(presetStart(d, d.dates.length - 1, 5));
   buildControls(); resetSliders();
-  ["weeks", "burst", "dd", "tie", "bmax", "hv", "hvx"].forEach(id => $(id).addEventListener("input", render));
+  ["weeks", "burst", "tie", "bmax", "hv", "hvx"].forEach(id => $(id).addEventListener("input", render));
   $("epth").addEventListener("input", () => { epCache = null; epSel = null; epView = null; render(); });
   $("f-region").addEventListener("change", render); $("f-type").addEventListener("change", render);
   ["dStart", "dEnd"].forEach(id => $(id).addEventListener("change", () => {
@@ -984,6 +1048,23 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   $("epchart").addEventListener("pointermove", epHover); $("epchart").addEventListener("pointerleave", epLeave); bindZoom();
   ["epFrom", "epTo"].forEach(id => $(id).addEventListener("change", () => { if ($("epTo").value > $("epFrom").value) { epView = { from: $("epFrom").value, to: $("epTo").value }; renderEps(); } }));
   $("epReset").onclick = () => { epView = null; renderEps(); };
+  // 主題按鈕：跟系統＝拿掉 data-theme；字級 85%～130%
+  const syncTheme = () => { const cur = document.documentElement.dataset.theme || "auto"; document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === cur)); };
+  document.querySelectorAll("[data-th]").forEach(b => b.onclick = () => {
+    const t = b.dataset.th; if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+    try { t === "auto" ? localStorage.removeItem("etf-theme") : localStorage.setItem("etf-theme", t); } catch (e) {}
+    syncTheme();
+  });
+  syncTheme();
+  const FZ = [0.85, 1, 1.1, 1.2, 1.3];
+  const syncFz = () => { $("fzOut").textContent = Math.round((+getComputedStyle(document.documentElement).getPropertyValue("--fz") || 1) * 100) + "%"; };
+  document.querySelectorAll("[data-fz]").forEach(b => b.onclick = () => {
+    const cur = +getComputedStyle(document.documentElement).getPropertyValue("--fz") || 1;
+    const k = Math.max(0, Math.min(FZ.length - 1, FZ.findIndex(v => Math.abs(v - cur) < 0.01) + +b.dataset.fz));
+    document.documentElement.style.setProperty("--fz", FZ[k]); try { localStorage.setItem("etf-fz", FZ[k]); } catch (e) {}
+    syncFz(); syncTopScroll();
+  });
+  syncFz();
   // 表格字級縮放：75%～130%，每張表各自記住
   const ZL = [0.75, 0.85, 1, 1.15, 1.3];
   document.querySelectorAll(".zoom[data-t]").forEach(z => {
