@@ -34,6 +34,7 @@
   --red: #ee7b6e; --green: #5cc28c; --calmar: #5cc28c; --burstflag: #d9b05c;
   --warn-bg: #242528; --warn-fg: #e6e7e9; --hl: #3a3417; --shadow: rgba(0,0,0,.5); --band: rgba(224,163,69,.10); color-scheme: dark }
 /* 漲跌顏色：預設台股（紅漲綠跌），美股模式對調 */
+#levtbl tr.thin td { opacity: .55; }
 :root[data-ud="us"] { --up: var(--green); --dn: var(--red); }
 /* 獨立部署（GitHub Pages）時沒有 Artifact 外殼的基本設定，這裡自己補上 */
 [hidden] { display: none !important; }
@@ -322,7 +323,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <div class="zoom fzrow" role="group" aria-label="文字大小"><span>文字大小</span><button type="button" data-fz="-1" aria-label="縮小文字">A−</button><output id="fzOut">100%</output><button type="button" data-fz="1" aria-label="放大文字">A+</button></div>
     </div>
     <div class="search" role="search">
-      <input type="search" id="q" placeholder="搜尋代號或名稱（例：QQQ、半導體）" autocomplete="off" spellcheck="false" aria-label="搜尋 ETF" role="combobox" aria-autocomplete="list" aria-controls="qlist" aria-expanded="false">
+      <input type="search" id="q" placeholder="搜尋代號或名稱（例：QQQ、半導體、AI）" autocomplete="off" spellcheck="false" aria-label="搜尋 ETF" role="combobox" aria-autocomplete="list" aria-controls="qlist" aria-expanded="false">
       <div class="qlist" id="qlist" role="listbox" hidden></div>
       <p class="hint" id="qmsg" hidden></p>
     </div>
@@ -331,6 +332,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     <button type="button" role="tab" data-page="overview" aria-selected="true">總覽</button>
     <button type="button" role="tab" data-page="bear" aria-selected="false">空頭</button>
     <button type="button" role="tab" data-page="notes" aria-selected="false" hidden>觀察</button>
+    <button type="button" role="tab" data-page="lev" aria-selected="false">槓桿耗損</button>
     <button type="button" role="tab" data-page="about" aria-selected="false">說明</button>
   </nav>
 
@@ -349,7 +351,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <p class="hint">題材依基金名稱與晨星分類標註，每檔一個主題材。</p></div>
       <div class="controls">
         <div class="ctl"><label for="vmax"><span class="term" tabindex="0" data-tip="波動倍數＝這檔每週漲跌的幅度，是基準的幾倍（週報酬的標準差相除）。&#10;例：1.5＝漲跌幅度大約是基準的 1.5 倍；2 倍槓桿約 1.5～2。&#10;和 beta 不同：beta 還會被「走勢和基準像不像」拉低，國際股票 ETF 的 beta 可能只有 0.5，實際漲跌卻是基準的 2 倍以上。&#10;用總覽選的期間計算；拉到最右邊＝不限制。1／3／5 年最高約 2.0～2.9，所以上限設 3。">波動倍數上限</span><output id="o-vmax"></output></label>
-          <input type="range" id="vmax" min="0.5" max="3" step="0.1"><div class="rticks" id="tk-vmax" aria-hidden="true"></div><p class="hint">只看漲跌沒那麼猛的。<br>預設不限制。</p></div>
+          <input type="range" id="vmax" min="0.5" max="3" step="0.1"><div class="rticks" id="tk-vmax" aria-hidden="true"></div><p class="hint">只看漲跌沒那麼猛的。</p></div>
         <div class="ctl"><label for="hv"><span class="term" tabindex="0" data-tip="每次大跌：這檔的跌幅減基準的跌幅（跌幅都是負數）＝跌幅 vs基準。&#10;例：基準跌 −24%、這檔跌 −29%：−29% −（−24%）＝ −5%，跌得比基準深 5%。&#10;這檔上市後經歷過的每一次大跌都算，取平均；和空頭頁選哪一次無關。&#10;哪些算大跌由空頭頁的「大跌門檻」決定，改了門檻結果也會跟著變。&#10;只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。">高波動門檻</span><output id="o-hv"></output></label>
           <input type="range" id="hv" min="1" max="25" step="1"><div class="rticks" id="tk-hv" aria-hidden="true"></div>
           <p class="hint">歷次大跌平均跌得比基準深這麼多以上（空頭跌幅 vs基準≤ −門檻），名稱旁標「高波動」。<br>預設 <span class="def" data-k="hv"></span>。</p>
@@ -359,7 +361,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   </div>
 
   <div class="side-sec" id="sideOverview" data-for="overview">
-    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。&#10;自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。&#10;拖下方時間軸的把手就會切到自訂；軸上的橘色小段是基準跌 25% 以上的大空頭，看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
+    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：每段有沒有包含大空頭，看「說明」頁的期間說明。&#10;自訂可以選 1999 年初（各分區從基準上市日）之後的任何一段，例如只看 2000～2002 年的網路泡沫。&#10;拖下方時間軸的把手就會切到自訂；軸上的橘色小段是基準的大空頭（股票等區跌 25% 以上、債券區 10% 以上），看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
       <div class="stack">
         <div class="cbox"><div class="row">
           <div class="seg" id="win" role="group" aria-label="回看期間">
@@ -376,14 +378,14 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           <div class="pticks" id="pticks" aria-hidden="true"></div>
         </div>
         <div class="btnpair"><button type="button" class="btn" data-pstep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-pstep="21">往後 1 個月 ▶</button></div>
-        <p class="hint"><span class="pkey"></span>橘色＝基準跌 25% 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
+        <p class="hint"><span class="pkey"></span>橘色＝基準跌 <span class="crashTh">25%</span> 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
         <p class="hint" id="cover"></p></div>
         <div class="controls">
           <div class="ctl burstctl"><p class="sentence"><span class="term" tabindex="0" data-tip="連續幾週加起來漲到這個幅度，算一段急漲（爆發段）。&#10;1 週＝單週大漲；拉長週數可以抓到「連漲好幾週、但每週都不算大」的段落，上限 4 週（約一個月）。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;參考：1 週配 7.5%、4 週配 20%，SPY 在 1999 年以來分別只有 5 段、2 段。&#10;漲幅上限 30%：SPY 任何 4 週最多漲 25.3%，超過 30% 只剩槓桿型、加密貨幣的少數極端週。">爆發段</span>：在 <output id="o-weeks"></output>內上漲 <output id="o-burst"></output> 以上，就算一段急漲。</p>
             <label for="weeks" class="sub">週數</label><input type="range" id="weeks" min="1" max="4" step="1"><div class="rticks" id="tk-weeks" aria-hidden="true"></div>
             <label for="burst" class="sub">漲幅</label><input type="range" id="burst" min="3" max="30" step="0.5"><div class="rticks" id="tk-burst" aria-hidden="true"></div>
             <p class="hint">預設 <span class="def" data-k="weeks"></span>內上漲 <span class="def" data-k="burst"></span>。</p><p class="hint" id="calib"></p></div>
-          <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和基準直接相減。&#10;例：設 ±1.5%、基準年化 29% 時，年化 27.5%～30.5%、而且最大回撤和基準相差 3% 以內的，算接近基準。&#10;追蹤同一指數的 ETF（例如 006208）會落在這裡；年化接近但回撤差很多的，照划算線分到其他四類。&#10;參考：5 年累積下來，±1% 約差 5%、±1.5% 約差 7%、±2% 約差 10%。">接近基準 的年化區間</span><output id="o-tie"></output></label>
+          <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和基準直接相減。&#10;例：設 ±1.5%、基準年化 11% 時，年化 9.5%～12.5%、而且最大回撤和基準相差 3% 以內的，算接近基準。&#10;追蹤同一指數的 ETF（例如 VOO、IVV 對 SPY）會落在這裡；年化接近但回撤差很多的，照划算線分到其他四類。&#10;參考：5 年累積下來，±1% 約差 5%、±1.5% 約差 7%、±2% 約差 10%。">接近基準 的年化區間</span><output id="o-tie"></output></label>
             <input type="range" id="tie" min="0" max="5" step="0.25"><div class="rticks" id="tk-tie" aria-hidden="true"></div><p class="hint">報酬和基準差多少以內算接近（回撤也要相差 3% 以內）。<br>預設 ±<span class="def" data-k="tie"></span>。</p></div>
         </div>
         <div class="row"><button type="button" class="btn" id="reset">回到預設門檻</button><span class="hint">類別的定義見「說明」</span></div>
@@ -393,8 +395,8 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <div class="side-sec" data-for="bear">
     <h3>大跌門檻（空頭）</h3>
     <div class="controls">
-      <div class="ctl"><label for="epth"><span class="term" tabindex="0" data-tip="基準從高點跌超過這個幅度、之後再回到高點，算一次大跌。&#10;1999 年以來 SPY 跌超過 30% 的有 3 次：2000 年網路泡沫 47.5%、2008 年金融海嘯 55.2%、2020 年疫情 33.7%；上限 30%，拉到最右邊只剩這三次。債券區的基準 AGG 跌得淺，門檻要調低才看得到。&#10;調低會多出幾次較小的回檔。&#10;高波動也用這裡的大跌來算。">大跌門檻</span><output id="o-epth"></output></label>
-        <input type="range" id="epth" min="10" max="30" step="1"><div class="rticks" id="tk-epth" aria-hidden="true"></div><p class="hint">基準跌多少算一次大跌。<br>預設 <span class="def" data-k="epth"></span>（2015 年以來 <span id="epthN"></span> 次）。</p></div>
+      <div class="ctl"><label for="epth"><span class="term" tabindex="0" data-tip="基準從高點跌超過這個幅度、之後再回到高點，算一次大跌。&#10;1999 年以來 SPY（含息、不扣稅）跌超過 30% 的有 3 次：2000 年網路泡沫 47.5%、2008 年金融海嘯 55.2%、2020 年疫情 33.7%；上限 30%，拉到最右邊只剩這三次。債券區的基準 AGG 跌得淺，門檻要調低才看得到。&#10;調低會多出幾次較小的回檔。&#10;高波動也用這裡的大跌來算。">大跌門檻</span><output id="o-epth"></output></label>
+        <input type="range" id="epth" min="10" max="30" step="1"><div class="rticks" id="tk-epth" aria-hidden="true"></div><p class="hint">基準跌多少算一次大跌。<br>預設 <span class="def" data-k="epth"></span>（這一區資料起點以來 <span id="epthN"></span> 次）。</p></div>
     </div>
   </div>
 </aside>
@@ -484,6 +486,25 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     </section>
   </section>
 
+  <!-- ── 槓桿耗損 -->
+  <section class="page" id="page-lev" role="tabpanel" aria-label="槓桿耗損" hidden>
+    <section class="panel stack">
+      <h2>槓桿 ETF 跟「原型 × 倍數」差多少</h2>
+      <p class="foot">槓桿 ETF 每天重新調整回固定倍數，行情來回震盪時會被磨損。<b>年化耗損</b>＝把槓桿 ETF 和「原型 × 倍數」都換成連續複利後相減、再除以年數，表示每年因為每天重設倍數而少賺幾 %。<br>
+        理論上它約等於「−(倍數² − 倍數) × 原型的年化波動率² ÷ 2 −（倍數 − 1）× 短期利率 − 費用」：和原型漲或跌無關，但和波動、倍數、利率有關。例：3 倍、波動 20% 的原型，光波動每年約少 12%；利率 5% 時再多少約 10%。所以利率高的年份耗損明顯較大。<br>
+        每個持有期間，都從歷史上每一週各起算一次（各段互相重疊），列出中位數、10%～90% 的範圍。用含息價格、不扣稅。</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><span class="lbl">持有期間</span><div class="seg" id="levH" role="group" aria-label="持有期間"></div></div>
+      <div class="tblwrap"><table id="levtbl"><thead></thead><tbody></tbody></table></div>
+      <p class="foot" id="levnote"></p>
+    </section>
+    <section class="panel stack">
+      <h2>年化耗損隨持有期間的變化</h2>
+      <p class="foot">勾上表的「畫圖」可以加減線（最多 6 條）。線＝中位數；色帶＝第一條的 10%～90% 範圍；空心點＝樣本少（可比期間不到持有期間的 3 倍）。</p>
+      <svg id="levchart" class="chart" viewBox="0 0 900 380" role="img" aria-label="槓桿耗損隨持有期間的變化"></svg>
+      <div class="legend" id="levlegend"></div>
+    </section>
+  </section>
+
   <!-- ── 說明 -->
   <section class="page" id="page-about" role="tabpanel" aria-label="說明" hidden>
     <section class="panel stack">
@@ -491,7 +512,8 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <ul class="plainlist">
         <li>這是歷史資料，不代表往後會一樣，也不是買賣建議。<br>2021～2026 剛好是美國大型科技與 AI 的大多頭；換一段期間（例如 2000～2002 網路泡沫、2022 年升息）結果可能完全相反。</li>
         <li>ETF 分成五區，各區跟自己的基準比：股票跟 SPY（標普 500）、債券跟 AGG（美國綜合債券）、原物料跟 GLD（黃金）、加密貨幣跟 IBIT（比特幣現貨）、槓桿跟 SPY。<br>不同區的類別不能直接比：債券區的「穩強」是贏 AGG，不是贏股市。</li>
-        <li>「股息扣 30% 預扣稅」是台灣居民的稅率，打開後每次配息只把 70% 再投入，基準也一樣扣。<br>實際上債券 ETF 的利息類配息、資本利得分配，對非美國居民原則上不預扣，所以債券區扣稅後的數字偏低；實際扣多少以券商的扣繳憑單（1042-S）為準。</li>
+        <li>「股息扣 30% 預扣稅」是台灣居民的稅率，打開後每次配息只把 70% 再投入，基準也一樣扣。<br>這裡把每一筆配息都當股利扣 30%。實際上債券 ETF 的利息類配息、年底的資本利得分配、選擇權收益型常見的資本返還，對非美國居民原則上不預扣，所以這幾類扣稅後的數字偏低：債券、原物料策略型（例如 PDBC、COMT）、選擇權收益型影響較大，SPY 這類一年約差 0.4 個百分點。實際扣多少以券商的扣繳憑單（1042-S）為準。<br>
+          另外，Yahoo 對部分月配息 ETF（例如 AGG、JEPI）2026 年 10、11 月的配息還沒有紀錄，最近一段的含息報酬會略低。</li>
         <li>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）。<br>進進出出的人，實際報酬可能差很多：例如標「靠爆發」的，領先全靠少數幾段急漲，剛好錯過那幾段就不會贏基準。</li>
         <li>期間愈短，分類愈只代表那一段行情。<br><span id="periodNotes"></span></li>
         <li>名單只有目前掛牌、規模 10 億美元以上的 ETF，已下市或規模小的不在裡面（存活者偏差）。<br>愈早的年份愈明顯：2000 年網路泡沫時就存在、又活到現在的只有二十幾檔，當年倒掉的網路主題基金都不在名單上。</li>
@@ -533,7 +555,8 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <button type="button" role="tab" data-page="overview" aria-selected="true">總覽</button>
   <button type="button" role="tab" data-page="bear" aria-selected="false">空頭</button>
   <button type="button" role="tab" data-page="notes" aria-selected="false" hidden>觀察</button>
-  <button type="button" role="tab" data-page="about" aria-selected="false">說明</button>
+  <button type="button" role="tab" data-page="lev" aria-selected="false">槓桿耗損</button>
+    <button type="button" role="tab" data-page="about" aria-selected="false">說明</button>
   <button type="button" class="setbtn" id="openSet">設定</button>
 </nav>
 <div class="tip" id="tip" hidden></div>
@@ -670,7 +693,7 @@ const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["約等於0050","
 const CAT_NAME = c => c === "約等於0050" ? "接近基準" : c;
 const colorOf = c => `var(${CATS.find(x => x[0] === c)[1]})`;
 let REGIONS = [], TYPES = [];
-const PAGES = ["overview", "bear", "notes", "about"];
+const PAGES = ["overview", "bear", "notes", "lev", "about"];
 const LINE_COLORS = ["--l1", "--l2", "--l3", "--l4", "--l5", "--l6", "--l7", "--l8"];
 const $ = id => document.getElementById(id);
 const pct = (x, d = 1) => { if (x == null) return "—"; const t = (x * 100).toFixed(d); return (/^-0(\.0+)?$/.test(t) ? t.slice(1) : t.replace("-", "−")) + "%"; };   // 浮點誤差的 −0 寫成 0
@@ -717,7 +740,7 @@ const TIPS = {
   av: "空頭跌幅 vs基準：在基準的幾次大跌裡，這檔的跌幅減基準的跌幅（跌幅都是負數），取平均（只算有經歷到的那幾次）。\n正數＝跌得比基準淺，負數＝比較深。",
   t: "題材：股票區依基金名稱與晨星分類標註，每檔一個主題材；緩衝型、選擇權收益、股債配置依晨星分類。其他區顯示分區名稱。",
   cat: "類別：依「說明」頁五種類別的規則，用目前的拉桿數字判定。\n名稱旁的標記：靠爆發＝贏基準主要靠少數幾段急漲；\n未經空頭驗證＝上市以來沒經歷過大空頭，或上市以來年化輸基準超過 1%。",
-  r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、已開發國際、新興市場、單一國家）；其他區沒有標，顯示「未標」。",
+  r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、國際（不含美國）、新興市場、單一國家）；其他區沒有標，顯示「未標」。左側地區選項滑過去有說明。",
   mk: "標註：勾選後在上面的散布圖標出代號，方便找點。\n點散布圖上的點也可以標註或取消。"
 };
 
@@ -754,11 +777,12 @@ document.addEventListener("scroll", hideTip, { passive: true, capture: true }); 
 // ── 分頁
 function showPage(p, push) {
   p = (p || "").split("?")[0];   // 分享連結是「#分頁?設定」，分頁只看 ? 前面
-  if (!PAGES.includes(p)) p = "overview";
+  if (!PAGES.includes(p) || p === "notes") p = "overview";   // 觀察頁還是台股內容，先不開放
   PAGES.forEach(x => { $("page-" + x).hidden = x !== p; });
   document.querySelectorAll("[data-page]").forEach(b => b.setAttribute("aria-selected", b.dataset.page === p));
   $("filterBox").hidden = !(p === "overview" || p === "bear");
   document.querySelectorAll("[data-for]").forEach(el => { el.hidden = el.dataset.for !== p; });
+  if (p === "lev" && RAW) renderLev();
   $("openSet").hidden = !(p === "overview" || p === "bear");
   document.body.classList.remove("drawer");
   document.body.dataset.page = p;
@@ -830,7 +854,8 @@ function passFilters(x, m) {
   return true;
 }
 
-function render(light) {   // light：拖時間軸途中只更新檔數和散布圖，放開才重建表格
+function render(light) { light = light === true; renderCore(light); if (!light && retryPick) retryPick(); }
+function renderCore(light) {   // light：拖時間軸途中只更新檔數和散布圖，放開才重建表格
   const P = params();
   $("o-weeks").textContent = P.weeks + " 週";
   $("o-burst").textContent = (P.burst * 100).toFixed(1) + "%";
@@ -881,7 +906,7 @@ function render(light) {   // light：拖時間軸途中只更新檔數和散布
   $("pstat").innerHTML = `期間：${st.win === "c" ? "自訂" : st.win + " 年"}（${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}）・門檻：${adj ? "已調整" : "預設"}　<button type="button" class="linkbtn" data-open-set>改設定</button>`;
   $("countnote").innerHTML = `共 ${rows.length} 檔（含基準自己）；和預設門檻相比換類別的有 ${rows.filter(r => r.cat !== r.def).length} 檔。`
     + ((D.dates[bs.e] - D.dates[bs.s]) / 365.25 < 0.95 ? `<br><strong>期間不到 1 年</strong>：年化是把這段的報酬換算成一年，漲跌都會被放大，分類參考就好。` : "");
-  $("scnote").innerHTML = `基準（靶心）：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。<br>右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的：${q1ok.length ? q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : "沒有"}` : ""}。`;
+  $("scnote").innerHTML = `基準（靶心）：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。<br>右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的：${q1ok.length ? q1ok.map(r => r.x.c).join("、") : "沒有"}` : ""}。`;
   drawChart(rows, B);
   if (light === true) return;   // 事件處理直接傳 render 時，參數是 Event，不算 light
   drawTable(rows); syncTopScroll();
@@ -1001,6 +1026,8 @@ function searchEtf(q) {
     let s = 0;
     if (c === q || c.replace(/^0+/, "").replace(/[a-z]+$/, "") === q.replace(/^0+/, "")) s = 100; else if (c.startsWith(q)) s = 90; else if (c.includes(q)) s = 80;
     else if (n.includes(q)) s = 70 - n.indexOf(q) * 0.5;
+    else if (norm(x.t || "") === q || norm(x.t2 || "") === q) s = 60;   // 題材（中文）：例「半導體」
+    else if ((x.t && norm(x.t).includes(q)) || (x.t2 && norm(x.t2).includes(q))) s = 55;
     else if (q.length >= 4 && editDist1(q, c)) s = 50;
     else {   // 名稱裡依序出現打的每個字（例：「元台50」找到「元大台灣50」），或打的字有八成在名稱裡
       let k = 0; for (const ch of n) if (ch === q[k]) k++;
@@ -1008,11 +1035,14 @@ function searchEtf(q) {
       else if (q.length >= 3 && [...q].filter(ch => n.includes(ch)).length / q.length >= 0.8) s = 20;
     }
     return { x, s };
-  }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || a.x.c.localeCompare(b.x.c)).slice(0, 30).map(r => r.x);
+  }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || a.x.c.localeCompare(b.x.c)).slice(0, 60).map(r => r.x);
 }
+let retryPick = null;
 function bindSearch() {
   const q = $("q"), list = $("qlist"), msg = $("qmsg");
-  let hits = [], act = 0;
+  let hits = [], act = 0, pending = null;   // pending：選了但這段期間或篩選下沒列出的那一檔，畫面改了之後自動再試
+  retryPick = () => { if (!pending) return; const x = pending, o = ovMap.get(x.c);
+    if (document.body.dataset.page === "overview" && o && passFilters(x, o.m)) { pending = null; pick(x); } };
   const close = () => { list.hidden = true; q.setAttribute("aria-expanded", "false"); };
   const show = () => {
     hits = searchEtf(q.value); act = 0; msg.hidden = true;
@@ -1022,7 +1052,7 @@ function bindSearch() {
     list.hidden = false; q.setAttribute("aria-expanded", "true"); q.setAttribute("aria-activedescendant", "qo0");
   };
   const move = d => { if (list.hidden) return; act = (act + d + hits.length) % hits.length; list.querySelectorAll("[role=option]").forEach((o, i) => o.setAttribute("aria-selected", i === act)); q.setAttribute("aria-activedescendant", "qo" + act); $("qo" + act).scrollIntoView({ block: "nearest" }); };
-  q.addEventListener("input", show);
+  q.addEventListener("input", () => { pending = null; show(); });
   q.addEventListener("focus", () => { if (q.value) show(); });
   q.addEventListener("keydown", e => {
     if (e.key === "ArrowDown") { e.preventDefault(); move(1); } else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
@@ -1043,6 +1073,7 @@ function bindSearch() {
     if (!passFilters(x, o && o.m)) { why.push(mq.matches ? "被「設定」裡的篩選排除" : "被左側的篩選排除"); fix.push(["清除篩選", () => { document.querySelectorAll("#f-region input, #f-type input").forEach(i => { i.checked = true; }); $("vmax").value = 3; $("hvx").checked = false; }]); }
     const sc = page === "bear" ? "ep" : "ov";
     if (!passHead(sc, x, o ? o.cat : null) && hfCat[sc].size < CATS.length) { why.push("被表頭的「類別」篩選排除"); fix.push(["取消類別篩選", () => { CATS.forEach(c => hfCat[sc].add(c[0])); }]); }
+    pending = why.length ? x : null;
     if (why.length) {
       msg.hidden = false; msg.innerHTML = `${x.c} 沒有列出來：${why.join("；")}。` + fix.map((f, i) => `<br><button type="button" class="linkbtn" data-fix="${i}">${f[0]}</button>`).join("");
       msg.querySelectorAll("[data-fix]").forEach(b => b.onclick = () => { fix.forEach(f => f[1]()); render(); pick(x); });
@@ -1375,7 +1406,11 @@ function buildControls() {
   $("mkClear").onclick = () => { marks.clear(); if (scState) { drawChart(scState.rows, scState.B); drawTable(scState.rows); } };
 }
 function buildFilters() {
-  $("f-region").innerHTML = REGIONS.map(r => `<label><input type="checkbox" id="r-${r}" checked> ${r}</label>`).join("");
+  const RT = { "美國": "只投資美國公司，例：SPY、QQQ、SCHD。", "全球": "含美國在內的全世界，美國通常占六成左右，例：VT、ACWI，以及全球產業型（GDX、IXN）。",
+    "國際（不含美國）": "美國以外的已開發市場（歐洲、日本、英國、加拿大、澳洲等），有些也含兩三成新興市場，例：VEA、EFA（不含新興）、VXUS（含新興）。",
+    "新興市場": "中國、台灣、印度、巴西、南韓等，例：VWO、IEMG。", "單一國家": "只投資一個國家，例：EWJ（日本）、EWZ（巴西）、INDA（印度）。",
+    "未標": "債券、原物料、加密貨幣、槓桿區沒有標地區。" };
+  $("f-region").innerHTML = REGIONS.map(r => `<label><input type="checkbox" id="r-${r}" checked> <span class="term" tabindex="0" data-tip="${RT[r] || r}">${r}</span></label>`).join("");
   const TT = {};
   $("f-type").innerHTML = TYPES.map(t => `<label><input type="checkbox" id="t-${t}" checked> <span class="term" tabindex="0" data-tip="${TT[t] || t}">${t}</span></label>`).join("");
 }
@@ -1406,7 +1441,7 @@ function colMenu(boxId, resetId, cols, locked, vis, defs, key, redraw) {
 // ── 新手導覽：一步一個區塊；sel 沒有就置中顯示；side＝在側欄裡（手機版要先打開「設定」抽屜）
 const TOUR = [
   { t: "這個網站在做什麼", x: "把每一檔美股 ETF 拿來和基準比：報酬有沒有比較高、跌的時候有沒有比較深。\n再依這兩件事分成五類。\n全部是歷史資料，不是買賣建議。" },
-  { page: "overview", sel: "#q", side: 1, t: "找一檔 ETF", x: "輸入代號或名稱的幾個字（例：QQQ、半導體），從建議裡選。\n在總覽會把它標在散布圖上，並捲到明細那一列。" },
+  { page: "overview", sel: "#q", side: 1, t: "找一檔 ETF", x: "輸入代號或名稱的幾個字（例：QQQ、半導體、AI），從建議裡選。\n在總覽會把它標在散布圖上，並捲到明細那一列。" },
   { page: "overview", sel: "#zoneSeg", side: 1, t: "先選分區", x: "股票、債券、原物料、加密貨幣、槓桿各自跟自己的基準比，按鈕上的數字是檔數。\n下方可以打開「股息扣 30% 預扣稅」，看台灣居民實際拿到的報酬。" },
   { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n橘色是基準的大空頭（股票區跌 25% 以上），期間有沒有包到它，結果差很多。" },
   { page: "overview", sel: "#counts", t: "五種類別", x: "穩強、猛強：報酬比基準高；差在多跌的部分有沒有換到等比例的報酬。\n穩但不強、弱：報酬比基準低。\n接近基準：兩項都差不多。\n動過拉桿時，卡片會顯示和預設相比多或少幾檔。" },
@@ -1515,11 +1550,12 @@ function buildEpPeriod() {
 // 說明頁、觀察頁裡會隨資料變的字：載入後從資料算，不寫死
 function fillLive() {
   const last = D.dates.length - 1, CE = crashEps(), dd = D.defaults;
-  $("crashYears").textContent = CE.map(ep => iso(D.dates[ep.pk]).slice(0, 4)).join("、") + ` 這 ${CE.length} 次`;
+  const done = CE.filter(ep => ep.rec != null), yrs = done.map(ep => iso(D.dates[ep.pk]).slice(0, 4));
+  $("crashYears").textContent = done.length ? done.map((ep, i) => yrs.filter(y => y === yrs[i]).length > 1 ? iso(D.dates[ep.pk]).slice(0, 7) : yrs[i]).join("、") + ` 這 ${done.length} 次` : "這段資料裡還沒有";
   const fits = y => presetStart(D, last, y) >= D.dates[0];   // 加密貨幣區只有約 3 年資料，3、5 年不算
   $("periodNotes").innerHTML = [1, 3, 5].filter(fits).map(y => {
     const s = windowIdx(D, presetStart(D, last, y), D.dates[last]).s, B = metrics(D.bench_p, D, s, last, {});
-    const has = CE.some(ep => ep.pk >= s && ep.tr <= last);
+    const has = CE.some(ep => ep.tr >= s && ep.pk <= last) && B.mdd <= -CRASH();
     return `${y} 年（${ym(D.dates[s])} 起）：基準最多跌 ${pct(-B.mdd)}，${has ? "包含" : "沒有包含"}大空頭（基準跌 ≥ ${f1(CRASH())}%）`;
   }).join("；<br>") + "。";
   // 「年化差不多、回撤差很多」的例子：5 年期間年化在區間內、回撤超出的，取年化最接近基準 的一檔
@@ -1565,7 +1601,7 @@ function getState() {
 function applyState(q) {
   const d8 = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "");
   const z = ZONES.includes(q.get("z")) ? q.get("z") : "股票", tx = q.get("tx") === "1";
-  if (z !== ZONE || tx !== TAX) { ZONE = z; TAX = tx; $("taxOn").checked = tx; buildView(); }
+  if (z !== ZONE || tx !== TAX) { const onlyTax = z === ZONE; ZONE = z; TAX = tx; $("taxOn").checked = tx; buildView(onlyTax); zoneUi(); }
   resetSliders();
   st.win = ["1", "3", "5", "c"].includes(q.get("w")) ? q.get("w") : "5";
   if (st.win === "c") { if (d8(q.get("s")) && d8(q.get("e")) && q.get("e") > q.get("s")) { $("dStart").value = q.get("s") < iso(D.dates[0]) ? iso(D.dates[0]) : q.get("s"); $("dEnd").value = q.get("e") > D.end ? D.end : q.get("e"); } else st.win = "5"; }
@@ -1637,7 +1673,8 @@ const ZONE_NOTE = { "股票": "跟 SPY（標普 500）比。", "債券": "跟 AG
   "加密貨幣": "跟 IBIT（比特幣現貨）比；2024 年 1 月才上市，只有 1 年期間能比。", "槓桿": "跟 SPY 比；耗損另見之後的槓桿分頁。" };
 function prep(d) {
   const ex = o => { if (o.i0 != null) { o.p = new Array(o.i0).fill(null).concat(o.p); o.dv = (o.dv || []).map(([i, v]) => [i + o.i0, v]); delete o.i0; } };
-  d.etfs.forEach(x => { ex(x); x.r = x.r || "未標"; x.t = x.t || x.z; BYC[x.c] = x; });
+  // 「已開發國際」裡有 VXUS、IXUS、ACWX 這類也含新興市場的，改叫「國際（不含美國）」（2026-11-08）
+  d.etfs.forEach(x => { ex(x); x.r = x.r === "已開發國際" ? "國際（不含美國）" : (x.r || "未標"); x.t = x.t || x.z; BYC[x.c] = x; });
   for (const t in d.ref) { ex(d.ref[t]); if (!BYC[t]) BYC[t] = { c: t, n: t, ...d.ref[t] }; }
   RAW = d;
 }
@@ -1653,7 +1690,7 @@ function taxed(o, rate) {
   }
   o.tp = out; o.tpr = rate; return out;
 }
-function buildView() {
+function buildView(keepSel) {
   const rate = TAX ? (RAW.defaults.tax ?? 0.3) : 0;
   BN = RAW.zone_bench[ZONE];
   const full = t => BYC[t] ? taxed(BYC[t], rate) : null, bp = full(BN), f = bp.findIndex(v => v != null), cut = a => a.slice(f);
@@ -1664,13 +1701,13 @@ function buildView() {
   const byN = a => [...a.reduce((m, v) => m.set(v, (m.get(v) || 0) + 1), new Map())].sort((a, b) => b[1] - a[1]).map(x => x[0]);
   REGIONS = byN(list.map(x => x.r)); TYPES = byN(list.map(x => x.t));
   DEF_PICKS = [BN, ...ZONE_PICKS[ZONE].filter(c => list.some(x => x.c === c))];
-  picks.clear(); DEF_PICKS.forEach(c => picks.add(c)); marks.clear();
+  if (!keepSel) { picks.clear(); DEF_PICKS.forEach(c => picks.add(c)); marks.clear(); }
   base = null; epCache = null; LIFE = null; CRASH_EPS = null; epSel = null; epView = null; scView = null; ovMap = new Map();
   // 回看期間：資料不夠長的按鈕停用；目前選的不能用時改成 1 年，離開後回到原本選的
   const last = D.dates.length - 1, ok = y => presetStart(D, last, y) >= D.dates[0];
   document.querySelectorAll("#win button").forEach(b => { b.disabled = b.dataset.v !== "c" && !ok(+b.dataset.v); });
   if (st.win !== "c" && !ok(+st.win)) { winBefore = winBefore || st.win; st.win = "1"; }
-  else if (winBefore && ok(+winBefore)) { st.win = winBefore; winBefore = null; }
+  else if (winBefore && ok(+winBefore)) { if (st.win === "1") st.win = winBefore; winBefore = null; }   // 使用者在這之間自己換過期間就不還原
 }
 function syncSub() {
   $("sub").textContent = `資料截至 ${RAW.end} 收盤・${ZONE}區的基準 ${BN}（含息${TAX ? "、股息扣 30%" : ""}）・大盤判讀用 SPY`;
@@ -1681,19 +1718,120 @@ function buildZoneSeg() {
   $("zoneSeg").innerHTML = ZONES.map(z => `<button type="button" data-z="${z}" aria-pressed="${z === ZONE}">${z} ${n(z)}</button>`).join("");
   $("zoneSeg").querySelectorAll("button").forEach(b => b.onclick = () => {
     if (b.dataset.z === ZONE) return;
-    ZONE = b.dataset.z; buildView(); syncSub(); refresh();
+    ZONE = b.dataset.z; buildView(); refresh();
   });
 }
-// 換分區或扣稅：重建篩選、日期範圍，再整頁重畫
-function refresh() {
+// 換分區或扣稅之後，跟著分區變的畫面：分區按鈕、標題、篩選、日期範圍、說明裡的數字（分享連結套用時也走這裡）
+function zoneUi() {
   $("zoneSeg").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.z === ZONE));
-  buildFilters(); setSeg(st.win);
+  syncSub(); buildFilters(); setSeg(st.win);
   const lo = iso(D.dates[0]);
   $("dStart").min = $("dEnd").min = $("epFrom").min = $("epTo").min = lo;
   if ($("dStart").value < lo) $("dStart").value = lo;
   $("epthN").textContent = episodes(D, D.defaults.epth ?? 0.15).length;
-  fillLive(); render();
+  document.querySelectorAll(".crashTh").forEach(el => { el.textContent = f1(CRASH()) + "%"; });
+  fillLive();
 }
+function refresh() { zoneUi(); render(); }
+
+// ===== 槓桿耗損分頁 =====
+// 每檔槓桿 ETF 對自己的 1 倍原型，持有 h 個交易日：
+//   年化耗損 v ＝〔ln(1＋槓桿報酬) − 倍數 × ln(1＋原型報酬)〕÷ 年數，顯示成 e^v − 1（每年少賺幾 %）。
+//   理論上 v ≈ −(倍數² − 倍數) × 原型波動率² ÷ 2 −（倍數 − 1）× 短期利率 − 費用：和原型漲跌無關，但和利率有關
+//   （稽核 2026-11-08 實測：零利率的 2013～15 年和 5% 利率的 2023～26 年，3 倍型的耗損差約 10 個百分點）。
+//   另列「最近一段」的簡單差距（槓桿累積報酬 − 倍數 × 原型累積報酬），當作直覺參考。
+// 起點每 5 個交易日取一次（約每週），用全期含息資料（不受分區、扣稅、回看期間影響）
+const LEV_H = [["1 個月", 21], ["3 個月", 63], ["6 個月", 126], ["1 年", 252], ["2 年", 504], ["3 年", 756], ["5 年", 1260]];
+const LEV_NOTE = { USD: "原型近似：USD 追道瓊美國半導體指數，SOXX 追 ICE 半導體指數", ROM: "原型近似：ROM 追道瓊美國科技指數",
+  BITX: "原型近似：BITX 持有比特幣期貨，IBIT 是現貨", ETHU: "原型近似：ETHU 持有以太幣期貨，ETHA 是現貨", FNGU: "NYSE FANG+ 指數沒有 1 倍 ETF，不能比" };
+let levH = 252, LEVC = null, levSort = "med", levDir = 1;
+const levPicks = new Set(["TQQQ", "SSO", "SOXL", "TMF"]);
+const ann = v => Math.exp(v) - 1;
+function levStats() {
+  if (LEVC) return LEVC;
+  LEVC = RAW.etfs.filter(e => e.x).map(x => {
+    const L = x.p, U = x.u && BYC[x.u] ? BYC[x.u].p : null, row = { x, by: {} };
+    if (!U) return row;
+    const f = Math.max(L.findIndex(v => v != null), U.findIndex(v => v != null)), last = L.length - 1;
+    row.since = iso(RAW.dates[f]); row.spanY = (last - f) / 252;
+    for (const [, h] of LEV_H) {
+      const g = []; let neg = 0;
+      for (let i = f; i + h <= last; i += 5) {
+        const a = L[i], b = L[i + h], c = U[i], d = U[i + h];
+        if (a == null || b == null || c == null || d == null) continue;
+        const v = (Math.log(b / a) - x.x * Math.log(d / c)) / (h / 252); g.push(v); if (v < 0) neg++;
+      }
+      if (g.length < 10) continue;
+      g.sort((a, b) => a - b);
+      const q = k => ann(g[Math.round(k * (g.length - 1))]), i0 = last - h;
+      const cur = L[i0] != null && U[i0] != null ? { lr: L[last] / L[i0] - 1, ur: U[last] / U[i0] - 1 } : null;
+      row.by[h] = { n: g.length, med: q(0.5), p10: q(0.1), p90: q(0.9), neg: neg / g.length,
+        thin: row.spanY < 3 * h / 252, cur: cur && { ...cur, gap: cur.lr - x.x * cur.ur } };
+    }
+    return row;
+  });
+  return LEVC;
+}
+const ppt = v => v == null ? "—" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1);
+function renderLev() {
+  const rows = levStats(), hl = LEV_H.find(h => h[1] === levH)[0];
+  $("levH").innerHTML = LEV_H.map(([t, h]) => `<button type="button" data-h="${h}" aria-pressed="${h === levH}">${t}</button>`).join("");
+  $("levH").querySelectorAll("button").forEach(b => b.onclick = () => { levH = +b.dataset.h; renderLev(); });
+  const cols = [["pick", "畫圖"], ["c", "代號"], ["n", "名稱"], ["xx", "倍數"], ["u", "原型"], ["since", "可比起點"],
+    ["med", "年化耗損（中位數）"], ["rng", "10%～90%"], ["neg", "耗損為負的比例"], ["lr", "最近" + hl + "：槓桿"], ["ur", "原型 × 倍數"], ["gap", "差距（百分點）"]];
+  const val = (r, k) => { const b = r.by[levH]; switch (k) {
+    case "c": case "n": return r.x[k]; case "xx": return r.x.x; case "u": return r.x.u || ""; case "since": return r.since || "";
+    case "med": return b ? b.med : null; case "rng": return b ? b.p10 : null; case "neg": return b ? b.neg : null;
+    case "lr": return b && b.cur ? b.cur.lr : null; case "ur": return b && b.cur ? b.cur.ur * r.x.x : null; case "gap": return b && b.cur ? b.cur.gap : null;
+    case "pick": return levPicks.has(r.x.c) ? 1 : 0; } };
+  const sorted = rows.slice().sort((a, b) => { const va = val(a, levSort), vb = val(b, levSort);
+    if (va == null) return 1; if (vb == null) return -1; return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * levDir; });
+  $("levtbl").querySelector("thead").innerHTML = "<tr>" + cols.map(([k, t]) => `<th><button type="button" data-k="${k}">${t}${levSort === k ? (levDir > 0 ? " ▲" : " ▼") : ""}</button></th>`).join("") + "</tr>";
+  const thinTip = r => `樣本少：可比期間只有 ${r.since} 起約 ${r.spanY.toFixed(1)} 年，不到持有期間的 3 倍。&#10;各個起點的持有期間大多重疊、落在同一段行情裡，數字主要反映那段行情，不能代表長期。`;
+  $("levtbl").querySelector("tbody").innerHTML = sorted.map(r => { const b = r.by[levH], c = b && b.cur, note = LEV_NOTE[r.x.c];
+    return `<tr${b && b.thin ? ' class="thin"' : ""}><td><input type="checkbox" data-c="${r.x.c}" ${levPicks.has(r.x.c) ? "checked" : ""} ${b ? "" : "disabled"} aria-label="畫 ${r.x.c}"></td>`
+      + `<td class="txt left">${r.x.c}${note ? ` <span class="term" tabindex="0" data-tip="${note}">*</span>` : ""}${b && b.thin ? ` <span class="flag term" tabindex="0" data-tip="${thinTip(r)}">樣本少</span>` : ""}</td>`
+      + `<td class="txt left">${r.x.n}</td><td>${r.x.x} 倍</td><td class="txt left">${r.x.u || "—"}</td><td>${r.since || "—"}</td>`
+      + `<td class="${b ? ud(b.med) : ""}">${b ? pct(b.med) : "—"}</td><td>${b ? pct(b.p10) + " ～ " + pct(b.p90) : "—"}</td><td>${b ? pct(b.neg, 0) : "—"}</td>`
+      + `<td class="${c ? ud(c.lr) : ""}">${c ? pct(c.lr) : "—"}</td><td class="${c ? ud(c.ur) : ""}">${c ? pct(c.ur * r.x.x) : "—"}</td><td class="${c ? ud(c.gap) : ""}">${c ? ppt(c.gap) : "—"}</td></tr>`; }).join("");
+  $("levtbl").querySelectorAll("th button").forEach(b => b.onclick = () => { const k = b.dataset.k; if (levSort === k) levDir = -levDir; else { levSort = k; levDir = 1; } renderLev(); });
+  $("levtbl").querySelectorAll("input[data-c]").forEach(i => i.onchange = () => {
+    if (i.checked && levPicks.size >= 6) { i.checked = false; return; }
+    i.checked ? levPicks.add(i.dataset.c) : levPicks.delete(i.dataset.c); drawLev(rows);
+  });
+  const no = rows.filter(r => !r.by[levH]).map(r => r.x.c);
+  $("levnote").innerHTML = `「最近一段」的差距單位是百分點（槓桿和原型的累積報酬直接相減），會被那段行情放大，只當參考。* 原型不是同一個指數，滑過去看說明。淡色列＝樣本少。`
+    + (no.length ? `<br>${hl}沒有數字的：${no.join("、")}（資料不夠長，或沒有 1 倍原型）。` : "");
+  drawLev(rows);
+}
+function drawLev(rows) {
+  const sel = [...levPicks].map(c => rows.find(r => r.x.c === c)).filter(r => r && Object.keys(r.by).length);
+  const W = 900, H = 380, m = { l: 64, r: 20, t: 16, b: 40 }, n = LEV_H.length;
+  const sx = k => m.l + k / (n - 1) * (W - m.l - m.r);
+  const vals = sel.flatMap((r, j) => LEV_H.map(([, h]) => r.by[h]).filter(Boolean).flatMap(b => j === 0 ? [b.p10, b.p90, b.med] : [b.med]));
+  let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals); if (!vals.length) { lo = -0.5; hi = 0.1; }
+  const pad = (hi - lo) * 0.06 || 0.05; lo -= pad; hi += pad;
+  const sy = v => H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b);
+  let g = "";
+  const span = hi - lo, step = span > 2 ? 0.5 : span > 1 ? 0.2 : span > 0.4 ? 0.1 : span > 0.2 ? 0.05 : 0.02;
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) {
+    const zero = Math.abs(v) < 1e-9;
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="${zero ? "var(--fg)" : "var(--line)"}" stroke-width="${zero ? 1.2 : 1}"/><text x="${m.l - 8}" y="${sy(v) + 4}" text-anchor="end">${pct(v, 0)}</text>`;
+  }
+  LEV_H.forEach(([t], k) => { g += `<text x="${sx(k)}" y="${H - 14}" text-anchor="middle">${t}</text>`; });
+  if (sel[0]) {
+    const pts = LEV_H.map(([, h], k) => [k, sel[0].by[h]]).filter(x => x[1]);
+    if (pts.length > 1) g += `<path d="M${pts.map(([k, b]) => sx(k) + "," + sy(b.p90)).join("L")}L${pts.slice().reverse().map(([k, b]) => sx(k) + "," + sy(b.p10)).join("L")}Z" fill="var(${LINE_COLORS[0]})" opacity="0.15"/>`;
+  }
+  sel.forEach((r, j) => {
+    const col = `var(${LINE_COLORS[j % LINE_COLORS.length]})`, pts = LEV_H.map(([, h], k) => [k, r.by[h]]).filter(x => x[1]);
+    g += `<path d="M${pts.map(([k, b]) => sx(k) + "," + sy(b.med)).join("L")}" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+    pts.forEach(([k, b]) => { g += `<circle cx="${sx(k)}" cy="${sy(b.med)}" r="${b.thin ? 3 : 3.5}" fill="${b.thin ? "var(--panel)" : col}" stroke="${col}" stroke-width="1.5"><title>${r.x.c} 持有${LEV_H[k][0]}：年化耗損中位數 ${pct(b.med)}（10%～90%：${pct(b.p10)} ～ ${pct(b.p90)}）${b.thin ? "；樣本少" : ""}</title></circle>`; });
+  });
+  $("levchart").innerHTML = g;
+  $("levlegend").innerHTML = sel.map((r, j) => `<span><svg width="18" height="10" viewBox="0 0 18 10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(${LINE_COLORS[j % LINE_COLORS.length]})" stroke-width="3"/></svg>${r.x.c}（${r.x.x} 倍 ${r.x.u}）</span>`).join("") + (sel.length ? "<span>空心點＝樣本少</span>" : "<span>上表勾「畫圖」選要畫的</span>");
+}
+
 showPage((location.hash || "").slice(1), false);
 addEventListener("hashchange", () => { if (D && location.hash.includes("?")) openShared(); else showPage(location.hash.slice(1), false); });
 fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
@@ -1721,9 +1859,9 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   ["weeks", "burst", "tie", "vmax", "hv", "hvx"].forEach(id => $(id).addEventListener("input", render));
   $("epth").addEventListener("input", () => { epCache = null; epSel = null; epView = null; render(); });
   $("f-region").addEventListener("change", render); $("f-type").addEventListener("change", render);
-  $("taxOn").addEventListener("change", () => { TAX = $("taxOn").checked; buildView(); syncSub(); refresh(); });
+  $("taxOn").addEventListener("change", () => { TAX = $("taxOn").checked; buildView(true); refresh(); });
   ["dStart", "dEnd"].forEach(id => $(id).addEventListener("change", () => {
-    if ($("dStart").value < iso(d.dates[0])) $("dStart").value = iso(d.dates[0]);
+    if ($("dStart").value < iso(D.dates[0])) $("dStart").value = iso(D.dates[0]);
     if ($("dEnd").value > d.end) $("dEnd").value = d.end;
     // 迄日不晚於起日：兩個日期框標紅、檔數區說明，圖表維持上一次的結果
     const w = $("dEnd").value > $("dStart").value && windowIdx(D, toDay($("dStart").value), toDay($("dEnd").value)), short = w && w.e - w.s < 30;
@@ -1768,6 +1906,7 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   });
   syncFz();
   render();
+  if (!$("page-lev").hidden) renderLev();
   if (location.hash.includes("?")) openShared();
 }).catch(err => { $("sub").innerHTML = `<span class="err">資料讀不到（${err.message}）。重新整理一次；還是不行的話，請重新發佈。</span>`; });
 </script>
