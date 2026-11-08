@@ -1053,7 +1053,8 @@ function toggleMark(c) {
 
 // ── 搜尋：代號或名稱，打錯一點也找得到；選了之後，總覽＝標註並捲到那一列，空頭＝畫進走勢圖並捲到那一列
 // 正規化：全形轉半形、英文轉小寫、去空白、「臺」當「台」
-const norm = s => s.normalize("NFKC").toLowerCase().replace(/\s+/g, "").replace(/臺/g, "台");
+// 同義詞：簡稱用「納斯達克」「高收益」，打「那斯達克」「非投資等級」也找得到
+const norm = s => s.normalize("NFKC").toLowerCase().replace(/\s+/g, "").replace(/臺/g, "台").replace(/那斯達克/g, "納斯達克").replace(/非投資等級/g, "高收益");
 function editDist1(a, b) {   // a、b 差距不超過 1 個字（多、少、換一個字，或相鄰兩字對調）
   if (Math.abs(a.length - b.length) > 1) return false;
   if (a.length === b.length) { const d = [...a].map((ch, i) => ch !== b[i] ? i : -1).filter(i => i >= 0); if (d.length === 2 && d[1] === d[0] + 1 && a[d[0]] === b[d[1]] && a[d[1]] === b[d[0]]) return true; }
@@ -1065,7 +1066,7 @@ function editDist1(a, b) {   // a、b 差距不超過 1 個字（多、少、換
 function searchEtf(q) {
   q = norm(q); if (!q) return [];
   return RAW.etfs.map((x, i) => {
-    // 中文簡稱的開頭是發行商（「Invesco 那斯達克100」），排名只看發行商之後的位置
+    // 中文簡稱的開頭是發行商（「Invesco 納斯達克100」），排名只看發行商之後的位置
     const c = norm(x.c), n = norm(x.cn ? x.n.slice(x.n.indexOf(" ") + 1) : x.n), en = norm(x.en || "");
     let s = 0;
     if (c === q || c.replace(/^0+/, "").replace(/[a-z]+$/, "") === q.replace(/^0+/, "")) s = 100; else if (c.startsWith(q)) s = 90; else if (c.includes(q)) s = 80;
