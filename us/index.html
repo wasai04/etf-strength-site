@@ -492,7 +492,8 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <h2>槓桿 ETF 跟「原型 × 倍數」差多少</h2>
       <p class="foot">槓桿 ETF 每天重新調整回固定倍數，行情來回震盪時會被磨損。<b>年化耗損</b>＝把槓桿 ETF 和「原型 × 倍數」都換成連續複利後相減、再除以年數，表示每年因為每天重設倍數而少賺幾 %。<br>
         理論上它約等於「−(倍數² − 倍數) × 原型的年化波動率² ÷ 2 −（倍數 − 1）× 短期利率 − 費用」：和原型漲或跌無關，但和波動、倍數、利率有關。例：3 倍、波動 20% 的原型，光波動每年約少 12%；利率 5% 時再多少約 10%。所以利率高的年份耗損明顯較大。<br>
-        每個持有期間，都從歷史上每一週各起算一次（各段互相重疊），列出中位數、10%～90% 的範圍。用含息價格、不扣稅。</p>
+        每個持有期間，都從歷史上每一週各起算一次（各段互相重疊），列出中位數、10%～90% 的範圍。用含息價格、不扣稅。<br>
+        這頁收規模 1 億美元以上的槓桿 ETF（反向、VIX、原油、天然氣、上市不到一年的不收）；標「1～10 億」的不在總覽名單裡。倍數改過的（例如 1.5 倍改 2 倍）只用改了之後的資料。</p>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="lbl">持有期間</span><div class="seg" id="levH" role="group" aria-label="持有期間"></div></div>
       <div class="tblwrap"><table id="levtbl"><thead></thead><tbody></tbody></table></div>
       <p class="foot" id="levnote"></p>
@@ -1676,6 +1677,7 @@ function prep(d) {
   // 「已開發國際」裡有 VXUS、IXUS、ACWX 這類也含新興市場的，改叫「國際（不含美國）」（2026-11-08）
   d.etfs.forEach(x => { ex(x); x.r = x.r === "已開發國際" ? "國際（不含美國）" : (x.r || "未標"); x.t = x.t || x.z; BYC[x.c] = x; });
   for (const t in d.ref) { ex(d.ref[t]); if (!BYC[t]) BYC[t] = { c: t, n: t, ...d.ref[t] }; }
+  (d.lev_extra || []).forEach(x => { ex(x); x.small = true; });   // 規模 1～10 億的槓桿 ETF，只在槓桿耗損頁
   RAW = d;
 }
 // 扣稅版：日報酬 − 稅率 × 當天的股息貢獻 dv（資料腳本算好的 adj 報酬 − close 報酬）
@@ -1742,17 +1744,17 @@ function refresh() { zoneUi(); render(); }
 //   另列「最近一段」的簡單差距（槓桿累積報酬 − 倍數 × 原型累積報酬），當作直覺參考。
 // 起點每 5 個交易日取一次（約每週），用全期含息資料（不受分區、扣稅、回看期間影響）
 const LEV_H = [["1 個月", 21], ["3 個月", 63], ["6 個月", 126], ["1 年", 252], ["2 年", 504], ["3 年", 756], ["5 年", 1260]];
-const LEV_NOTE = { USD: "原型近似：USD 追道瓊美國半導體指數，SOXX 追 ICE 半導體指數", ROM: "原型近似：ROM 追道瓊美國科技指數",
-  BITX: "原型近似：BITX 持有比特幣期貨，IBIT 是現貨", ETHU: "原型近似：ETHU 持有以太幣期貨，ETHA 是現貨", FNGU: "NYSE FANG+ 指數沒有 1 倍 ETF，不能比" };
+// 每檔的說明（原型不同、倍數改過）和改倍數的日期 ls 由資料腳本給（nt、ls）
 let levH = 252, LEVC = null, levSort = "med", levDir = 1;
 const levPicks = new Set(["TQQQ", "SSO", "SOXL", "TMF"]);
 const ann = v => Math.exp(v) - 1;
 function levStats() {
   if (LEVC) return LEVC;
-  LEVC = RAW.etfs.filter(e => e.x).map(x => {
+  LEVC = RAW.etfs.filter(e => e.x).concat(RAW.lev_extra || []).map(x => {
     const L = x.p, U = x.u && BYC[x.u] ? BYC[x.u].p : null, row = { x, by: {} };
     if (!U) return row;
-    const f = Math.max(L.findIndex(v => v != null), U.findIndex(v => v != null)), last = L.length - 1;
+    const ls = x.ls ? RAW.dates.findIndex(d => d >= Math.round(Date.parse(x.ls) / 864e5)) : 0;
+    const f = Math.max(L.findIndex(v => v != null), U.findIndex(v => v != null), ls), last = L.length - 1;
     row.since = iso(RAW.dates[f]); row.spanY = (last - f) / 252;
     for (const [, h] of LEV_H) {
       const g = []; let neg = 0;
@@ -1788,9 +1790,10 @@ function renderLev() {
     if (va == null) return 1; if (vb == null) return -1; return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * levDir; });
   $("levtbl").querySelector("thead").innerHTML = "<tr>" + cols.map(([k, t]) => `<th><button type="button" data-k="${k}">${t}${levSort === k ? (levDir > 0 ? " ▲" : " ▼") : ""}</button></th>`).join("") + "</tr>";
   const thinTip = r => `樣本少：可比期間只有 ${r.since} 起約 ${r.spanY.toFixed(1)} 年，不到持有期間的 3 倍。&#10;各個起點的持有期間大多重疊、落在同一段行情裡，數字主要反映那段行情，不能代表長期。`;
-  $("levtbl").querySelector("tbody").innerHTML = sorted.map(r => { const b = r.by[levH], c = b && b.cur, note = LEV_NOTE[r.x.c];
+  $("levtbl").querySelector("tbody").innerHTML = sorted.map(r => { const b = r.by[levH], c = b && b.cur, note = r.x.nt;
     return `<tr${b && b.thin ? ' class="thin"' : ""}><td><input type="checkbox" data-c="${r.x.c}" ${levPicks.has(r.x.c) ? "checked" : ""} ${b ? "" : "disabled"} aria-label="畫 ${r.x.c}"></td>`
-      + `<td class="txt left">${r.x.c}${note ? ` <span class="term" tabindex="0" data-tip="${note}">*</span>` : ""}${b && b.thin ? ` <span class="flag term" tabindex="0" data-tip="${thinTip(r)}">樣本少</span>` : ""}</td>`
+      + `<td class="txt left">${r.x.c}${note ? ` <span class="term" tabindex="0" data-tip="${note}">*</span>` : ""}${b && b.thin ? ` <span class="flag term" tabindex="0" data-tip="${thinTip(r)}">樣本少</span>` : ""}`
+      + `${r.x.small ? ` <span class="flag term" tabindex="0" data-tip="規模 1～10 億美元，不在總覽名單裡，只列在這頁">1～10 億</span>` : ""}</td>`
       + `<td class="txt left">${r.x.n}</td><td>${r.x.x} 倍</td><td class="txt left">${r.x.u || "—"}</td><td>${r.since || "—"}</td>`
       + `<td class="${b ? ud(b.med) : ""}">${b ? pct(b.med) : "—"}</td><td>${b ? pct(b.p10) + " ～ " + pct(b.p90) : "—"}</td><td>${b ? pct(b.neg, 0) : "—"}</td>`
       + `<td class="${c ? ud(c.lr) : ""}">${c ? pct(c.lr) : "—"}</td><td class="${c ? ud(c.ur) : ""}">${c ? pct(c.ur * r.x.x) : "—"}</td><td class="${c ? ud(c.gap) : ""}">${c ? ppt(c.gap) : "—"}</td></tr>`; }).join("");
@@ -1800,7 +1803,7 @@ function renderLev() {
     i.checked ? levPicks.add(i.dataset.c) : levPicks.delete(i.dataset.c); drawLev(rows);
   });
   const no = rows.filter(r => !r.by[levH]).map(r => r.x.c);
-  $("levnote").innerHTML = `「最近一段」的差距單位是百分點（槓桿和原型的累積報酬直接相減），會被那段行情放大，只當參考。* 原型不是同一個指數，滑過去看說明。淡色列＝樣本少。`
+  $("levnote").innerHTML = `「最近一段」的差距單位是百分點（槓桿和原型的累積報酬直接相減），會被那段行情放大，只當參考。* 有說明（原型不是同一個指數、倍數改過等），滑過去看。淡色列＝樣本少。`
     + (no.length ? `<br>${hl}沒有數字的：${no.join("、")}（資料不夠長，或沒有 1 倍原型）。` : "");
   drawLev(rows);
 }
