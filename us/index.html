@@ -1053,6 +1053,8 @@ function toggleMark(c) {
 
 // ── 搜尋：代號或名稱，打錯一點也找得到；選了之後，總覽＝標註並捲到那一列，空頭＝畫進走勢圖並捲到那一列
 // 正規化：全形轉半形、英文轉小寫、去空白、「臺」當「台」
+// 特殊結構的短說明（資料檔的 nb）：代號旁一個「*」，滑過去或點一下看
+const nbMark = x => x.nb ? ` <span class="term" tabindex="0" data-tip="${x.nb}">*</span>` : "";
 // 同義詞：簡稱用「納斯達克」「非投資等級」「標普」「羅素」「道瓊」，打俗稱或英文也找得到（兩邊都換，英文全名也一起對上）
 const SYN = [[/那斯達克|nasdaq/g, "納斯達克"], [/非投資級|高收益/g, "非投資等級"], [/s&p/g, "標普"], [/russell/g, "羅素"], [/dowjones/g, "道瓊"], [/房地產|不動產/g, "reit"]];
 const norm = s => SYN.reduce((t, [a, b]) => t.replace(a, b), s.normalize("NFKC").toLowerCase().replace(/\s+/g, "").replace(/臺/g, "台"));
@@ -1225,7 +1227,8 @@ function drawTable(rows) {
     const x = r.x, m = r.m;
     switch (k) {
       case "t": return `<td class="txt left">${x.t}${x.t2 ? ` › <span class="t2">${x.t2}</span>` : ""}</td>`;
-      case "c": case "r": return `<td class="txt left">${x[k]}</td>`;
+      case "c": return `<td class="txt left">${x.c}${nbMark(x)}</td>`;
+      case "r": return `<td class="txt left">${x.r}</td>`;
       case "mk": return `<td class="left"><input type="checkbox" data-mk="${x.c}" aria-label="在散布圖標出 ${x.c}" ${marks.has(x.c) ? "checked" : ""}></td>`;
       case "n": return `<td class="txt left" title="${x.en || ""}">${x.n}${FORCE.has(x.c) && !passFilters(x, r.m, true) ? ` <span class="flag nv">篩選外</span>` : ""}${isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}${r.burst ? ` <span class="flag bu">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv">未經空頭驗證</span>` : ""}</td>`;
       case "life": return `<td class="${ud(r.life)}">${r.life == null ? "—" : sgn(r.life)}</td>`;
@@ -1446,7 +1449,7 @@ function drawEpTable(E, ep) {
     const b = r.x.c === BN;
     switch (k) {
       case "t": return `<td class="txt left">${r.x.t}${r.x.t2 ? ` › <span class="t2">${r.x.t2}</span>` : ""}</td>`;
-      case "c": return `<td class="txt left">${r.x[k]}</td>`;
+      case "c": return `<td class="txt left">${r.x.c}${nbMark(r.x)}</td>`;
       case "n": return `<td class="txt left" title="${r.x.en || ""}">${r.x.n}${r.hv ? ` <span class="flag">高波動</span>` : ""}</td>`;
       case "cat": return `<td class="txt left">${r.ov ? `<span class="pill" style="--c:${colorOf(r.ov.cat)}">${CAT_NAME(r.ov.cat)}</span>` : "—"}</td>`;
       case "pick": return `<td class="left"><input type="checkbox" data-c="${r.x.c}" aria-label="把 ${r.x.c} 畫進走勢圖" ${picks.has(r.x.c) ? "checked" : ""} ${b ? "disabled" : ""}></td>`;
