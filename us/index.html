@@ -539,7 +539,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           另外，Yahoo 對部分月配息 ETF（例如 AGG、JEPI）2026 年 10、11 月的配息還沒有紀錄，最近一段的含息報酬會略低。</li>
         <li>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）。<br>進進出出的人，實際報酬可能差很多：例如標「靠爆發」的，領先全靠少數幾段急漲，剛好錯過那幾段就不會贏基準。</li>
         <li>期間愈短，分類愈只代表那一段行情。<br><span id="periodNotes"></span></li>
-        <li>名單只有目前掛牌、規模 10 億美元以上的 ETF，已下市或規模小的不在裡面（存活者偏差）。<br>愈早的年份愈明顯：2000 年網路泡沫時就存在、又活到現在的只有二十幾檔，當年倒掉的網路主題基金都不在名單上。</li>
+        <li>名單只有目前掛牌、規模 10 億美元以上的 ETF，已下市或規模小的不在裡面（存活者偏差）。<br>反向、箱型價差（BOXX）、管理期貨、多空型不收。<br>愈早的年份愈明顯：2000 年網路泡沫時就存在、又活到現在的只有二十幾檔，當年倒掉的網路主題基金都不在名單上。</li>
         <li>緩衝型（buffer）、選擇權收益型 ETF 用選擇權換取少跌或配息，漲幅有上限；它們落在「穩但不強」是設計使然，要看的是少跌的部分值不值得。</li>
       </ul>
       <p class="foot" id="foot"></p>
@@ -1053,8 +1053,9 @@ function toggleMark(c) {
 
 // ── 搜尋：代號或名稱，打錯一點也找得到；選了之後，總覽＝標註並捲到那一列，空頭＝畫進走勢圖並捲到那一列
 // 正規化：全形轉半形、英文轉小寫、去空白、「臺」當「台」
-// 同義詞：簡稱用「納斯達克」「高收益」，打「那斯達克」「非投資等級」也找得到
-const norm = s => s.normalize("NFKC").toLowerCase().replace(/\s+/g, "").replace(/臺/g, "台").replace(/那斯達克/g, "納斯達克").replace(/非投資等級/g, "高收益");
+// 同義詞：簡稱用「納斯達克」「非投資等級」「標普」「羅素」「道瓊」，打俗稱或英文也找得到（兩邊都換，英文全名也一起對上）
+const SYN = [[/那斯達克|nasdaq/g, "納斯達克"], [/非投資級|高收益/g, "非投資等級"], [/s&p/g, "標普"], [/russell/g, "羅素"], [/dowjones/g, "道瓊"]];
+const norm = s => SYN.reduce((t, [a, b]) => t.replace(a, b), s.normalize("NFKC").toLowerCase().replace(/\s+/g, "").replace(/臺/g, "台"));
 function editDist1(a, b) {   // a、b 差距不超過 1 個字（多、少、換一個字，或相鄰兩字對調）
   if (Math.abs(a.length - b.length) > 1) return false;
   if (a.length === b.length) { const d = [...a].map((ch, i) => ch !== b[i] ? i : -1).filter(i => i >= 0); if (d.length === 2 && d[1] === d[0] + 1 && a[d[0]] === b[d[1]] && a[d[1]] === b[d[0]]) return true; }
