@@ -1628,8 +1628,9 @@ function syncRange(sId, eId, fillId, s, e) {
   $(sId).style.zIndex = s > (D.dates.length - 1) / 2 ? 4 : "";   // 兩個把手疊在右半邊時，起日要在上面才拉得回來
   $(fillId).style.left = pPos(s) + "%"; $(fillId).style.width = (pPos(e) - pPos(s)) + "%";
 }
-// 跌幅越深顏色越深：跌 15% 用最淺、跌 55% 以上用最深
-const crashAlpha = (depth, lo, hi) => lo + (hi - lo) * Math.min(1, Math.max(0, (Math.abs(depth) - 0.15) / 0.4));
+// 跌幅越深顏色越深：跌 15% 用最淺，這一區基準最深的那次用最深（SPY 約 55%、AGG 約 18%）；換分區時重算
+let crashMax = null;
+const crashAlpha = (depth, lo, hi) => { if (crashMax == null) crashMax = Math.max(0.3, ...episodes(D, 0.15).map(e => Math.abs(e.depth))); return lo + (hi - lo) * Math.min(1, Math.max(0, (Math.abs(depth) - 0.15) / (crashMax - 0.15))); };
 // 軌道上的跌色段：基準從高點跌到低點；sel 以外的變淡（sel 沒給就全部一樣深）
 function crashMarks(trackId, eps, sel, label) {
   $(trackId).querySelectorAll(".pcrash").forEach(el => el.remove());
@@ -1810,7 +1811,7 @@ function buildView(keepSel) {
   REGIONS = byN(list.map(x => x.r)); TYPES = byN(list.map(x => x.t));
   DEF_PICKS = [BN, ...ZONE_PICKS[ZONE].filter(c => list.some(x => x.c === c))];
   if (!keepSel) { picks.clear(); DEF_PICKS.forEach(c => picks.add(c)); marks.clear(); }
-  FORCE = new Set(); base = null; epCache = null; LIFE = null; CRASH_EPS = null; epSel = null; epView = null; scView = null; ovMap = new Map();
+  FORCE = new Set(); crashMax = null; base = null; epCache = null; LIFE = null; CRASH_EPS = null; epSel = null; epView = null; scView = null; ovMap = new Map();
   // 回看期間：資料不夠長的按鈕停用；目前選的不能用時改成 1 年，離開後回到原本選的
   const last = D.dates.length - 1, ok = y => presetStart(D, last, y) >= D.dates[0];
   document.querySelectorAll("#win button").forEach(b => { b.disabled = b.dataset.v !== "c" && !ok(+b.dataset.v); });
