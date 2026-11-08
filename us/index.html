@@ -1054,7 +1054,7 @@ function toggleMark(c) {
 // ── 搜尋：代號或名稱，打錯一點也找得到；選了之後，總覽＝標註並捲到那一列，空頭＝畫進走勢圖並捲到那一列
 // 正規化：全形轉半形、英文轉小寫、去空白、「臺」當「台」
 // 同義詞：簡稱用「納斯達克」「非投資等級」「標普」「羅素」「道瓊」，打俗稱或英文也找得到（兩邊都換，英文全名也一起對上）
-const SYN = [[/那斯達克|nasdaq/g, "納斯達克"], [/非投資級|高收益/g, "非投資等級"], [/s&p/g, "標普"], [/russell/g, "羅素"], [/dowjones/g, "道瓊"]];
+const SYN = [[/那斯達克|nasdaq/g, "納斯達克"], [/非投資級|高收益/g, "非投資等級"], [/s&p/g, "標普"], [/russell/g, "羅素"], [/dowjones/g, "道瓊"], [/房地產|不動產/g, "reit"]];
 const norm = s => SYN.reduce((t, [a, b]) => t.replace(a, b), s.normalize("NFKC").toLowerCase().replace(/\s+/g, "").replace(/臺/g, "台"));
 function editDist1(a, b) {   // a、b 差距不超過 1 個字（多、少、換一個字，或相鄰兩字對調）
   if (Math.abs(a.length - b.length) > 1) return false;
