@@ -120,6 +120,19 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .row .lbl { color: var(--muted); font-size: .85rem; min-width: 4.5em; }
 .checks { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: .9rem; }
 .btn { font: inherit; font-size: .88rem; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+/* 屬性篩選：大項標籤分組，選了大項才出現細項（虛線框）；有篩選時出現顯眼的「清除」 */
+td .t2 { color: var(--muted); }
+.attr-g { display: flex; gap: 6px; align-items: flex-start; margin-top: 4px; }
+.attr-g .gl { color: var(--muted); font-size: .78rem; width: 2.4em; flex: none; padding-top: 3px; }
+.attr-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.achip { font: inherit; font-size: .8rem; border: 1px solid var(--line); background: var(--panel); color: var(--fg); padding: 1px 8px; border-radius: 999px; cursor: pointer; }
+.achip .n { color: var(--muted); font-size: .72rem; font-variant-numeric: tabular-nums; }
+.achip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.achip[aria-pressed="true"] .n { color: inherit; opacity: .8; }
+.achip.fine { border-style: dashed; }
+.attr-fine { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 6px; }
+.attr-fine .gl { color: var(--muted); font-size: .78rem; margin-bottom: 3px; }
+.achip.clr { background: var(--c-strong); border-color: var(--c-strong); color: #fff; font-weight: 700; margin-top: 6px; }
 .linkbtn { font: inherit; font-size: .8rem; background: none; border: 0; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
 .stack { display: grid; gap: 10px; }
 .counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
@@ -347,8 +360,8 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     <h3>篩選（總覽和空頭共用）</h3>
     <div class="stack">
       <div class="cbox"><div class="row"><span class="lbl">地區</span><div class="checks" id="f-region"></div></div></div>
-      <div class="cbox"><div class="row"><span class="lbl">題材</span><div class="checks" id="f-type"></div></div>
-      <p class="hint">題材依基金名稱與晨星分類標註，每檔一個主題材。</p></div>
+      <div class="cbox"><span class="lbl">屬性</span><div id="f-type"></div>
+      <p class="hint">點大項篩選（可複選），再點下方的細項縮小範圍；都不選＝全部。</p></div>
       <div class="controls">
         <div class="ctl"><label for="vmax"><span class="term" tabindex="0" data-tip="波動倍數＝這檔每週漲跌的幅度，是基準的幾倍（週報酬的標準差相除）。&#10;例：1.5＝漲跌幅度大約是基準的 1.5 倍；2 倍槓桿約 1.5～2。&#10;和 beta 不同：beta 還會被「走勢和基準像不像」拉低，國際股票 ETF 的 beta 可能只有 0.5，實際漲跌卻是基準的 2 倍以上。&#10;用總覽選的期間計算；拉到最右邊＝不限制。1／3／5 年最高約 2.0～2.9，所以上限設 3。">波動倍數上限</span><output id="o-vmax"></output></label>
           <input type="range" id="vmax" min="0.5" max="3" step="0.1"><div class="rticks" id="tk-vmax" aria-hidden="true"></div><p class="hint">只看漲跌沒那麼猛的。</p></div>
@@ -542,22 +555,24 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <p class="hint">規則裡的數字是目前的拉桿設定；空頭驗證的大空頭門檻固定（股票等區 25%、債券區 10%），年化容許固定 1%。<br>債券區：AGG 2020 年起的那次大跌到現在還沒回到高點，所以 2008 年後上市的債券 ETF 暫時都還沒通過驗證。</p>
     </section>
     <section class="panel stack">
-      <h2>題材、地區、名稱怎麼來的</h2>
+      <h2>屬性、地區、名稱怎麼來的</h2>
       <div class="defs-grid"><dl class="defs-r">
-        <dt>題材分兩層</dt>
-        <dd>每檔一個主題材，名稱看得出更細的方向時再加一個細題材，例如「科技 › 量子計算」「核能鈾 › 鈾礦」「金融 › 區域銀行」。<br>
-          主題材有三種：<br>
-          風格：大型、中小型、成長、價值、股利高股息、低波動，以及用選擇權的緩衝型、選擇權收益、避險型，和股債配置；<br>
+        <dt>屬性分兩層</dt>
+        <dd>每檔一個大項，名稱看得出更細的方向時再加一個細項，例如「科技 › 量子計算」「核能鈾 › 鈾礦」「金融 › 區域銀行」。<br>
+          大項分三組：<br>
+          風格：大型、中小型、成長、價值、股利高股息、低波動、動能、多因子、品質，以及用選擇權的緩衝型、選擇權收益、避險型，和股債配置；<br>
           產業：科技、半導體、AI、資安、雲端軟體、通訊、醫療、生技、金融、能源、公用事業、工業、國防航太、房地產、原物料、消費；<br>
           主題：核能鈾、電網電力、機器人、黃金礦業。<br>
-          篩選只列主題材；搜尋時打細題材（例如「量子」「鈾」）也找得到。債券、原物料、加密貨幣、槓桿區的題材欄顯示分區名稱。</dd>
+          風格只有一層，細項只用在產業和主題（例如成長型裡的「集中持股」、高股息裡的「股利成長」）。<br>
+          篩選時先點大項（可複選），左側下方會出現它的細項，可以再縮小；搜尋時打細項（例如「量子」「鈾」）也找得到。<br>
+          債券、原物料、加密貨幣、槓桿區的大項是分區名稱；債券的細項是天期與種類（短期公債、投資級公司債、市政債等）。</dd>
         <dt>地區（只有股票區）</dt>
         <dd>美國、全球（含美國）、國際已開發（不含美國、不含新興市場）、國際含新興（不含美國）、新興市場、單一國家。左側地區選項滑過去有例子。</dd>
         <dt>中文名稱</dt>
         <dd>「發行商＋中文內容」，照台灣財經網站常用的譯名再簡化，例如「Vanguard 標普500」「iShares 0-3月美債」。滑過名稱可以看英文全名，搜尋中英文都可以。<br>
           追同一個指數的會同名（例如 QQQ、QQQM 都是「Invesco 那斯達克100」），以代號區分。</dd>
         <dt>怎麼標的、準不準</dt>
-        <dd>依基金英文名稱和晨星分類，由語言模型逐檔標註，再人工抽查、改正看得出的錯誤。名稱看不出投資內容的（多半是規模小、名稱抽象的主動型基金），題材可能不夠精確，以基金公司的說明為準。</dd>
+        <dd>依基金英文名稱和晨星分類，由語言模型逐檔標註，再人工抽查、改正看得出的錯誤。名稱看不出投資內容的（多半是規模小、名稱抽象的主動型基金），屬性可能不夠精確，以基金公司的說明為準。</dd>
       </dl></div>
     </section>
   </section>
@@ -758,14 +773,14 @@ const TIPS = {
   up: "上漲捕獲：SPY 上漲的那些週，這檔平均賺到 SPY 漲幅的幾倍。",
   dn: "下跌捕獲：SPY 下跌的那些週，這檔平均跟著跌 SPY 跌幅的幾倍。\n愈小愈抗跌。",
   av: "空頭跌幅 vs基準：在基準的幾次大跌裡，這檔的跌幅減基準的跌幅（跌幅都是負數），取平均（只算有經歷到的那幾次）。\n正數＝跌得比基準淺，負數＝比較深。",
-  t: "題材：股票區依基金名稱與晨星分類標註，每檔一個主題材；緩衝型、選擇權收益、股債配置依晨星分類。其他區顯示分區名稱。",
+  t: "屬性：股票區依基金名稱與晨星分類標註，分大項與細項（例：科技 › 量子計算）；緩衝型、選擇權收益、股債配置依晨星分類。其他區的大項是分區名稱，細項是債券天期、種類等。",
   cat: "類別：依「說明」頁五種類別的規則，用目前的拉桿數字判定。\n名稱旁的標記：靠爆發＝贏基準主要靠少數幾段急漲；\n未經空頭驗證＝上市以來沒經歷過大空頭，或上市以來年化輸基準超過 1%。",
   r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、國際已開發、國際含新興、新興市場、單一國家）；其他區沒有標，顯示「未標」。左側地區選項滑過去有說明。",
   mk: "標註：勾選後在上面的散布圖標出代號，方便找點。\n點散布圖上的點也可以標註或取消。"
 };
 
 const COLS = [
-  ["c", "代號", 1], ["mk", "標註", 1], ["n", "名稱", 1], ["t", "題材", 1], ["cat", "類別", 1], ["r", "地區", 0], ["cagr", "年化", 1], ["dca", "定投年化", 1], ["mdd", "最大回撤", 1],
+  ["c", "代號", 1], ["mk", "標註", 1], ["n", "名稱", 1], ["t", "屬性", 1], ["cat", "類別", 1], ["r", "地區", 0], ["cagr", "年化", 1], ["dca", "定投年化", 1], ["mdd", "最大回撤", 1],
   ["rr", "報酬／回撤", 1], ["life", "上市以來 vs基準", 1], ["lead", "平時領先", 1], ["rec", "回到前高", 1], ["nb", "爆發段數", 0],
   ["vr", "波動倍數", 1], ["bm", "beta（大盤）", 0], ["r2", "R²（大盤）", 0], ["up", "上漲捕獲", 0], ["dn", "下跌捕獲", 0], ["av", "空頭跌幅 vs基準", 1]
 ];
@@ -866,9 +881,11 @@ function computeEps() {
   return (epCache = { th, eps, B, per });
 }
 const isHV = c => { const E = computeEps().per[c]; return E && E.av != null && E.av >= +$("hv").value / 100; };
-function passFilters(x, m) {
+function passFilters(x, m, raw) {
+  if (!raw && FORCE.has(x.c)) return true;
   const rg = REGIONS.filter(r => $("r-" + r).checked), tp = TYPES.filter(t => $("t-" + t).checked);
   if (!rg.includes(x.r) || !tp.includes(x.t)) return false;
+  if (TF.size) { const f = [...TF].filter(k => k.startsWith(x.t + "|")); if (f.length && !f.includes(x.t + "|" + x.t2)) return false; }
   const vmax = +$("vmax").value; if (vmax < 3 && m && m.vr != null && m.vr > vmax) return false;
   if ($("hvx").checked && isHV(x.c)) return false;
   return true;
@@ -1039,16 +1056,17 @@ function editDist1(a, b) {   // a、b 差距不超過 1 個字（多、少、換
   while (i < a.length && j < b.length) { if (a[i] === b[j]) { i++; j++; continue; } if (++d > 1) return false; if (a.length > b.length) i++; else if (a.length < b.length) j++; else { i++; j++; } }
   return d + (a.length - i) + (b.length - j) <= 1;
 }
+// 搜尋所有分區（不只目前這區）；同分時目前分區的在前，再照規模
 function searchEtf(q) {
   q = norm(q); if (!q) return [];
-  return D.etfs.map((x, i) => {
+  return RAW.etfs.map((x, i) => {
     // 中文簡稱的開頭是發行商（「Invesco 那斯達克100」），排名只看發行商之後的位置
     const c = norm(x.c), n = norm(x.cn ? x.n.slice(x.n.indexOf(" ") + 1) : x.n), en = norm(x.en || "");
     let s = 0;
     if (c === q || c.replace(/^0+/, "").replace(/[a-z]+$/, "") === q.replace(/^0+/, "")) s = 100; else if (c.startsWith(q)) s = 90; else if (c.includes(q)) s = 80;
     else if (n.includes(q)) s = 70 - n.indexOf(q) * 0.5;
     else if (en.includes(q)) s = 68 - en.indexOf(q) * 0.5;   // 英文全名
-    else if (norm(x.t || "") === q || norm(x.t2 || "") === q) s = 60;   // 題材（中文）：例「半導體」
+    else if (norm(x.t || "") === q || norm(x.t2 || "") === q) s = 60;   // 屬性（中文）：例「半導體」
     else if ((x.t && norm(x.t).includes(q)) || (x.t2 && norm(x.t2).includes(q))) s = 55;
     else if (q.length >= 4 && editDist1(q, c)) s = 50;
     else {   // 名稱裡依序出現打的每個字（例：「元台50」找到「元大台灣50」），或打的字有八成在名稱裡
@@ -1056,8 +1074,8 @@ function searchEtf(q) {
       if (k === q.length && q.length >= 2) s = 40;
       else if (q.length >= 3 && [...q].filter(ch => n.includes(ch)).length / q.length >= 0.8) s = 20;
     }
-    return { x, s, i };
-  }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || a.i - b.i).slice(0, 60).map(r => r.x);   // 同分照資料順序（規模大到小）
+    return { x, s, i, z: x.z === ZONE ? 0 : 1 };
+  }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || a.z - b.z || a.i - b.i).slice(0, 60).map(r => r.x);
 }
 let retryPick = null;
 function bindSearch() {
@@ -1070,11 +1088,15 @@ function bindSearch() {
     hits = searchEtf(q.value); act = 0; msg.hidden = true;
     if (!hits.length) { close(); if (q.value.trim()) { msg.hidden = false; const sk = (D.skipped || []).map(t => t.split(".")[0]).find(c => norm(c).includes(norm(q.value)));
       msg.textContent = sk ? `${sk} 在名單上，但資料來源目前沒有足夠的價格（多半是剛上市），暫時沒列入。` : "找不到符合的 ETF，換個代號或名稱的幾個字試試。"; } return; }
-    list.innerHTML = hits.map((x, i) => { const o = ovMap.get(x.c); return `<div role="option" id="qo${i}" data-i="${i}" aria-selected="${i === act}"><span class="qc">${x.c}</span><span class="qn">${x.n}</span>${o ? (passFilters(x, o.m) ? `<span class="pill" style="--c:${colorOf(o.cat)}">${CAT_NAME(o.cat)}</span>` : `<span class="was">被篩選排除</span>`) : `<span class="was">${x.p.some(v => v != null) ? "上市晚於期間起點" : "沒有價格"}</span>`}</div>`; }).join("");
+    list.innerHTML = hits.map((x, i) => { const o = x.z === ZONE && ovMap.get(x.c);
+      const tag = x.z !== ZONE ? `<span class="was">在${x.z}區，選了會切換過去</span>`
+        : o ? (passFilters(x, o.m, true) ? `<span class="pill" style="--c:${colorOf(o.cat)}">${CAT_NAME(o.cat)}</span>` : `<span class="was">篩選外</span>`)
+        : `<span class="was">${x.p.some(v => v != null) ? "上市晚於期間起點" : "沒有價格"}</span>`;
+      return `<div role="option" id="qo${i}" data-i="${i}" aria-selected="${i === act}"><span class="qc">${x.c}</span><span class="qn">${x.n}</span>${tag}</div>`; }).join("");
     list.hidden = false; q.setAttribute("aria-expanded", "true"); q.setAttribute("aria-activedescendant", "qo0");
   };
   const move = d => { if (list.hidden) return; act = (act + d + hits.length) % hits.length; list.querySelectorAll("[role=option]").forEach((o, i) => o.setAttribute("aria-selected", i === act)); q.setAttribute("aria-activedescendant", "qo" + act); $("qo" + act).scrollIntoView({ block: "nearest" }); };
-  q.addEventListener("input", () => { pending = null; show(); });
+  q.addEventListener("input", () => { pending = null; if (FORCE.size) { FORCE = new Set(); render(); } show(); });
   q.addEventListener("focus", () => { if (q.value) show(); });
   q.addEventListener("keydown", e => {
     if (e.key === "ArrowDown") { e.preventDefault(); move(1); } else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
@@ -1087,20 +1109,33 @@ function bindSearch() {
     close(); q.value = `${x.c} ${x.n}`; msg.hidden = true;
     const page = document.body.dataset.page === "bear" ? "bear" : "overview";
     if (page !== document.body.dataset.page) showPage("overview", true);
+    // 在別的分區：先切過去（分區按鈕、篩選、期間跟著換）
+    let moved = "";
+    if (x.z !== ZONE) { moved = `已切換到${x.z}區。`; ZONE = x.z; buildView(); refresh(); }
+    x = D.etfs.find(e => e.c === x.c) || x;
     const why = [], fix = [];
     // 沒列出來的原因：期間、左側篩選、表頭的類別篩選，各給一個修正按鈕
     if (page === "overview" && !ovMap.has(x.c)) { const f = x.p.findIndex(v => v != null); if (D.dates.length - 1 - f < 63) { why.push(`上市不到 3 個月（${iso(D.dates[f])} 上市），期間太短，還不能比`); } else { why.push(`上市日（${iso(D.dates[f])}）晚於這段期間的起點`); fix.push(["從它上市那天起算", () => { st.win = "c"; setSeg("c"); $("dStart").value = iso(D.dates[f]); $("dEnd").value = D.end; }]); } }
     if (page === "bear" && !computeEps().per[x.c].s[epSel]) why.push("這次大跌時還沒上市，換一次大跌看看");
-    const o = ovMap.get(x.c);
-    if (!passFilters(x, o && o.m)) { why.push(mq.matches ? "被「設定」裡的篩選排除" : "被左側的篩選排除"); fix.push(["清除篩選", () => { document.querySelectorAll("#f-region input, #f-type input").forEach(i => { i.checked = true; }); $("vmax").value = 3; $("hvx").checked = false; }]); }
+    // 被左側篩選擋掉的：不動使用者的篩選，先把這一檔暫時列出來（標「篩選外」），另給「清除篩選」
+    const clearAll = () => { document.querySelectorAll("#f-region input").forEach(i => { i.checked = true; }); clearAttr(); $("vmax").value = 3; $("hvx").checked = false; FORCE = new Set(); };
+    let o = ovMap.get(x.c);
+    FORCE = new Set();
+    const outF = !passFilters(x, o && o.m, true);
+    if (outF) { FORCE = new Set([x.c]); render(); o = ovMap.get(x.c); }
     const sc = page === "bear" ? "ep" : "ov";
     if (!passHead(sc, x, o ? o.cat : null) && hfCat[sc].size < CATS.length) { why.push("被表頭的「類別」篩選排除"); fix.push(["取消類別篩選", () => { CATS.forEach(c => hfCat[sc].add(c[0])); }]); }
     pending = why.length ? x : null;
+    const note = (moved ? moved : "") + (outF ? `${x.c} 不符合目前的篩選，先暫時列出來（名稱旁標「篩選外」）。` : "");
+    const clrBtn = outF ? `<br><button type="button" class="linkbtn" id="qclr">清除篩選</button>` : "";
+    const bindClr = () => { const b = $("qclr"); if (b) b.onclick = () => { clearAll(); render(); msg.hidden = true; }; };
     if (why.length) {
-      msg.hidden = false; msg.innerHTML = `${x.c} 沒有列出來：${why.join("；")}。` + fix.map((f, i) => `<br><button type="button" class="linkbtn" data-fix="${i}">${f[0]}</button>`).join("");
+      msg.hidden = false; msg.innerHTML = note + `${x.c} 沒有列出來：${why.join("；")}。` + fix.map((f, i) => `<br><button type="button" class="linkbtn" data-fix="${i}">${f[0]}</button>`).join("") + clrBtn;
       msg.querySelectorAll("[data-fix]").forEach(b => b.onclick = () => { fix.forEach(f => f[1]()); render(); pick(x); });
+      bindClr();
       return;
     }
+    if (note) { msg.hidden = false; msg.innerHTML = note + clrBtn; bindClr(); }
     if (page === "overview") { marks.add(x.c); render(); }
     else { if (!picks.has(x.c) && picks.size < 8) picks.add(x.c); renderEps(); }
     document.body.classList.remove("drawer");
@@ -1157,7 +1192,7 @@ document.addEventListener("click", e => {
   hfApply = () => {
     const on = [...box.querySelectorAll("input")].filter(i => i.checked).map(i => i.value);
     if (on.length === sel.size && on.every(v => sel.has(v))) return;   // 沒改就不重畫
-    if (k === "t") TYPES.forEach(t => { $("t-" + t).checked = on.includes(t); }); else { hfCat[scope].clear(); on.forEach(v => hfCat[scope].add(v)); }
+    if (k === "t") { setTypes(on.length === TYPES.length ? [] : on); if (!on.length) TYPES.forEach(t => { $("t-" + t).checked = false; }); drawAttr(); } else { hfCat[scope].clear(); on.forEach(v => hfCat[scope].add(v)); }
     if (scope === "ep" && k === "cat") renderEps(); else render();
   };
   box.querySelectorAll("[data-set]").forEach(x => x.onclick = () => box.querySelectorAll("input").forEach(i => { i.checked = x.dataset.set === "1"; }));
@@ -1178,9 +1213,10 @@ function drawTable(rows) {
   const cell = (r, k) => {
     const x = r.x, m = r.m;
     switch (k) {
-      case "c": case "t": case "r": return `<td class="txt left">${x[k]}</td>`;
+      case "t": return `<td class="txt left">${x.t}${x.t2 ? ` › <span class="t2">${x.t2}</span>` : ""}</td>`;
+      case "c": case "r": return `<td class="txt left">${x[k]}</td>`;
       case "mk": return `<td class="left"><input type="checkbox" data-mk="${x.c}" aria-label="在散布圖標出 ${x.c}" ${marks.has(x.c) ? "checked" : ""}></td>`;
-      case "n": return `<td class="txt left" title="${x.en || ""}">${x.n}${isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}${r.burst ? ` <span class="flag bu">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv">未經空頭驗證</span>` : ""}</td>`;
+      case "n": return `<td class="txt left" title="${x.en || ""}">${x.n}${FORCE.has(x.c) && !passFilters(x, r.m, true) ? ` <span class="flag nv">篩選外</span>` : ""}${isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}${r.burst ? ` <span class="flag bu">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv">未經空頭驗證</span>` : ""}</td>`;
       case "life": return `<td class="${ud(r.life)}">${r.life == null ? "—" : sgn(r.life)}</td>`;
       case "cat": return `<td class="txt left"><span class="pill" style="--c:${colorOf(r.cat)}">${CAT_NAME(r.cat)}</span>${r.cat !== r.def ? `<span class="was">預設：${CAT_NAME(r.def)}</span>` : ""}</td>`;
       case "rec": return `<td>${m.rec == null ? "未回復" : Math.round(m.rec) + " 個月"}</td>`;
@@ -1359,7 +1395,7 @@ function syncTopScroll() {
     }
   });
 }
-const EPCOLS = [["c", "代號"], ["n", "名稱"], ["t", "題材"], ["cat", "類別"], ["pick", "畫圖"], ["sel", "這次跌幅"], ["vs", "跌幅 vs基準"], ["rec", "回到前高"], ["chase", "和基準的追趕"], ["av", "平均跌幅 vs基準"], ["slow", "最慢回到前高"]];
+const EPCOLS = [["c", "代號"], ["n", "名稱"], ["t", "屬性"], ["cat", "類別"], ["pick", "畫圖"], ["sel", "這次跌幅"], ["vs", "跌幅 vs基準"], ["rec", "回到前高"], ["chase", "和基準的追趕"], ["av", "平均跌幅 vs基準"], ["slow", "最慢回到前高"]];
 const EPLOCKED = new Set(["c", "n", "pick"]);   // 一定顯示，不列在「顯示欄位」選單
 const epDefaultCols = () => new Set(EPCOLS.map(c => c[0]));
 let epVisible = epDefaultCols();
@@ -1398,7 +1434,8 @@ function drawEpTable(E, ep) {
   const cell = (r, k) => {
     const b = r.x.c === BN;
     switch (k) {
-      case "c": case "t": return `<td class="txt left">${r.x[k]}</td>`;
+      case "t": return `<td class="txt left">${r.x.t}${r.x.t2 ? ` › <span class="t2">${r.x.t2}</span>` : ""}</td>`;
+      case "c": return `<td class="txt left">${r.x[k]}</td>`;
       case "n": return `<td class="txt left" title="${r.x.en || ""}">${r.x.n}${r.hv ? ` <span class="flag">高波動</span>` : ""}</td>`;
       case "cat": return `<td class="txt left">${r.ov ? `<span class="pill" style="--c:${colorOf(r.ov.cat)}">${CAT_NAME(r.ov.cat)}</span>` : "—"}</td>`;
       case "pick": return `<td class="left"><input type="checkbox" data-c="${r.x.c}" aria-label="把 ${r.x.c} 畫進走勢圖" ${picks.has(r.x.c) ? "checked" : ""} ${b ? "disabled" : ""}></td>`;
@@ -1434,8 +1471,43 @@ function buildFilters() {
     "新興市場": "中國、台灣、印度、巴西、南韓等，例：VWO、IEMG。", "單一國家": "只投資一個國家，例：EWJ（日本）、EWZ（巴西）、INDA（印度）。",
     "未標": "債券、原物料、加密貨幣、槓桿區沒有標地區。" };
   $("f-region").innerHTML = REGIONS.map(r => `<label><input type="checkbox" id="r-${r}" checked> <span class="term" tabindex="0" data-tip="${RT[r] || r}">${r}</span></label>`).join("");
-  const TT = {};
-  $("f-type").innerHTML = TYPES.map(t => `<label><input type="checkbox" id="t-${t}" checked> <span class="term" tabindex="0" data-tip="${TT[t] || t}">${t}</span></label>`).join("");
+  // 屬性：勾選框留著（隱藏）當狀態，表頭篩選、分享連結、檔數都照舊讀它；畫面上是分組的標籤
+  $("f-type").innerHTML = `<div hidden>${TYPES.map(t => `<input type="checkbox" id="t-${t}" checked>`).join("")}</div><div id="f-type-ui"></div>`;
+  TF.clear(); ASEL.clear(); drawAttr();
+}
+// 屬性的分組（股票區）；其他區只有一個大項（分區名稱），細項是債券的天期、種類等
+const ATTR_GROUPS = [["風格", ["大型", "中小型", "成長", "價值", "股利高股息", "低波動", "動能", "多因子", "品質", "選擇權收益", "緩衝型", "避險型", "股債配置"]],
+  ["產業", ["科技", "半導體", "AI", "資安", "雲端軟體", "通訊", "醫療", "生技", "金融", "能源", "公用事業", "工業", "國防航太", "房地產", "原物料", "消費"]],
+  ["主題", ["核能鈾", "電網電力", "機器人", "黃金礦業"]]];
+const TF = new Set();      // 選了的細項，"大項|細項"
+let FORCE = new Set();     // 搜尋選到、但被篩選擋掉的那一檔：暫時照樣列出，標「篩選外」
+const ASEL = new Set();   // 點了的大項；空＝全部
+const typeOn = () => TYPES.filter(t => $("t-" + t).checked);
+// 大項只有一個的分區（債券等），細項直接列出來，不用先點大項
+const fineMains = () => TYPES.length === 1 ? TYPES : [...ASEL];
+function setTypes(on) {
+  ASEL.clear(); on.forEach(t => ASEL.add(t));
+  TYPES.forEach(t => { $("t-" + t).checked = !on.length || on.includes(t); });
+  const keep = new Set(fineMains()); [...TF].forEach(k => { if (!keep.has(k.split("|")[0])) TF.delete(k); });
+}
+function clearAttr() { setTypes([]); TF.clear(); drawAttr(); }
+function drawAttr() {
+  const ui = $("f-type-ui"); if (!ui) return;
+  const on = fineMains(), cnt = {}, fine = {};
+  D.etfs.forEach(x => { if (x.c === BN && ZONE !== "槓桿") return; cnt[x.t] = (cnt[x.t] || 0) + 1; if (x.t2) { const f = fine[x.t] = fine[x.t] || {}; f[x.t2] = (f[x.t2] || 0) + 1; } });
+  const chip = t => `<button type="button" class="achip" data-at="${t}" aria-pressed="${ASEL.has(t)}">${t} <span class="n">${cnt[t] || 0}</span></button>`;
+  const used = new Set(ATTR_GROUPS.flatMap(g => g[1])), rest = TYPES.filter(t => !used.has(t));
+  const groups = ATTR_GROUPS.map(([g, ts]) => [g, ts.filter(t => TYPES.includes(t))]).filter(g => g[1].length).concat(rest.length ? [[ZONE === "股票" ? "其他" : "", rest]] : []);
+  const fs = on.flatMap(t => Object.entries(fine[t] || {}).sort((a, b) => b[1] - a[1]).map(([f, n]) => [t, f, n]));
+  ui.innerHTML = groups.map(([g, ts]) => `<div class="attr-g">${g ? `<span class="gl">${g}</span>` : ""}<div class="attr-chips">${ts.map(chip).join("")}</div></div>`).join("")
+    + (fs.length ? `<div class="attr-fine"><div class="gl">細項</div><div class="attr-chips">${fs.map(([t, f, n]) => `<button type="button" class="achip fine" data-af="${t}|${f}" aria-pressed="${TF.has(t + "|" + f)}">${on.length > 1 ? t + " › " : ""}${f} <span class="n">${n}</span></button>`).join("")}</div></div>` : "")
+    + (ASEL.size || TF.size ? `<button type="button" class="achip clr" id="attrClr">清除屬性篩選</button>` : "");
+  ui.querySelectorAll("[data-at]").forEach(b => b.onclick = () => {
+    const t = b.dataset.at, cur = [...ASEL];
+    setTypes(cur.includes(t) ? cur.filter(v => v !== t) : [...cur, t]); drawAttr(); render();
+  });
+  ui.querySelectorAll("[data-af]").forEach(b => b.onclick = () => { const k = b.dataset.af; TF.has(k) ? TF.delete(k) : TF.add(k); drawAttr(); render(); });
+  const c = $("attrClr"); if (c) c.onclick = () => { clearAttr(); render(); };
 }
 // 下載 CSV：照畫面上的表格（目前的篩選、排序、顯示欄位）輸出。
 // 表頭只留欄名；名稱旁的標記另開「標記」欄；「預設：…」「（N 次）」這類附註不輸出；負號改成一般減號，Excel 才會當數字
@@ -1469,8 +1541,8 @@ const TOUR = [
   { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n橘色是基準的大空頭（股票區跌 25% 以上），期間有沒有包到它，結果差很多。" },
   { page: "overview", sel: "#counts", t: "五種類別", x: "穩強、猛強：報酬比基準高；差在多跌的部分有沒有換到等比例的報酬。\n穩但不強、弱：報酬比基準低。\n接近基準：兩項都差不多。\n動過拉桿時，卡片會顯示和預設相比多或少幾檔。" },
   { page: "overview", sel: "#chartPanel", t: "散布圖：一眼看位置", x: "往上＝報酬高，往右＝跌得淺。\n靶心是基準，虛線十字和綠色斜線（划算線）把圖切成五類。\n點一下圓點會標出代號；Ctrl＋滾輪可以縮放。" },
-  { page: "overview", sel: "#tblPanel", t: "每檔明細", x: "點表頭排序；「類別」「題材」旁的 ▾ 可以篩選。\n「標註」打勾會標到散布圖上。\n欄位太多就用「顯示欄位」勾掉，也能下載 CSV。" },
-  { page: "overview", sel: "#filterBox", side: 1, t: "篩選", x: "地區、題材、波動倍數上限、高波動，總覽和空頭頁共用。\n游標移到有底線的字上，會跳出說明。" },
+  { page: "overview", sel: "#tblPanel", t: "每檔明細", x: "點表頭排序；「類別」「屬性」旁的 ▾ 可以篩選。\n「標註」打勾會標到散布圖上。\n欄位太多就用「顯示欄位」勾掉，也能下載 CSV。" },
+  { page: "overview", sel: "#filterBox", side: 1, t: "篩選", x: "地區、屬性、波動倍數上限、高波動，總覽和空頭頁共用。\n游標移到有底線的字上，會跳出說明。" },
   { page: "bear", sel: "#epsPanel", t: "空頭：大跌時各檔跌多少", x: "選一次基準的大跌，看同一段時間裡各檔最多跌多少、多久回到高點。\n「跌幅 vs基準」正數＝跌得比基準淺。" },
   { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以基準高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」可以加減線；時間軸可以拉長，看誰先回到高點。" },
   { sel: ".viewset", side: 1, t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按最上面的按鈕。" },
@@ -1607,6 +1679,7 @@ function getState() {
   if (TAX) q.set("tx", "1");
   if (rg.length < REGIONS.length) q.set("rg", rg.join(",") || "-");
   if (ty.length < TYPES.length) q.set("ty", ty.join(",") || "-");
+  if (TF.size) q.set("tf", [...TF].join(","));
   const catq = sc => CATS.map((c, i) => hfCat[sc].has(c[0]) ? i : "").join("") || "-";
   if (hfCat.ov.size < CATS.length) q.set("cat", catq("ov"));
   if (hfCat.ep.size < CATS.length) q.set("ecat", catq("ep"));
@@ -1634,7 +1707,8 @@ function applyState(q) {
   const pick = (k, all) => { const v = q.get(k); return v == null ? null : v.split(",").filter(n => all.includes(n)); };
   const rg = pick("rg", REGIONS), ty = pick("ty", TYPES);
   REGIONS.forEach(r => { $("r-" + r).checked = !rg || !rg.length || rg.includes(r); });
-  TYPES.forEach(t => { $("t-" + t).checked = !ty || !ty.length || ty.includes(t); });
+  setTypes(ty && ty.length < TYPES.length ? ty : []);
+  TF.clear(); (q.get("tf") || "").split(",").filter(k => k.includes("|") && TYPES.includes(k.split("|")[0])).forEach(k => TF.add(k)); drawAttr();
   for (const [k, sc] of [["cat", "ov"], ["ecat", "ep"]]) { const v = q.get(k) || "", on = CATS.filter((c, i) => v.includes(String(i))).map(c => c[0]); hfCat[sc].clear(); (on.length ? on : CATS.map(c => c[0])).forEach(c => hfCat[sc].add(c)); }
   const sortOf = (k, cols, dk, dd) => { const v = q.get(k); if (!v) return [dk, dd]; const key = v.replace(/^-/, ""); return cols.some(c => c[0] === key) ? [key, v.startsWith("-") ? -1 : 1] : [dk, dd]; };
   [sortKey, sortDir] = sortOf("so", COLS, "cagr", -1); [epSort, epDir] = sortOf("eso", EPCOLS, "sel", 1);
@@ -1727,7 +1801,7 @@ function buildView(keepSel) {
   REGIONS = byN(list.map(x => x.r)); TYPES = byN(list.map(x => x.t));
   DEF_PICKS = [BN, ...ZONE_PICKS[ZONE].filter(c => list.some(x => x.c === c))];
   if (!keepSel) { picks.clear(); DEF_PICKS.forEach(c => picks.add(c)); marks.clear(); }
-  base = null; epCache = null; LIFE = null; CRASH_EPS = null; epSel = null; epView = null; scView = null; ovMap = new Map();
+  FORCE = new Set(); base = null; epCache = null; LIFE = null; CRASH_EPS = null; epSel = null; epView = null; scView = null; ovMap = new Map();
   // 回看期間：資料不夠長的按鈕停用；目前選的不能用時改成 1 年，離開後回到原本選的
   const last = D.dates.length - 1, ok = y => presetStart(D, last, y) >= D.dates[0];
   document.querySelectorAll("#win button").forEach(b => { b.disabled = b.dataset.v !== "c" && !ok(+b.dataset.v); });
@@ -1869,7 +1943,7 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   syncSub();
   const ring = `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4" fill="var(--muted)"/><circle cx="10" cy="10" r="8" fill="none" stroke="var(--fg)" stroke-width="1.5"/></svg>`;
   $("legend").innerHTML = `<span><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="var(--fg)"/><circle cx="9" cy="9" r="5.5" fill="var(--panel)"/><circle cx="9" cy="9" r="3" fill="var(--fg)"/></svg>基準（標竿）</span>` + CATS.map(([c, v]) => `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--c-steady)" stroke-width="2"/></svg>空心＝未經空頭驗證的穩強／猛強</span><span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span><span><svg width="34" height="16" viewBox="0 0 34 16"><rect x="0" y="0" width="34" height="16" fill="var(--fg)"/><text x="17" y="12" text-anchor="middle" style="fill:var(--panel);font-weight:700;font-size:10px">代號</text></svg>深色方框＝標註的（和基準同樣標法）</span>`;
-  $("foot").innerHTML = `資料來源：ETF 名單取自 stockanalysis.com（規模 10 億美元以上，2026-11-06）；價格與配息取自 Yahoo Finance 含息還原價。題材與地區依基金名稱和晨星分類標註。<br>備註：各檔對齊到 SPY 的交易日，資料最早從 1999 年初。GBTC、ETHE 轉成 ETF 之前是場外交易的信託、SMH 2011 年以前是另一種信託，都只用轉換後的價格。`;
+  $("foot").innerHTML = `資料來源：ETF 名單取自 stockanalysis.com（規模 10 億美元以上，2026-11-06）；價格與配息取自 Yahoo Finance 含息還原價。屬性與地區依基金名稱和晨星分類標註。<br>備註：各檔對齊到 SPY 的交易日，資料最早從 1999 年初。GBTC、ETHE 轉成 ETF 之前是場外交易的信託、SMH 2011 年以前是另一種信託，都只用轉換後的價格。`;
   $("dStart").min = $("dEnd").min = iso(d.dates[0]); $("dStart").max = $("dEnd").max = d.end;
   $("epFrom").min = $("epTo").min = iso(d.dates[0]); $("epFrom").max = $("epTo").max = d.end;
   $("dEnd").value = d.end; $("dStart").value = iso(presetStart(d, d.dates.length - 1, 5));
