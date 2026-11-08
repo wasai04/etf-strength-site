@@ -741,7 +741,7 @@ const TIPS = {
   av: "空頭跌幅 vs基準：在基準的幾次大跌裡，這檔的跌幅減基準的跌幅（跌幅都是負數），取平均（只算有經歷到的那幾次）。\n正數＝跌得比基準淺，負數＝比較深。",
   t: "題材：股票區依基金名稱與晨星分類標註，每檔一個主題材；緩衝型、選擇權收益、股債配置依晨星分類。其他區顯示分區名稱。",
   cat: "類別：依「說明」頁五種類別的規則，用目前的拉桿數字判定。\n名稱旁的標記：靠爆發＝贏基準主要靠少數幾段急漲；\n未經空頭驗證＝上市以來沒經歷過大空頭，或上市以來年化輸基準超過 1%。",
-  r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、國際（不含美國）、新興市場、單一國家）；其他區沒有標，顯示「未標」。左側地區選項滑過去有說明。",
+  r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、國際已開發、國際含新興、新興市場、單一國家）；其他區沒有標，顯示「未標」。左側地區選項滑過去有說明。",
   mk: "標註：勾選後在上面的散布圖標出代號，方便找點。\n點散布圖上的點也可以標註或取消。"
 };
 
@@ -1022,11 +1022,13 @@ function editDist1(a, b) {   // a、b 差距不超過 1 個字（多、少、換
 }
 function searchEtf(q) {
   q = norm(q); if (!q) return [];
-  return D.etfs.map(x => {
-    const c = norm(x.c), n = norm(x.n);
+  return D.etfs.map((x, i) => {
+    // 中文簡稱的開頭是發行商（「Invesco 那斯達克100」），排名只看發行商之後的位置
+    const c = norm(x.c), n = norm(x.cn ? x.n.slice(x.n.indexOf(" ") + 1) : x.n), en = norm(x.en || "");
     let s = 0;
     if (c === q || c.replace(/^0+/, "").replace(/[a-z]+$/, "") === q.replace(/^0+/, "")) s = 100; else if (c.startsWith(q)) s = 90; else if (c.includes(q)) s = 80;
     else if (n.includes(q)) s = 70 - n.indexOf(q) * 0.5;
+    else if (en.includes(q)) s = 68 - en.indexOf(q) * 0.5;   // 英文全名
     else if (norm(x.t || "") === q || norm(x.t2 || "") === q) s = 60;   // 題材（中文）：例「半導體」
     else if ((x.t && norm(x.t).includes(q)) || (x.t2 && norm(x.t2).includes(q))) s = 55;
     else if (q.length >= 4 && editDist1(q, c)) s = 50;
@@ -1035,8 +1037,8 @@ function searchEtf(q) {
       if (k === q.length && q.length >= 2) s = 40;
       else if (q.length >= 3 && [...q].filter(ch => n.includes(ch)).length / q.length >= 0.8) s = 20;
     }
-    return { x, s };
-  }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || a.x.c.localeCompare(b.x.c)).slice(0, 60).map(r => r.x);
+    return { x, s, i };
+  }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || a.i - b.i).slice(0, 60).map(r => r.x);   // 同分照資料順序（規模大到小）
 }
 let retryPick = null;
 function bindSearch() {
@@ -1159,7 +1161,7 @@ function drawTable(rows) {
     switch (k) {
       case "c": case "t": case "r": return `<td class="txt left">${x[k]}</td>`;
       case "mk": return `<td class="left"><input type="checkbox" data-mk="${x.c}" aria-label="在散布圖標出 ${x.c}" ${marks.has(x.c) ? "checked" : ""}></td>`;
-      case "n": return `<td class="txt left">${x.n}${isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}${r.burst ? ` <span class="flag bu">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv">未經空頭驗證</span>` : ""}</td>`;
+      case "n": return `<td class="txt left" title="${x.en || ""}">${x.n}${isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}${r.burst ? ` <span class="flag bu">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv">未經空頭驗證</span>` : ""}</td>`;
       case "life": return `<td class="${ud(r.life)}">${r.life == null ? "—" : sgn(r.life)}</td>`;
       case "cat": return `<td class="txt left"><span class="pill" style="--c:${colorOf(r.cat)}">${CAT_NAME(r.cat)}</span>${r.cat !== r.def ? `<span class="was">預設：${CAT_NAME(r.def)}</span>` : ""}</td>`;
       case "rec": return `<td>${m.rec == null ? "未回復" : Math.round(m.rec) + " 個月"}</td>`;
@@ -1378,7 +1380,7 @@ function drawEpTable(E, ep) {
     const b = r.x.c === BN;
     switch (k) {
       case "c": case "t": return `<td class="txt left">${r.x[k]}</td>`;
-      case "n": return `<td class="txt left">${r.x.n}${r.hv ? ` <span class="flag">高波動</span>` : ""}</td>`;
+      case "n": return `<td class="txt left" title="${r.x.en || ""}">${r.x.n}${r.hv ? ` <span class="flag">高波動</span>` : ""}</td>`;
       case "cat": return `<td class="txt left">${r.ov ? `<span class="pill" style="--c:${colorOf(r.ov.cat)}">${CAT_NAME(r.ov.cat)}</span>` : "—"}</td>`;
       case "pick": return `<td class="left"><input type="checkbox" data-c="${r.x.c}" aria-label="把 ${r.x.c} 畫進走勢圖" ${picks.has(r.x.c) ? "checked" : ""} ${b ? "disabled" : ""}></td>`;
       case "sel": return `<td>${pct(r.sel)}</td>`;
@@ -1408,7 +1410,8 @@ function buildControls() {
 }
 function buildFilters() {
   const RT = { "美國": "只投資美國公司，例：SPY、QQQ、SCHD。", "全球": "含美國在內的全世界，美國通常占六成左右，例：VT、ACWI，以及全球產業型（GDX、IXN）。",
-    "國際（不含美國）": "美國以外的已開發市場（歐洲、日本、英國、加拿大、澳洲等），有些也含兩三成新興市場，例：VEA、EFA（不含新興）、VXUS（含新興）。",
+    "國際已開發": "美國以外的已開發市場（歐洲、日本、英國、加拿大、澳洲等），不含新興市場，例：VEA、EFA、IEFA。",
+    "國際含新興": "美國以外的全世界，已開發市場加上兩到三成新興市場，例：VXUS、IXUS、ACWX、VEU。",
     "新興市場": "中國、台灣、印度、巴西、南韓等，例：VWO、IEMG。", "單一國家": "只投資一個國家，例：EWJ（日本）、EWZ（巴西）、INDA（印度）。",
     "未標": "債券、原物料、加密貨幣、槓桿區沒有標地區。" };
   $("f-region").innerHTML = REGIONS.map(r => `<label><input type="checkbox" id="r-${r}" checked> <span class="term" tabindex="0" data-tip="${RT[r] || r}">${r}</span></label>`).join("");
@@ -1674,10 +1677,11 @@ const ZONE_NOTE = { "股票": "跟 SPY（標普 500）比。", "債券": "跟 AG
   "加密貨幣": "跟 IBIT（比特幣現貨）比；2024 年 1 月才上市，只有 1 年期間能比。", "槓桿": "跟 SPY 比；耗損另見之後的槓桿分頁。" };
 function prep(d) {
   const ex = o => { if (o.i0 != null) { o.p = new Array(o.i0).fill(null).concat(o.p); o.dv = (o.dv || []).map(([i, v]) => [i + o.i0, v]); delete o.i0; } };
-  // 「已開發國際」裡有 VXUS、IXUS、ACWX 這類也含新興市場的，改叫「國際（不含美國）」（2026-11-08）
-  d.etfs.forEach(x => { ex(x); x.r = x.r === "已開發國際" ? "國際（不含美國）" : (x.r || "未標"); x.t = x.t || x.z; BYC[x.c] = x; });
+  // 名稱顯示中文簡稱 cn，英文全名留在 en（提示、搜尋用）；地區「全球（含美國）」顯示成「全球」
+  const zh = x => { x.en = x.n; if (x.cn) x.n = x.cn; };
+  d.etfs.forEach(x => { ex(x); zh(x); x.r = x.r === "全球（含美國）" ? "全球" : (x.r || "未標"); x.t = x.t || x.z; BYC[x.c] = x; });
   for (const t in d.ref) { ex(d.ref[t]); if (!BYC[t]) BYC[t] = { c: t, n: t, ...d.ref[t] }; }
-  (d.lev_extra || []).forEach(x => { ex(x); x.small = true; });   // 規模 1～10 億的槓桿 ETF，只在槓桿耗損頁
+  (d.lev_extra || []).forEach(x => { ex(x); zh(x); x.small = true; });   // 規模 1～10 億的槓桿 ETF，只在槓桿耗損頁
   RAW = d;
 }
 // 扣稅版：日報酬 − 稅率 × 當天的股息貢獻 dv（資料腳本算好的 adj 報酬 − close 報酬）
@@ -1794,7 +1798,7 @@ function renderLev() {
     return `<tr${b && b.thin ? ' class="thin"' : ""}><td><input type="checkbox" data-c="${r.x.c}" ${levPicks.has(r.x.c) ? "checked" : ""} ${b ? "" : "disabled"} aria-label="畫 ${r.x.c}"></td>`
       + `<td class="txt left">${r.x.c}${note ? ` <span class="term" tabindex="0" data-tip="${note}">*</span>` : ""}${b && b.thin ? ` <span class="flag term" tabindex="0" data-tip="${thinTip(r)}">樣本少</span>` : ""}`
       + `${r.x.small ? ` <span class="flag term" tabindex="0" data-tip="規模 1～10 億美元，不在總覽名單裡，只列在這頁">1～10 億</span>` : ""}</td>`
-      + `<td class="txt left">${r.x.n}</td><td>${r.x.x} 倍</td><td class="txt left">${r.x.u || "—"}</td><td>${r.since || "—"}</td>`
+      + `<td class="txt left" title="${r.x.en || ""}">${r.x.n}</td><td>${r.x.x} 倍</td><td class="txt left">${r.x.u || "—"}</td><td>${r.since || "—"}</td>`
       + `<td class="${b ? ud(b.med) : ""}">${b ? pct(b.med) : "—"}</td><td>${b ? pct(b.p10) + " ～ " + pct(b.p90) : "—"}</td><td>${b ? pct(b.neg, 0) : "—"}</td>`
       + `<td class="${c ? ud(c.lr) : ""}">${c ? pct(c.lr) : "—"}</td><td class="${c ? ud(c.ur) : ""}">${c ? pct(c.ur * r.x.x) : "—"}</td><td class="${c ? ud(c.gap) : ""}">${c ? ppt(c.gap) : "—"}</td></tr>`; }).join("");
   $("levtbl").querySelectorAll("th button").forEach(b => b.onclick = () => { const k = b.dataset.k; if (levSort === k) levDir = -levDir; else { levSort = k; levDir = 1; } renderLev(); });
