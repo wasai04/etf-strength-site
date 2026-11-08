@@ -74,7 +74,7 @@ details.box[open] > summary { margin-bottom: 12px; }
 .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 24px; }
 .ctl > label { display: flex; justify-content: space-between; gap: 8px; font-weight: 500; font-size: .92rem; }
 .ctl output { font-family: var(--f-num); color: var(--accent); white-space: nowrap; }
-/* 回看期間的時間軸：兩個重疊的拉桿共用一條軌道，只有把手能點；深色小段＝0050 大空頭（跌 ≥25%） */
+/* 回看期間的時間軸：兩個重疊的拉桿共用一條軌道，只有把手能點；深色小段＝0050 大空頭（跌 ≥20%） */
 .period { position: relative; height: 44px; margin-top: 10px; }
 .ptrack { position: absolute; left: 8px; right: 8px; top: 10px; height: 8px; border-radius: 4px; background: var(--line); }
 .pfill { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: .55; border-radius: 4px; cursor: grab; touch-action: none; z-index: 1; }
@@ -351,7 +351,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   </div>
 
   <div class="side-sec" id="sideOverview" data-for="overview">
-    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。&#10;自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。&#10;拖下方時間軸的把手就會切到自訂；軸上的色塊是 0050 跌 25% 以上的大空頭，看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
+    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。&#10;自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。&#10;拖下方時間軸的把手就會切到自訂；軸上的色塊是 0050 跌 20% 以上的大空頭，看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
       <div class="stack">
         <div class="cbox"><div class="row">
           <div class="seg" id="win" role="group" aria-label="回看期間">
@@ -368,7 +368,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           <div class="pticks" id="pticks" aria-hidden="true"></div>
         </div>
         <div class="btnpair"><button type="button" class="btn" data-pstep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-pstep="21">往後 1 個月 ▶</button></div>
-        <p class="hint"><span class="pkey"></span>色塊＝0050 跌 25% 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
+        <p class="hint"><span class="pkey"></span>色塊＝0050 跌 20% 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
         <p class="hint" id="cover"></p></div>
         <div class="controls">
           <div class="ctl burstctl"><p class="sentence"><span class="term" tabindex="0" data-tip="連續幾週加起來漲到這個幅度，算一段急漲（爆發段）。&#10;1 週＝單週大漲；拉長週數可以抓到「連漲好幾週、但每週都不算大」的段落，上限 4 週（約一個月）。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;參考：1 週配 7.5%、4 週配 20%，0050 在 2015 年以來分別只有 4 段、1 段。&#10;漲幅上限 30%：0050 任何 4 週都沒漲超過 23%，超過 30% 只剩槓桿型的少數極端週。">爆發段</span>：在 <output id="o-weeks"></output>內上漲 <output id="o-burst"></output> 以上，就算一段急漲。</p>
@@ -501,12 +501,12 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           <dt>標記：靠爆發</dt>
           <dd>贏 0050 超過 <span class="tieval">1.5%</span>（接近 0050 的年化區間），但拿掉少數幾段急漲（爆發段）、0050 也拿掉同樣那幾週之後就不贏。<br>這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。<br>漲跌比 0050 猛的（例如正 2）比較容易被標到。</dd>
           <dt>標記：未經空頭驗證</dt>
-          <dd>穩強、猛強要長期也站得住才可信。<br>上市以來（最早從 2015 年初算）至少經歷過一次 0050 跌 ≥ 25% 再回到高點的大空頭（<span id="crashYears"></span>），而且上市以來的年化沒有輸 0050 超過 1%，才算通過。<br>沒通過的在散布圖畫成空心點。</dd>
+          <dd>穩強、猛強要長期也站得住才可信。<br>上市以來（最早從 2015 年初算）至少經歷過一次 0050 跌 ≥ 20% 再回到高點的大空頭（<span id="crashYears"></span>），而且上市以來的年化沒有輸 0050 超過 1%，才算通過。<br>沒通過的在散布圖畫成空心點。</dd>
           <dt>標記：高波動</dt>
           <dd>0050 每次大跌時，這檔的跌幅減 0050 的跌幅（跌幅 vs 0050，負數＝跌得比較深），再把歷次取平均；平均跌得比 0050 深 <span class="hvval"></span>（目前門檻）以上就標。<br>只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。</dd>
         </dl>
       </div>
-      <p class="hint">規則裡的數字是目前的拉桿設定；空頭驗證的大空頭門檻固定 25%、年化容許固定 1%。</p>
+      <p class="hint">規則裡的數字是目前的拉桿設定；空頭驗證的大空頭門檻固定 20%、年化容許固定 1%。</p>
     </section>
   </section>
 
@@ -689,7 +689,7 @@ const RULE = P => ({
   "穩但不強": `規則：不屬於接近 0050，年化比 0050 低，在划算線上方。`,
   "弱": `規則：不屬於接近 0050，年化比 0050 低，在划算線下方。`
 });
-const CRASH = () => (D.defaults.crash || 0.25);
+const CRASH = () => (D.defaults.crash || 0.20);
 const TIPS = {
   cagr: "年化報酬：一次投入、配息再投入（含息還原價），換算成每年平均報酬。",
   dca: "定投年化：期初和之後每月第一個交易日，各投入同樣金額（中途不賣），依實際投入日期算的年化報酬率（XIRR）。\n期間短時會把差距放大，不宜直接和一次投入比。",
@@ -1393,7 +1393,7 @@ function colMenu(boxId, resetId, cols, locked, vis, defs, key, redraw) {
 const TOUR = [
   { t: "這個網站在做什麼", x: "把每一檔台股 ETF 拿來和 0050 比：報酬有沒有比較高、跌的時候有沒有比較深。\n再依這兩件事分成五類。\n全部是歷史資料，不是買賣建議。" },
   { page: "overview", sel: "#q", side: 1, t: "找一檔 ETF", x: "輸入代號或名稱的幾個字（例：878、高股息），從建議裡選。\n在總覽會把它標在散布圖上，並捲到明細那一列。" },
-  { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n色塊是 0050 跌 25% 以上的大空頭，期間有沒有包到它，結果差很多。" },
+  { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n色塊是 0050 跌 20% 以上的大空頭，期間有沒有包到它，結果差很多。" },
   { page: "overview", sel: "#counts", t: "五種類別", x: "穩強、猛強：報酬比 0050 高；差在多跌的部分有沒有換到等比例的報酬。\n穩但不強、弱：報酬比 0050 低。\n接近 0050：兩項都差不多。\n動過拉桿時，卡片會顯示和預設相比多或少幾檔。" },
   { page: "overview", sel: "#chartPanel", t: "散布圖：一眼看位置", x: "往上＝報酬高，往右＝跌得淺。\n靶心是 0050，虛線十字和綠色斜線（划算線）把圖切成五類。\n點一下圓點會標出代號；Ctrl＋滾輪可以縮放。" },
   { page: "overview", sel: "#tblPanel", t: "每檔明細", x: "點表頭排序；「類別」「類型」旁的 ▾ 可以篩選。\n「標註」打勾會標到散布圖上。\n欄位太多就用「顯示欄位」勾掉，也能下載 CSV。" },
