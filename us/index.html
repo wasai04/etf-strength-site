@@ -75,7 +75,7 @@ details.box[open] > summary { margin-bottom: 12px; }
 .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 24px; }
 .ctl > label { display: flex; justify-content: space-between; gap: 8px; font-weight: 500; font-size: .92rem; }
 .ctl output { font-family: var(--f-num); color: var(--accent); white-space: nowrap; }
-/* 回看期間的時間軸：兩個重疊的拉桿共用一條軌道，只有把手能點；深色小段＝基準大空頭（跌 ≥25%） */
+/* 回看期間的時間軸：兩個重疊的拉桿共用一條軌道，只有把手能點；深色小段＝基準大空頭（股票等區跌 ≥20%） */
 .period { position: relative; height: 44px; margin-top: 10px; }
 .ptrack { position: absolute; left: 8px; right: 8px; top: 10px; height: 8px; border-radius: 4px; background: var(--line); }
 .pfill { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: .55; border-radius: 4px; cursor: grab; touch-action: none; z-index: 1; }
@@ -131,6 +131,7 @@ td .t2 { color: var(--muted); }
 .achip[aria-pressed="true"] .n { color: inherit; opacity: .8; }
 .achip.fine { border-style: dashed; }
 .attr-fine { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 6px; }
+.attr-fine.solo { border-top: 0; margin-top: 2px; padding-top: 0; }
 .attr-fine .gl { color: var(--muted); font-size: .78rem; margin-bottom: 3px; }
 .achip.clr { background: var(--c-strong); border-color: var(--c-strong); color: #fff; font-weight: 700; margin-top: 6px; }
 .linkbtn { font: inherit; font-size: .8rem; background: none; border: 0; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
@@ -382,7 +383,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   </div>
 
   <div class="side-sec" id="sideOverview" data-for="overview">
-    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：每段有沒有包含大空頭，看「說明」頁的期間說明。&#10;自訂可以選 1999 年初（各分區從基準上市日）之後的任何一段，例如只看 2000～2002 年的網路泡沫。&#10;拖下方時間軸的把手就會切到自訂；軸上的色塊是基準的大空頭（股票等區跌 25% 以上、債券區 10% 以上），看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
+    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：每段有沒有包含大空頭，看「說明」頁的期間說明。&#10;自訂可以選 1999 年初（各分區從基準上市日）之後的任何一段，例如只看 2000～2002 年的網路泡沫。&#10;拖下方時間軸的把手就會切到自訂；軸上的色塊是基準的大空頭（股票等區跌 20% 以上、債券區 10% 以上），看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
       <div class="stack">
         <div class="cbox"><div class="row">
           <div class="seg" id="win" role="group" aria-label="回看期間">
@@ -399,7 +400,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           <div class="pticks" id="pticks" aria-hidden="true"></div>
         </div>
         <div class="btnpair"><button type="button" class="btn" data-pstep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-pstep="21">往後 1 個月 ▶</button></div>
-        <p class="hint"><span class="pkey"></span>色塊＝基準跌 <span class="crashTh">25%</span> 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
+        <p class="hint"><span class="pkey"></span>色塊＝基準跌 <span class="crashTh">20%</span> 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
         <p class="hint" id="cover"></p></div>
         <div class="controls">
           <div class="ctl burstctl"><p class="sentence"><span class="term" tabindex="0" data-tip="連續幾週加起來漲到這個幅度，算一段急漲（爆發段）。&#10;1 週＝單週大漲；拉長週數可以抓到「連漲好幾週、但每週都不算大」的段落，上限 4 週（約一個月）。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;參考：1 週配 7.5%、4 週配 20%，SPY 在 1999 年以來分別只有 5 段、2 段。&#10;漲幅上限 30%：SPY 任何 4 週最多漲 25.3%，超過 30% 只剩槓桿型、加密貨幣的少數極端週。">爆發段</span>：在 <output id="o-weeks"></output>內上漲 <output id="o-burst"></output> 以上，就算一段急漲。</p>
@@ -555,12 +556,12 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           <dt>標記：靠爆發</dt>
           <dd>贏基準超過 <span class="tieval">1.5%</span>（接近基準 的年化區間），但拿掉少數幾段急漲（爆發段）、基準也拿掉同樣那幾週之後就不贏。<br>這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。<br>漲跌比基準猛的（例如槓桿型）比較容易被標到。</dd>
           <dt>標記：未經空頭驗證</dt>
-          <dd>穩強、猛強要長期也站得住才可信。<br>上市以來（最早從 1999 年初算）至少經歷過一次基準大空頭（股票等區跌 ≥ 25%、債券區跌 ≥ 10%）再回到高點（<span id="crashYears"></span>），而且上市以來的年化沒有輸基準超過 1%，才算通過。<br>沒通過的在散布圖畫成空心點。</dd>
+          <dd>穩強、猛強要長期也站得住才可信。<br>上市以來（最早從 1999 年初算）至少經歷過一次基準大空頭（股票等區跌 ≥ 20%、債券區跌 ≥ 10%）再回到高點（<span id="crashYears"></span>），而且上市以來的年化沒有輸基準超過 1%，才算通過。<br>沒通過的在散布圖畫成空心點。</dd>
           <dt>標記：高波動</dt>
           <dd>基準每次大跌時，這檔的跌幅減基準的跌幅（跌幅 vs基準，負數＝跌得比較深），再把歷次取平均；平均跌得比基準深 <span class="hvval"></span>（目前門檻）以上就標。<br>只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。</dd>
         </dl>
       </div>
-      <p class="hint">規則裡的數字是目前的拉桿設定；空頭驗證的大空頭門檻固定（股票等區 25%、債券區 10%），年化容許固定 1%。<br>債券區：AGG 2020 年起的那次大跌到現在還沒回到高點，所以 2008 年後上市的債券 ETF 暫時都還沒通過驗證。</p>
+      <p class="hint">規則裡的數字是目前的拉桿設定；空頭驗證的大空頭門檻固定（股票等區 20%、債券區 10%），年化容許固定 1%。<br>債券區：AGG 2020 年起的那次大跌到現在還沒回到高點，所以 2008 年後上市的債券 ETF 暫時都還沒通過驗證。</p>
     </section>
     <section class="panel stack">
       <h2>屬性、地區、名稱怎麼來的</h2>
@@ -765,7 +766,7 @@ const RULE = P => ({
   "穩但不強": `規則：不屬於接近基準，年化比基準低，在划算線上方。`,
   "弱": `規則：不屬於接近基準，年化比基準低，在划算線下方。`
 });
-const CRASH = () => (D.defaults.crash || 0.25);   // 債券區在 buildView() 換成 crash_bond
+const CRASH = () => (D.defaults.crash || 0.20);   // 債券區在 buildView() 換成 crash_bond
 const TIPS = {
   cagr: "年化報酬：一次投入、配息再投入（含息還原價），換算成每年平均報酬。",
   dca: "定投年化：期初和之後每月第一個交易日，各投入同樣金額（中途不賣），依實際投入日期算的年化報酬率（XIRR）。\n期間短時會把差距放大，不宜直接和一次投入比。",
@@ -783,7 +784,7 @@ const TIPS = {
   av: "空頭跌幅 vs基準：在基準的幾次大跌裡，這檔的跌幅減基準的跌幅（跌幅都是負數），取平均（只算有經歷到的那幾次）。\n正數＝跌得比基準淺，負數＝比較深。",
   t: "屬性：股票區依基金名稱與晨星分類標註，分大項與細項（例：科技 › 量子計算）；緩衝型、選擇權收益、股債配置依晨星分類。其他區的大項是分區名稱，細項是債券天期、種類等。",
   cat: "類別：依「說明」頁五種類別的規則，用目前的拉桿數字判定。\n名稱旁的標記：靠爆發＝贏基準主要靠少數幾段急漲；\n未經空頭驗證＝上市以來沒經歷過大空頭，或上市以來年化輸基準超過 1%。",
-  r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、國際已開發、國際含新興、新興市場、單一國家）；其他區沒有標，顯示「未標」。左側地區選項滑過去有說明。",
+  r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、國際已開發、國際含新興、新興市場、單一國家）；其他區沒有標，顯示「無」。左側地區選項滑過去有說明。",
   mk: "標註：勾選後在上面的散布圖標出代號，方便找點。\n點散布圖上的點也可以標註或取消。"
 };
 
@@ -1477,7 +1478,7 @@ function buildFilters() {
     "國際已開發": "美國以外的已開發市場（歐洲、日本、英國、加拿大、澳洲等），不含新興市場，例：VEA、EFA、IEFA。",
     "國際含新興": "美國以外的全世界，已開發市場加上兩到三成新興市場，例：VXUS、IXUS、ACWX、VEU。",
     "新興市場": "中國、台灣、印度、巴西、南韓等，例：VWO、IEMG。", "單一國家": "只投資一個國家，例：EWJ（日本）、EWZ（巴西）、INDA（印度）。",
-    "未標": "債券、原物料、加密貨幣、槓桿區沒有標地區。" };
+    "無": "債券、原物料、加密貨幣、槓桿區不分地區。" };
   $("f-region").innerHTML = REGIONS.map(r => `<label><input type="checkbox" id="r-${r}" checked> <span class="term" tabindex="0" data-tip="${RT[r] || r}">${r}</span></label>`).join("");
   // 屬性：勾選框留著（隱藏）當狀態，表頭篩選、分享連結、檔數都照舊讀它；畫面上是分組的標籤
   $("f-type").innerHTML = `<div hidden>${TYPES.map(t => `<input type="checkbox" id="t-${t}" checked>`).join("")}</div><div id="f-type-ui"></div>`;
@@ -1507,8 +1508,8 @@ function drawAttr() {
   const used = new Set(ATTR_GROUPS.flatMap(g => g[1])), rest = TYPES.filter(t => !used.has(t));
   const groups = ATTR_GROUPS.map(([g, ts]) => [g, ts.filter(t => TYPES.includes(t))]).filter(g => g[1].length).concat(rest.length ? [[ZONE === "股票" ? "其他" : "", rest]] : []);
   const fs = on.flatMap(t => Object.entries(fine[t] || {}).sort((a, b) => b[1] - a[1]).map(([f, n]) => [t, f, n]));
-  ui.innerHTML = groups.map(([g, ts]) => `<div class="attr-g">${g ? `<span class="gl">${g}</span>` : ""}<div class="attr-chips">${ts.map(chip).join("")}</div></div>`).join("")
-    + (fs.length ? `<div class="attr-fine"><div class="gl">細項</div><div class="attr-chips">${fs.map(([t, f, n]) => `<button type="button" class="achip fine" data-af="${t}|${f}" aria-pressed="${TF.has(t + "|" + f)}">${on.length > 1 ? t + " › " : ""}${f} <span class="n">${n}</span></button>`).join("")}</div></div>` : "")
+  ui.innerHTML = (TYPES.length === 1 ? "" : groups.map(([g, ts]) => `<div class="attr-g">${g ? `<span class="gl">${g}</span>` : ""}<div class="attr-chips">${ts.map(chip).join("")}</div></div>`).join(""))
+    + (fs.length ? `<div class="attr-fine${TYPES.length === 1 ? " solo" : ""}"><div class="gl">細項</div><div class="attr-chips">${fs.map(([t, f, n]) => `<button type="button" class="achip fine" data-af="${t}|${f}" aria-pressed="${TF.has(t + "|" + f)}">${on.length > 1 ? t + " › " : ""}${f} <span class="n">${n}</span></button>`).join("")}</div></div>` : "")
     + (ASEL.size || TF.size ? `<button type="button" class="achip clr" id="attrClr">清除屬性篩選</button>` : "");
   ui.querySelectorAll("[data-at]").forEach(b => b.onclick = () => {
     const t = b.dataset.at, cur = [...ASEL];
@@ -1546,7 +1547,7 @@ const TOUR = [
   { t: "這個網站在做什麼", x: "把每一檔美股 ETF 拿來和基準比：報酬有沒有比較高、跌的時候有沒有比較深。\n再依這兩件事分成五類。\n全部是歷史資料，不是買賣建議。" },
   { page: "overview", sel: "#q", side: 1, t: "找一檔 ETF", x: "輸入代號或名稱的幾個字（例：QQQ、半導體、AI），從建議裡選。\n在總覽會把它標在散布圖上，並捲到明細那一列。" },
   { page: "overview", sel: "#zoneSeg", side: 1, t: "先選分區", x: "股票、債券、原物料、加密貨幣、槓桿各自跟自己的基準比，按鈕上的數字是檔數。\n下方可以打開「股息扣 30% 預扣稅」，看台灣居民實際拿到的報酬。" },
-  { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n色塊是基準的大空頭（股票區跌 25% 以上），期間有沒有包到它，結果差很多。" },
+  { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n色塊是基準的大空頭（股票區跌 20% 以上），期間有沒有包到它，結果差很多。" },
   { page: "overview", sel: "#counts", t: "五種類別", x: "穩強、猛強：報酬比基準高；差在多跌的部分有沒有換到等比例的報酬。\n穩但不強、弱：報酬比基準低。\n接近基準：兩項都差不多。\n動過拉桿時，卡片會顯示和預設相比多或少幾檔。" },
   { page: "overview", sel: "#chartPanel", t: "散布圖：一眼看位置", x: "往上＝報酬高，往右＝跌得淺。\n靶心是基準，虛線十字和綠色斜線（划算線）把圖切成五類。\n點一下圓點會標出代號；Ctrl＋滾輪可以縮放。" },
   { page: "overview", sel: "#tblPanel", t: "每檔明細", x: "點表頭排序；「類別」「屬性」旁的 ▾ 可以篩選。\n「標註」打勾會標到散布圖上。\n欄位太多就用「顯示欄位」勾掉，也能下載 CSV。" },
@@ -1598,16 +1599,21 @@ function bindTour() {
 // 時間軸（總覽的回看期間、空頭的走勢圖區間共用）：兩個重疊的拉桿共用一條軌道，把手位置＝交易日序號
 const pPos = i => i / (D.dates.length - 1) * 100;
 // 中間的色段（fillId）可以整段拖：長度不變、整段往前或往後移，用來看「固定 1 年」這種窗口一路滑過去的變化
-function buildRange(sId, eId, ticksId, gap, onMove, fillId) {
+// 刻度與把手範圍：載入時和換分區時（各區資料起點不同）都要重算
+function rangeScale(sId, eId, ticksId) {
   const N = D.dates.length - 1, y0 = +iso(D.dates[0]).slice(0, 4), y1 = +iso(D.dates[N]).slice(0, 4);
   [sId, eId].forEach(id => { $(id).min = 0; $(id).max = N; });
   const step = [1, 2, 5, 10].find(k => (y1 - y0) / k <= 6) || 10;
   let t = ""; for (let y = y0 + 1; y <= y1; y++) if (y % step === 0) t += `<span style="left:${pPos(lastIdxLE(D.dates, toDay(y + "-01-01")))}%">${y}</span>`;
   $(ticksId).innerHTML = t;
+}
+function buildRange(sId, eId, ticksId, gap, onMove, fillId) {
+  rangeScale(sId, eId, ticksId);
+  const NN = () => D.dates.length - 1;
   let raf = 0;
   const frame = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; onMove.draw(); }); };
   [sId, eId].forEach(id => $(id).addEventListener("input", () => {
-    let s = +$(sId).value, e = +$(eId).value;
+    let s = +$(sId).value, e = +$(eId).value; const N = NN();
     if (e - s < gap) { if (id === sId) s = e - gap; else e = s + gap; if (s < 0) { s = 0; e = gap; } if (e > N) { e = N; s = N - gap; } $(sId).value = s; $(eId).value = e; }
     onMove(s, e); frame();
   }));
@@ -1615,13 +1621,13 @@ function buildRange(sId, eId, ticksId, gap, onMove, fillId) {
   fill.addEventListener("pointerdown", e => { e.preventDefault(); drag = { x: e.clientX, s: +$(sId).value, e: +$(eId).value, w: fill.parentElement.getBoundingClientRect().width }; try { fill.setPointerCapture(e.pointerId); } catch (err) {} });
   fill.addEventListener("pointermove", ev => {
     if (!drag) return;
-    const di = Math.max(-drag.s, Math.min(N - drag.e, Math.round((ev.clientX - drag.x) / drag.w * N)));
+    const N = NN(), di = Math.max(-drag.s, Math.min(N - drag.e, Math.round((ev.clientX - drag.x) / drag.w * N)));
     onMove(drag.s + di, drag.e + di); frame();
   });
   fill.addEventListener("pointerup", () => { if (drag && onMove.end) onMove.end(); drag = null; });
   fill.addEventListener("pointercancel", () => { drag = null; });
   // 往前／往後一格（約 1 個月＝21 個交易日），長度不變
-  onMove.step = di => { let s = +$(sId).value, e = +$(eId).value; di = Math.max(-s, Math.min(N - e, di)); if (!di) return; onMove(s + di, e + di); onMove.draw(); if (onMove.end) onMove.end(); };
+  onMove.step = di => { let s = +$(sId).value, e = +$(eId).value; const N = NN(); di = Math.max(-s, Math.min(N - e, di)); if (!di) return; onMove(s + di, e + di); onMove.draw(); if (onMove.end) onMove.end(); };
 }
 function syncRange(sId, eId, fillId, s, e) {
   $(sId).value = s; $(eId).value = e;
@@ -1782,7 +1788,7 @@ function prep(d) {
   const ex = o => { if (o.i0 != null) { o.p = new Array(o.i0).fill(null).concat(o.p); o.dv = (o.dv || []).map(([i, v]) => [i + o.i0, v]); delete o.i0; } };
   // 名稱顯示中文簡稱 cn，英文全名留在 en（提示、搜尋用）；地區「全球（含美國）」顯示成「全球」
   const zh = x => { x.en = x.n; if (x.cn) x.n = x.cn; };
-  d.etfs.forEach(x => { ex(x); zh(x); x.r = x.r === "全球（含美國）" ? "全球" : (x.r || "未標"); x.t = x.t || x.z; BYC[x.c] = x; });
+  d.etfs.forEach(x => { ex(x); zh(x); x.r = x.r === "全球（含美國）" ? "全球" : (x.r || "無"); x.t = x.t || x.z; BYC[x.c] = x; });
   for (const t in d.ref) { ex(d.ref[t]); if (!BYC[t]) BYC[t] = { c: t, n: t, ...d.ref[t] }; }
   (d.lev_extra || []).forEach(x => { ex(x); zh(x); x.small = true; });   // 規模 1～10 億的槓桿 ETF，只在槓桿耗損頁
   RAW = d;
@@ -1837,6 +1843,7 @@ function zoneUi() {
   $("dStart").min = $("dEnd").min = $("epFrom").min = $("epTo").min = lo;
   if ($("dStart").value < lo) $("dStart").value = lo;
   $("epthN").textContent = episodes(D, D.defaults.epth ?? 0.15).length;
+  rangeScale("pS", "pE", "pticks"); rangeScale("eS", "eE", "epticks"); crashMarks("ptrack", crashEps(), null, "基準大空頭"); syncPeriod();
   document.querySelectorAll(".crashTh").forEach(el => { el.textContent = f1(CRASH()) + "%"; });
   fillLive();
 }
