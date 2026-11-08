@@ -80,8 +80,8 @@ details.box[open] > summary { margin-bottom: 12px; }
 .pfill { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: .55; border-radius: 4px; cursor: grab; touch-action: none; z-index: 1; }
 .pfill::after { content: ""; position: absolute; inset: -7px 0; }   /* 加大可以抓的範圍 */
 .pfill:active { cursor: grabbing; opacity: .75; }
-.pcrash { position: absolute; top: -3px; bottom: -3px; background: var(--c-strong); border-radius: 2px; z-index: 2; pointer-events: none; }   /* 蓋在藍色段上面看得到，但不擋拖曳 */
-.pcrash.dim { opacity: .45; }
+.pcrash { position: absolute; top: -3px; bottom: -3px; background: var(--dn); border-radius: 2px; z-index: 2; pointer-events: none; }   /* 蓋在藍色段上面看得到，但不擋拖曳 */
+.pcrash.dim { filter: saturate(.4); }
 input[aria-invalid=true] { outline: 2px solid var(--red); outline-offset: 1px; }
 .period input[type=range] { position: absolute; z-index: 3; left: 0; right: 0; top: 4px; width: 100%; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
 .period input[type=range]::-webkit-slider-runnable-track { background: none; height: 20px; }
@@ -91,7 +91,7 @@ input[aria-invalid=true] { outline: 2px solid var(--red); outline-offset: 1px; }
 .period input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pticks { position: absolute; left: 8px; right: 8px; top: 26px; height: 16px; font-size: .7rem; color: var(--muted); font-family: var(--f-num); }
 .pticks span { position: absolute; transform: translateX(-50%); }
-.pkey { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--c-strong); margin-right: 4px; vertical-align: -1px; }
+.pkey { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--dn); margin-right: 4px; vertical-align: -1px; }
 /* 拉桿下方的刻度（爆發段的週數、漲幅）：左右各留 8px，對齊把手中心 */
 .rticks { position: relative; height: 14px; margin: 0 8px; font-size: .7rem; color: var(--muted); font-family: var(--f-num); }
 .rticks span { position: absolute; transform: translateX(-50%); }
@@ -351,7 +351,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   </div>
 
   <div class="side-sec" id="sideOverview" data-for="overview">
-    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。&#10;自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。&#10;拖下方時間軸的把手就會切到自訂；軸上的橘色小段是 0050 跌 25% 以上的大空頭，看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
+    <h3><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。&#10;自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。&#10;拖下方時間軸的把手就會切到自訂；軸上的色塊是 0050 跌 25% 以上的大空頭，看得出選的期間有沒有包含到。">回看期間</span>與分類門檻（總覽）</h3>
       <div class="stack">
         <div class="cbox"><div class="row">
           <div class="seg" id="win" role="group" aria-label="回看期間">
@@ -368,7 +368,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           <div class="pticks" id="pticks" aria-hidden="true"></div>
         </div>
         <div class="btnpair"><button type="button" class="btn" data-pstep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-pstep="21">往後 1 個月 ▶</button></div>
-        <p class="hint"><span class="pkey"></span>橘色＝0050 跌 25% 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
+        <p class="hint"><span class="pkey"></span>色塊＝0050 跌 25% 以上的大空頭。<br>拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。</p>
         <p class="hint" id="cover"></p></div>
         <div class="controls">
           <div class="ctl burstctl"><p class="sentence"><span class="term" tabindex="0" data-tip="連續幾週加起來漲到這個幅度，算一段急漲（爆發段）。&#10;1 週＝單週大漲；拉長週數可以抓到「連漲好幾週、但每週都不算大」的段落，上限 4 週（約一個月）。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;參考：1 週配 7.5%、4 週配 20%，0050 在 2015 年以來分別只有 4 段、1 段。&#10;漲幅上限 30%：0050 任何 4 週都沒漲超過 23%，超過 30% 只剩槓桿型的少數極端週。">爆發段</span>：在 <output id="o-weeks"></output>內上漲 <output id="o-burst"></output> 以上，就算一段急漲。</p>
@@ -445,7 +445,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
         <div class="pticks" id="epticks" aria-hidden="true"></div>
       </div>
       <div class="row" style="gap:6px;justify-content:center"><button type="button" class="btn" data-estep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-estep="21">往後 1 個月 ▶</button></div>
-      <p class="hint"><span class="pkey"></span>橘色＝0050 的大跌期間（從高點跌到低點，依<span class="side-where">左側欄</span>的大跌門檻），深橘是目前選的這一次。<br>拖兩端的把手調整走勢圖的日期範圍；拖中間的藍色段，長度不變、整段移動。</p>
+      <p class="hint"><span class="pkey"></span>色塊＝0050 的大跌期間（從高點跌到低點，依<span class="side-where">左側欄</span>的大跌門檻），顏色越深跌越多，灰掉的是沒選的。<br>拖兩端的把手調整走勢圖的日期範圍；拖中間的藍色段，長度不變、整段移動。</p>
       <svg id="epchart" class="chart" viewBox="0 0 900 360" role="img" aria-label="大跌期間各 ETF 的走勢，起點高點設為 100"></svg>
       <p class="foot">走勢以 0050 高點那天 = 100；淡色區＝0050 從高點跌到低點。<br>勾選下表的「畫圖」可以加減線（最多 8 條）。</p>
       <div class="head"><span class="foot">點整格表頭排序；列底色＝總覽目前的類別</span>
@@ -1162,7 +1162,7 @@ function drawEpChart(ep) {
   lo = Math.floor(lo / 10) * 10; hi = Math.ceil(hi / 10) * 10;
   const sx = i => m.l + (i - i0) / (i1 - i0) * (Wd - m.l - m.r), sy = v => H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b);
   const bx0 = Math.min(Math.max(sx(ep.pk), m.l), Wd - m.r), bx1 = Math.min(Math.max(sx(ep.tr), m.l), Wd - m.r);
-  let g = `<rect x="${bx0}" y="${m.t}" width="${bx1 - bx0}" height="${H - m.t - m.b}" fill="var(--band)"/>`;
+  let g = `<rect x="${bx0}" y="${m.t}" width="${bx1 - bx0}" height="${H - m.t - m.b}" fill="var(--dn)" fill-opacity="${crashAlpha(ep.depth, .1, .3)}"/>`;
   const step = (hi - lo) > 120 ? 40 : (hi - lo) > 60 ? 20 : 10;
   for (let v = lo; v <= hi; v += step) g += `<line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${m.l - 6}" y="${sy(v) + 4}" text-anchor="end">${v}</text>`;
   g += `<line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(100)}" y2="${sy(100)}" stroke="var(--fg)" stroke-dasharray="3 4" opacity=".5"/>`;
@@ -1393,7 +1393,7 @@ function colMenu(boxId, resetId, cols, locked, vis, defs, key, redraw) {
 const TOUR = [
   { t: "這個網站在做什麼", x: "把每一檔台股 ETF 拿來和 0050 比：報酬有沒有比較高、跌的時候有沒有比較深。\n再依這兩件事分成五類。\n全部是歷史資料，不是買賣建議。" },
   { page: "overview", sel: "#q", side: 1, t: "找一檔 ETF", x: "輸入代號或名稱的幾個字（例：878、高股息），從建議裡選。\n在總覽會把它標在散布圖上，並捲到明細那一列。" },
-  { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n橘色是 0050 跌 25% 以上的大空頭，期間有沒有包到它，結果差很多。" },
+  { page: "overview", sel: "#sideOverview", side: 1, t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n色塊是 0050 跌 25% 以上的大空頭，期間有沒有包到它，結果差很多。" },
   { page: "overview", sel: "#counts", t: "五種類別", x: "穩強、猛強：報酬比 0050 高；差在多跌的部分有沒有換到等比例的報酬。\n穩但不強、弱：報酬比 0050 低。\n接近 0050：兩項都差不多。\n動過拉桿時，卡片會顯示和預設相比多或少幾檔。" },
   { page: "overview", sel: "#chartPanel", t: "散布圖：一眼看位置", x: "往上＝報酬高，往右＝跌得淺。\n靶心是 0050，虛線十字和綠色斜線（划算線）把圖切成五類。\n點一下圓點會標出代號；Ctrl＋滾輪可以縮放。" },
   { page: "overview", sel: "#tblPanel", t: "每檔明細", x: "點表頭排序；「類別」「類型」旁的 ▾ 可以篩選。\n「標註」打勾會標到散布圖上。\n欄位太多就用「顯示欄位」勾掉，也能下載 CSV。" },
@@ -1474,10 +1474,13 @@ function syncRange(sId, eId, fillId, s, e) {
   $(sId).style.zIndex = s > (D.dates.length - 1) / 2 ? 4 : "";   // 兩個把手疊在右半邊時，起日要在上面才拉得回來
   $(fillId).style.left = pPos(s) + "%"; $(fillId).style.width = (pPos(e) - pPos(s)) + "%";
 }
-// 軌道上的橘色段：0050 從高點跌到低點；sel 以外的變淡（sel 沒給就全部一樣深）
+// 跌幅越深顏色越深：跌 15% 用最淺，資料裡最深的那次用最深（台股 0050 最深約 34%、美股 SPY 約 55%）
+let crashMax = null;
+const crashAlpha = (depth, lo, hi) => { if (crashMax == null) crashMax = Math.max(0.3, ...episodes(D, 0.15).map(e => Math.abs(e.depth))); return lo + (hi - lo) * Math.min(1, Math.max(0, (Math.abs(depth) - 0.15) / (crashMax - 0.15))); };
+// 軌道上的色塊：0050 從高點跌到低點；sel 以外的變淡（sel 沒給就全部一樣深）
 function crashMarks(trackId, eps, sel, label) {
   $(trackId).querySelectorAll(".pcrash").forEach(el => el.remove());
-  $(trackId).insertAdjacentHTML("beforeend", eps.map((ep, i) => `<div class="pcrash${sel != null && i !== sel ? " dim" : ""}" style="left:${pPos(ep.pk)}%;width:${pPos(ep.tr) - pPos(ep.pk)}%" title="${label}：${ym(D.dates[ep.pk])}→${ym(D.dates[ep.tr])}，跌 ${pct(ep.depth)}"></div>`).join(""));
+  $(trackId).insertAdjacentHTML("beforeend", eps.map((ep, i) => `<div class="pcrash${sel != null && i !== sel ? " dim" : ""}" style="opacity:${crashAlpha(ep.depth, .4, 1) * (sel != null && i !== sel ? .55 : 1)};left:${pPos(ep.pk)}%;width:${pPos(ep.tr) - pPos(ep.pk)}%" title="${label}：${ym(D.dates[ep.pk])}→${ym(D.dates[ep.tr])}，跌 ${pct(ep.depth)}"></div>`).join(""));
 }
 // 回看期間：按 1／3／5 年或改日期，把手跟著動；拖把手就切到自訂
 function buildPeriod() {
