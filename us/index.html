@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
-/* 版面（ui/side-panel）：電腦版左側固定欄（分頁＋共用篩選＋目前分頁的拉桿），右側內容；手機版改底部分頁列，拉桿收進「設定」抽屜 */
+/* 版面：電腦版左側固定欄（全站設定、分頁、搜尋、共用篩選），右側內容；分頁專用的設定在各分頁頂端；手機版改底部分頁列，側欄收進「設定」抽屜 */
 :root {
   --bg: #eef1f2; --panel: #fbfcfc; --fg: #1b2531; --muted: #5c6976; --line: #cfd6dc; --accent: #24467f; --quad: rgba(36,70,127,.06);
   --c-steady: #2f7d7a; --c-strong: #b9740f; --c-burst: #a3477e; --c-tie: #76699a; --c-safe: #5a88bd; --c-weak: #9aa3ab;
@@ -138,9 +138,11 @@ td .t2 { color: var(--muted); }
 .stack { display: grid; gap: 10px; }
 .counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .cnt { border-top: 4px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--panel)); box-shadow: -1px 0 0 var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
-.cnt .hd { margin: 0; line-height: 1.45; display: flex; align-items: center; gap: .45em; }   /* 類別名＋白話說明同一行；說明換行時對齊說明的開頭（懸掛縮排），類別名和說明上下置中（同底下的檔數），卡片才扁 */
-.cnt .name { font-weight: 700; font-size: 1.05rem; flex: none; }
-.cnt .hd .plain { flex: 1; min-width: 0; text-wrap: pretty; }
+.cnt .ctop { display: flex; justify-content: space-between; align-items: center; gap: 8px; }   /* 卡片第一行：類別名＋檔數（JC 2026-11-12），第二行說明 */
+.cnt .name { font-weight: 700; font-size: 1.05rem; }
+.cnt .cnum { display: inline-flex; align-items: center; gap: 6px; }
+.cnt .cnum .bstat { display: grid; gap: 0; line-height: 1.3; text-align: right; white-space: nowrap; font-size: .74rem; color: var(--muted); }
+.cnt .cnum .delta { font-size: .74rem; }
 .cnt .plain { font-size: .8rem; color: var(--muted); }
 @media (min-width: 1100px) { .counts { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .cnt .rule { font-size: .74rem; color: var(--muted); line-height: 1.4; text-wrap: pretty; }
@@ -197,7 +199,7 @@ tr.changed td:first-child { box-shadow: inset 4px 0 0 var(--fg); }
 .was { color: var(--muted); font-family: var(--f-body); font-size: .76rem; margin-left: 4px; }
 .swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; }
 details.cols { position: relative; }
-/* 搜尋：側欄最上面；邊打邊跳建議 */
+/* 搜尋：側欄分頁和篩選之間；邊打邊跳建議 */
 .search { position: relative; width: 100%; }
 .search input::-webkit-search-cancel-button { display: none; }
 .search .qx { position: absolute; right: 4px; top: 4px; width: 26px; height: 26px; border: 0; background: none; color: var(--muted); font-size: 1.1rem; line-height: 1; cursor: pointer; border-radius: 4px; }
@@ -276,7 +278,7 @@ header.hd > div { flex: 1 1 320px; min-width: 0; }   /* 副標題在左欄裡換
 .eb-name.roll-in { transform: translateY(100%); opacity: 0; transition: none; }
 .eyebrow a { color: var(--muted); font-weight: 500; letter-spacing: .04em; text-decoration: none; border-bottom: 1px solid transparent; transition: color .2s, border-color .2s; }
 .eyebrow a:hover { color: var(--accent); border-bottom-color: currentColor; }
-@media (max-width: 900px) { .eyebrow { order: -1; margin: 0; } }   /* 窄螢幕放到標題上方 */
+@media (max-width: 900px) { .eyebrow { order: -1; margin: 0; flex-basis: 100%; } }   /* 窄螢幕放到標題上方 */
 /* 換頁：瀏覽器支援的話用跨頁轉場（舊頁和新頁交叉淡化），離開時內容和側欄先淡出；
    新頁面資料算好前內容和側欄先藏著（:root.booting，不要和側欄原本的 .loading 混用）、標題下跑一條進度線，畫完再淡入。
    只留眉標、側欄的分段不淡（當定位點）；標題離開時淡出、進來時馬上淡入，不等資料，換頁時才不會整塊閃 */
@@ -284,12 +286,12 @@ header.hd > div { flex: 1 1 320px; min-width: 0; }   /* 副標題在左欄裡換
 @view-transition { navigation: auto; }
 ::view-transition-group(root) { animation-duration: var(--fade); }
 .wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt) { transition: opacity var(--fade) ease; }
-header.hd h1 { animation: h1in var(--fade) ease both; transition: opacity var(--fade) ease; }   /* 標題不等資料，一進頁面就淡入 */
+header.hd h1 { animation: h1in var(--fade) ease backwards; transition: opacity var(--fade) ease; }   /* 標題不等資料，一進頁面就淡入 */
 :root.leaving header.hd h1 { opacity: 0; }
 @keyframes h1in { from { opacity: 0; } }
 :root.leaving :is(.wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt)) { opacity: 0; }
 :root.booting :is(.wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt)) { opacity: 0; transition: none; }
-:root.booting header.hd::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 2px; border-radius: 1px;
+:root:is(.booting, .loading) header.hd::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 2px; border-radius: 1px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent) 0 0 / 40% 100% no-repeat; animation: loadbar 1.1s ease-in-out infinite; }
 @keyframes loadbar { from { background-position: -60% 0; } to { background-position: 160% 0; } }
 @media (prefers-reduced-motion: reduce) { .mkt::before, .mkt a, .eb-name, .wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt), header.hd h1 { transition: none; } header.hd::after, header.hd h1 { animation: none; } ::view-transition-group(root) { animation: none; } }
@@ -336,7 +338,7 @@ details.fold .controls { gap: 14px 28px; }
 .btnpair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .btnpair .btn { text-align: center; padding-inline: 6px; }
 .btnpair.toprow { grid-template-columns: auto 1fr; }   /* 導覽按鈕照字寬，分享按鈕吃剩下的寬度，一行放得下 */
-.btnpair.toprow .btn { white-space: nowrap; }
+.btnpair.toprow .btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .side .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; box-sizing: border-box; }
 .side .seg button { text-align: center; padding-inline: 4px; }
 /* 分區：上面分區名、下面檔數；名稱太長時只在中間斷（加密／貨幣） */
@@ -366,7 +368,7 @@ details.fold .controls { gap: 14px 28px; }
   .closeset { display: inline-block; }
   .bottombar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 35; background: var(--panel); border-top: 1px solid var(--line);
     padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
-  .bottombar button { flex: 1; font: inherit; font-size: .85rem; background: none; border: 0; border-top: 3px solid transparent; color: var(--muted); padding: 10px 4px; cursor: pointer; }
+  .bottombar button { flex: 1; font: inherit; white-space: nowrap; font-size: .85rem; background: none; border: 0; border-top: 3px solid transparent; color: var(--muted); padding: 10px 4px; cursor: pointer; }
   .bottombar button[aria-selected=true] { color: var(--fg); border-top-color: var(--accent); }
   .bottombar .setbtn { color: var(--accent); font-weight: 700; }
   body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
@@ -393,13 +395,13 @@ details.fold .controls { gap: 14px 28px; }
 .tour-card { position: fixed; z-index: 52; width: min(380px, calc(100vw - 32px)); background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; box-shadow: 0 8px 28px rgba(0, 0, 0, .35); display: grid; gap: 8px; }
 .tour-card h3 { margin: 0; font-size: 1.02rem; }
 .tour-card p { margin: 0; font-size: .9rem; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } details.fold > summary::before { transition: none; } tr.flash td { animation: none !important; } }
 </style>
 
 <script>
 // 主題（跟系統／亮／暗）與全頁字級，存在這個瀏覽器；先套用再畫面，避免閃爍
-// 資料算好前先把內容藏起來（:root.booting），畫完或出錯時拿掉；萬一卡住 15 秒後也拿掉。和下面側欄用的 .loading 是兩回事
-document.documentElement.classList.add("booting"); setTimeout(() => document.documentElement.classList.remove("booting"), 15000);
+// 資料算好前先把內容藏起來（:root.booting），畫完或出錯時拿掉；萬一卡住 30 秒後也拿掉。和下面側欄用的 .loading 是兩回事
+document.documentElement.classList.add("booting"); setTimeout(() => document.documentElement.classList.remove("booting"), 30000);
 // 跨頁轉場做不成時（例如舊頁在背景、來不及截圖）瀏覽器會丟出 promise 錯誤；照常顯示即可，把錯誤接住
 const vtQuiet = e => { const t = e.viewTransition; if (t) { t.ready.catch(() => {}); t.finished.catch(() => {}); t.updateCallbackDone.catch(() => {}); } };
 addEventListener("pagereveal", vtQuiet); addEventListener("pageswap", vtQuiet);
@@ -452,10 +454,10 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <p class="hint">點大項篩選（可複選），再點下方的細項縮小範圍；都不選＝全部。</p></div>
       <div class="controls">
         <div class="ctl"><label for="vmax"><span class="term" tabindex="0" data-tip="波動倍數＝這檔每週漲跌的幅度，是基準的幾倍（週報酬的標準差相除）。&#10;例：1.5＝漲跌幅度大約是基準的 1.5 倍；2 倍槓桿約 1.5～2。&#10;和 beta 不同：beta 還會被「走勢和基準像不像」拉低，國際股票 ETF 的 beta 可能只有 0.5，實際漲跌卻是基準的 2 倍以上。&#10;用總覽選的期間計算；拉到最右邊＝不限制。1／3／5 年最高約 2.0～2.9，所以上限設 3。">波動倍數上限</span><output id="o-vmax"></output></label>
-          <input type="range" id="vmax" min="0.5" max="3" step="0.1"><div class="rticks" id="tk-vmax" aria-hidden="true"></div><p class="hint">只看漲跌沒那麼猛的。</p></div>
-        <div class="ctl"><label for="hv"><span class="term" tabindex="0" data-tip="每次大跌：這檔的跌幅減基準的跌幅（跌幅都是負數）＝跌幅 vs基準。&#10;例：基準跌 −24%、這檔跌 −29%：−29% −（−24%）＝ −5%，跌得比基準深 5%。&#10;這檔上市後經歷過的每一次大跌都算，取平均；和空頭頁選哪一次無關。&#10;哪些算大跌由空頭頁的「大跌門檻」決定，改了門檻結果也會跟著變。&#10;只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。">高波動門檻</span><output id="o-hv"></output></label>
+          <input type="range" id="vmax" min="0.5" max="3" step="0.1"><div class="rticks" id="tk-vmax" aria-hidden="true"></div><p class="hint">只看漲跌沒那麼猛的。<br>預設不限制。</p></div>
+        <div class="ctl"><label for="hv"><span class="term" tabindex="0" data-tip="每次大跌：這檔的跌幅減基準的跌幅（跌幅都是負數）＝跌幅 vs 基準。&#10;例：基準跌 −24%、這檔跌 −29%：−29% −（−24%）＝ −5%，跌得比基準深 5%。&#10;這檔上市後經歷過的每一次大跌都算，取平均；和空頭頁選哪一次無關。&#10;哪些算大跌由空頭頁的「大跌門檻」決定，改了門檻結果也會跟著變。&#10;只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。">高波動門檻</span><output id="o-hv"></output></label>
           <input type="range" id="hv" min="1" max="25" step="1"><div class="rticks" id="tk-hv" aria-hidden="true"></div>
-          <p class="hint">歷次大跌平均跌得比基準深這麼多以上（空頭跌幅 vs基準≤ −門檻），名稱旁標「高波動」。大跌用「空頭」頁的大跌門檻認定。<br>預設 <span class="def" data-k="hv"></span>。</p>
+          <p class="hint">歷次大跌平均跌得比基準深這麼多以上（空頭跌幅 vs 基準 ≤ −門檻），名稱旁標「高波動」。大跌用「空頭」頁的大跌門檻認定。<br>預設 <span class="def" data-k="hv"></span>。</p>
           <label for="hvx" class="chk"><input type="checkbox" id="hvx"> 排除高波動的 ETF</label></div>
       </div>
     </div>
@@ -494,7 +496,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
             <label for="weeks" class="sub">週數</label><input type="range" id="weeks" min="1" max="4" step="1"><div class="rticks" id="tk-weeks" aria-hidden="true"></div>
             <label for="burst" class="sub">漲幅</label><input type="range" id="burst" min="3" max="30" step="0.5"><div class="rticks" id="tk-burst" aria-hidden="true"></div>
             <p class="hint">預設 <span class="def" data-k="weeks"></span>內上漲 <span class="def" data-k="burst"></span>。</p><p class="hint" id="calib"></p></div>
-          <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和基準直接相減。&#10;例：設 ±1.5%、基準年化 11% 時，年化 9.5%～12.5%、而且最大回撤和基準相差 3% 以內的，算接近基準。&#10;追蹤同一指數的 ETF（例如 VOO、IVV 對 SPY）會落在這裡；年化接近但回撤差很多的，照划算線分到其他四類。&#10;參考：5 年累積下來，±1% 約差 5%、±1.5% 約差 7%、±2% 約差 10%。">接近基準 的年化區間</span><output id="o-tie"></output></label>
+          <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和基準直接相減。&#10;例：設 ±1.5%、基準年化 11% 時，年化 9.5%～12.5%、而且最大回撤和基準相差 3% 以內的，算接近基準。&#10;追蹤同一指數的 ETF（例如 VOO、IVV 對 SPY）會落在這裡；年化接近但回撤差很多的，照划算線分到其他四類。&#10;參考：5 年累積下來，±1% 約差 5%、±1.5% 約差 7%、±2% 約差 10%。">接近基準的年化區間</span><output id="o-tie"></output></label>
             <input type="range" id="tie" min="0" max="5" step="0.25"><div class="rticks" id="tk-tie" aria-hidden="true"></div><p class="hint">報酬和基準差多少以內算接近（回撤也要相差 3% 以內）。<br>預設 ±<span class="def" data-k="tie"></span>。</p></div>
         </div>
         <div class="row"><button type="button" class="btn" id="reset">回到預設門檻</button><span class="hint">類別的定義見「說明」</span></div>
@@ -529,7 +531,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     <div class="pair73">
       <section class="panel stack" id="epsPanel">
         <h2>基準大跌時，各檔跌多少</h2>
-        <p class="hint">用基準的大跌當共同時間表：每一次都從基準的高點算起，看各檔在同一段日期裡最多跌多少、比基準深或淺多少、多久回到原來的高點。<br>「跌幅 vs基準」是這檔跌幅減基準跌幅（都是負數）：正數＝跌得比基準淺，負數＝比較深；下一次不一定一樣。<br>只有和基準比的欄位上色：比基準好用「漲」的顏色，比較差用「跌」的顏色。<br>大跌門檻在本頁的「大跌門檻」區，高波動門檻在<span class="side-where">左側欄</span>。</p>
+        <p class="hint">用基準的大跌當共同時間表：每一次都從基準的高點算起，看各檔在同一段日期裡最多跌多少、比基準深或淺多少、多久回到原來的高點。<br>「跌幅 vs 基準」是這檔跌幅減基準跌幅（都是負數）：正數＝跌得比基準淺，負數＝比較深；下一次不一定一樣。<br>只有和基準比的欄位上色：比基準好用「漲」的顏色，比較差用「跌」的顏色。<br>大跌門檻在本頁的「大跌門檻」區，高波動門檻在<span class="side-where">左側欄</span>。</p>
         <div class="stack adj"><h3 class="adjh">選一次大跌</h3><div class="chips" id="eps" role="group" aria-label="選一次大跌"></div></div>
       </section>
       <section class="panel stack pctl" id="crashPanel" aria-label="大跌門檻"><h2>大跌門檻</h2><div class="controls">
@@ -551,7 +553,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       </div>
       <div class="row" style="gap:6px;justify-content:center"><button type="button" class="btn" data-estep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-estep="21">往後 1 個月 ▶</button></div>
       </div>
-      <p class="hint"><span class="pkey"></span>色塊＝基準的大跌期間（從高點跌到低點，依本頁的大跌門檻），顏色越深跌越多，灰掉的是沒選的這一次。<br>拖兩端的把手調整走勢圖的日期範圍；拖中間的藍色段，長度不變、整段移動。</p>
+      <p class="hint"><span class="pkey"></span>色塊＝基準的大跌期間（從高點跌到低點，依本頁的大跌門檻），顏色越深跌越多，灰掉的是沒選的。<br>拖兩端的把手調整走勢圖的日期範圍；拖中間的藍色段，長度不變、整段移動。</p>
       <svg id="epchart" class="chart" viewBox="0 0 900 360" role="img" aria-label="大跌期間各 ETF 的走勢，起點高點設為 100"></svg>
       <p class="foot">走勢以基準高點那天 = 100；淡色區＝基準從高點跌到低點。<br>勾選下表的「畫圖」可以加減線（最多 8 條）。</p>
       <div class="head"><span class="foot">點整格表頭排序；列底色＝總覽目前的類別</span>
@@ -569,7 +571,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <p class="hint">每一則按下去，會把總覽或空頭頁設成對應的期間、篩選和標註，用目前的資料自己看。<br>看完想回到一開始的樣子，按「回到預設畫面」。歷史資料，不是買賣建議。</p>
       <div class="row"><button type="button" class="btn" data-ins="">回到預設畫面</button></div>
       <div class="insights">
-        <article class="ins"><h3>基準本身就很難贏</h3><p>5 年期間，年化贏基準超過「接近基準 的區間」的只有少數幾檔，排在最前面的多半是正 2。<br>基準偏重台積電和科技股，本身就比大盤積極。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-cagr" data-to="tblPanel">依年化排序看</button></article>
+        <article class="ins"><h3>基準本身就很難贏</h3><p>5 年期間，年化贏基準超過「接近基準的區間」的只有少數幾檔，排在最前面的多半是正 2。<br>基準偏重台積電和科技股，本身就比大盤積極。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-cagr" data-to="tblPanel">依年化排序看</button></article>
         <article class="ins"><h3>「報酬更高、跌得更少」幾乎不存在</h3><p>散布圖右上角是大家都想找的那一格。<br>5 年期間落在裡面的只有零星幾檔，其中還有追蹤同一個指數、幾乎和基準一樣的。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;mk=@q1" data-to="chartPanel">在散布圖標出右上角</button></article>
         <article class="ins"><h3>穩強很少，而且只小幅領先</h3><p>穩強要報酬比基準高、多跌的部分也換得到報酬。<br>5 年期間符合的不多，報酬／回撤也只比基準高一點。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;cat=0&amp;so=-rr" data-to="tblPanel">只看穩強</button></article>
         <article class="ins"><h3>正 2 的領先，集中在少數幾週</h3><p>正 2 年化最高，但把幾段急漲拿掉、基準也拿掉同幾週，平時反而落後。<br>一直持有才拿得到；進出時剛好錯過那幾週，就可能輸基準。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=l&amp;so=lead&amp;cols=%2Blead,%2Bnb" data-to="tblPanel">只看槓桿型、看平時領先</button></article>
@@ -626,13 +628,13 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
           <dt>划算線是什麼</dt>
           <dd>散布圖的綠色斜虛線。<br>線上每一點的「年化報酬 ÷ 最大回撤」都和基準一樣，這個比值叫 Calmar 比率，基金評比常用。<br>線的上方＝每承受 1% 回撤換到的報酬比基準多。<br>基準年化是負的時候這個比值沒有意義，改成只看最大回撤有沒有比基準深。</dd>
           <dt>兩條線怎麼切出五類</dt>
-          <dd>先看是不是接近基準：年化相差 ±<span class="tieval">1.5%</span> 以內，而且最大回撤相差 3% 以內。<br>不是的話，看年化比基準高或低，再看在划算線上方還是下方。<br>所以右上角（報酬更高、跌得更少）除了接近基準 的，都是穩強；左下角除了接近基準 的，都是弱。<br>年化差不多、回撤卻差很多的<span id="nearEx"></span>，不算接近，照划算線分類。</dd>
+          <dd>先看是不是接近基準：年化相差 ±<span class="tieval">1.5%</span> 以內，而且最大回撤相差 3% 以內。<br>不是的話，看年化比基準高或低，再看在划算線上方還是下方。<br>所以右上角（報酬更高、跌得更少）除了接近基準的，都是穩強；左下角除了接近基準的，都是弱。<br>年化差不多、回撤卻差很多的<span id="nearEx"></span>，不算接近，照划算線分類。</dd>
           <dt>標記：靠爆發</dt>
-          <dd>贏基準超過 <span class="tieval">1.5%</span>（接近基準 的年化區間），但拿掉少數幾段急漲（爆發段）、基準也拿掉同樣那幾週之後就不贏。<br>這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。<br>漲跌比基準猛的（例如槓桿型）比較容易被標到。</dd>
+          <dd>贏基準超過 <span class="tieval">1.5%</span>（接近基準的年化區間），但拿掉少數幾段急漲（爆發段）、基準也拿掉同樣那幾週之後就不贏。<br>這種 ETF 的領先集中在那幾週，中途進出錯過就拿不到。<br>漲跌比基準猛的（例如槓桿型）比較容易被標到。</dd>
           <dt>標記：未經空頭驗證</dt>
           <dd>穩強、猛強要長期也站得住才可信。<br>上市以來（最早從 1999 年初算）至少經歷過一次基準大空頭（股票等區跌 ≥ 20%、債券區跌 ≥ 10%）再回到高點（<span id="crashYears"></span>），而且上市以來的年化沒有輸基準超過 1%，才算通過。<br>沒通過的在散布圖畫成空心點。</dd>
           <dt>標記：高波動</dt>
-          <dd>基準每次大跌時，這檔的跌幅減基準的跌幅（跌幅 vs基準，負數＝跌得比較深），再把歷次取平均；平均跌得比基準深 <span class="hvval"></span>（目前門檻）以上就標。<br>只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。</dd>
+          <dd>基準每次大跌時，這檔的跌幅減基準的跌幅（跌幅 vs 基準，負數＝跌得比較深），再把歷次取平均；平均跌得比基準深 <span class="hvval"></span>（目前門檻）以上就標。<br>只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。</dd>
         </dl>
       </div>
       <p class="hint">規則裡的數字是目前的拉桿設定；空頭驗證的大空頭門檻固定（股票等區 20%、債券區 10%），年化容許固定 1%。<br>債券區：AGG 2020 年起的那次大跌到現在還沒回到高點，所以 2008 年後上市的債券 ETF 暫時都還沒通過驗證。</p>
@@ -847,15 +849,15 @@ const TIPS = {
   mdd: "最大回撤：期間內從高點往下跌的最大幅度。",
   rec: "回到前高：最大回撤那次，從跌前高點到重新站回高點花了幾個月。\n「未回復」＝到期末還沒回到高點。",
   rr: "報酬／回撤（Calmar 比率）：年化報酬 ÷ 最大回撤的幅度。\n每承受 1% 的回撤，換到多少年化報酬；愈高愈划算。\n不低於基準的，在散布圖的划算線上方。",
-  life: "上市以來 vs基準：從上市日（最早 1999 年初）到資料最後一天，年化減基準同期的年化。\n不受上面選的期間影響，用來看這檔長期有沒有贏。",
-  lead: "平時領先：把這檔的爆發段漲幅當成 0 重算年化，基準在同樣那幾週也當成 0 重算，兩者相減。\n正數＝大漲那幾段以外的時間也比基準好，數字就是好多少；只有報酬高於基準的才算。\n贏基準超過「接近基準 的年化區間」、這欄卻不是正數的，標「靠爆發」。\n游標移到格子上看兩邊重算後的年化。",
+  life: "上市以來 vs 基準：從上市日（最早 1999 年初）到資料最後一天，年化減基準同期的年化。\n不受上面選的期間影響，用來看這檔長期有沒有贏。",
+  lead: "平時領先：把這檔的爆發段漲幅當成 0 重算年化，基準在同樣那幾週也當成 0 重算，兩者相減。\n正數＝大漲那幾段以外的時間也比基準好，數字就是好多少；只有報酬高於基準的才算。\n贏基準超過「接近基準的年化區間」、這欄卻不是正數的，標「靠爆發」。\n游標移到格子上看兩邊重算後的年化。",
   nb: "爆發段數：符合「連續 N 週累積漲幅 ≥ 門檻」的段數（不重疊）。",
   vr: "波動倍數：這檔每週漲跌的幅度是基準的幾倍（週報酬標準差相除）。\n大於 1＝漲跌比基準猛。\n和 beta 不同，不會因為走勢和基準不像而被拉低。",
   bm: "beta（大盤）：SPY 每漲跌 1%，這檔平均跟著動多少。",
   r2: "R²（大盤）：這檔的週漲跌有多少比例能用 SPY 解釋。\n愈接近 1，成分愈像大盤；低於約 0.7 時，上漲／下跌捕獲率參考價值低。",
   up: "上漲捕獲：SPY 上漲的那些週，這檔平均賺到 SPY 漲幅的幾倍。",
   dn: "下跌捕獲：SPY 下跌的那些週，這檔平均跟著跌 SPY 跌幅的幾倍。\n愈小愈抗跌。",
-  av: "空頭跌幅 vs基準：在基準的幾次大跌裡，這檔的跌幅減基準的跌幅（跌幅都是負數），取平均（只算有經歷到的那幾次）。\n正數＝跌得比基準淺，負數＝比較深。",
+  av: "空頭跌幅 vs 基準：在基準的幾次大跌裡，這檔的跌幅減基準的跌幅（跌幅都是負數），取平均（只算有經歷到的那幾次）。\n正數＝跌得比基準淺，負數＝比較深。",
   t: "屬性：股票區依基金名稱與晨星分類標註，分大項與細項（例：科技 › 量子計算）；緩衝型、選擇權收益、股債配置依晨星分類。其他區的大項是分區名稱，細項是債券天期、種類等。",
   cat: "類別：依「說明」頁五種類別的規則，用目前的拉桿數字判定。\n名稱旁的標記：靠爆發＝贏基準主要靠少數幾段急漲；\n未經空頭驗證＝上市以來沒經歷過大空頭，或上市以來年化輸基準超過 1%。",
   r: "地區：股票區依基金名稱與晨星分類標註（美國、全球、國際已開發、國際含新興、新興市場、單一國家）；其他區沒有標，顯示「無」。左側地區選項滑過去有說明。",
@@ -864,8 +866,8 @@ const TIPS = {
 
 const COLS = [
   ["c", "代號", 1], ["mk", "標註", 1], ["n", "名稱", 1], ["t", "屬性", 1], ["cat", "類別", 1], ["r", "地區", 0], ["cagr", "年化", 1], ["dca", "定投年化", 1], ["mdd", "最大回撤", 1],
-  ["rr", "報酬／回撤", 1], ["life", "上市以來 vs基準", 1], ["lead", "平時領先", 1], ["rec", "回到前高", 1], ["nb", "爆發段數", 0],
-  ["vr", "波動倍數", 1], ["bm", "beta（大盤）", 0], ["r2", "R²（大盤）", 0], ["up", "上漲捕獲", 0], ["dn", "下跌捕獲", 0], ["av", "空頭跌幅 vs基準", 1]
+  ["rr", "報酬／回撤", 1], ["life", "上市以來 vs 基準", 1], ["lead", "平時領先", 1], ["rec", "回到前高", 1], ["nb", "爆發段數", 0],
+  ["vr", "波動倍數", 1], ["bm", "beta（大盤）", 0], ["r2", "R²（大盤）", 0], ["up", "上漲捕獲", 0], ["dn", "下跌捕獲", 0], ["av", "空頭跌幅 vs 基準", 1]
 ];
 const TEXT_COLS = new Set(["c", "n", "t", "cat", "r"]);
 const LOCKED = new Set(["c", "mk", "n", "cat"]);   // 一定顯示，不列在「顯示欄位」選單
@@ -996,7 +998,7 @@ function renderCore(light) {   // light：拖時間軸途中只更新檔數和�
   const all = bs.list.map(({ x, m }) => { const L = lifeOf(x.c); return { x, m, ...classify(m, B, P), def: classify(m, B, DP).cat, av: computeEps().per[x.c].av, life: L ? L.diff : null, ok: verified(L, crashEps(), D.defaults.verify_tie ?? 0.01) }; });
   // 這段期間基準沒跌到大空頭門檻：分類只代表這段行情
   $("regime").hidden = B.mdd <= -CRASH();
-  $("regime").innerHTML = `這段期間基準最多只跌 ${pct(-B.mdd)}，沒有經過大空頭（跌 ≥ ${f1(CRASH())}%），分類只代表這段行情。<br>長期有沒有贏，看「上市以來 vs基準」欄和散布圖的空心點。`;
+  $("regime").innerHTML = `這段期間基準最多只跌 ${pct(-B.mdd)}，沒有經過大空頭（跌 ≥ ${f1(CRASH())}%），分類只代表這段行情。<br>長期有沒有贏，看「上市以來 vs 基準」欄和散布圖的空心點。`;
   const rows = all.filter(r => passFilters(r.x, r.m));
   ovMap = new Map(all.map(r => [r.x.c, r]));
   $("cover").innerHTML = `${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}：全期都有資料的 ${all.length} 檔（上市晚於起點超過 7 天的不列入；名單共 ${D.etfs.length} 檔）。<br>自訂期間最早 ${iso(D.dates[0])}。`;
@@ -1020,7 +1022,7 @@ function renderCore(light) {   // light：拖時間軸途中只更新檔數和�
   rows.forEach(r => { cnt[r.cat]++; cnt0[r.def]++; if (r.ok) cntOk[r.cat]++; });
   $("counts").innerHTML = CATS.map(([c, v]) => {
     const d = cnt[c] - cnt0[c], win = c === "穩強" || c === "猛強";
-    return `<div class="cnt" style="--c:var(${v})" title="${PLAIN[c]}"><p class="hd"><span class="name">${CAT_NAME(c)}</span><span class="plain">${PLAIN[c]}</span></p><span class="bottom"><span class="num">${cnt[c]}</span><span class="bstat"><span class="delta">${d === 0 ? "同預設" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span>${win && cnt[c] ? `<span class="okn" title="通過空頭驗證的檔數（定義見說明頁）">通過驗證 ${cntOk[c]} 檔</span>` : ""}</span></span></div>`;
+    return `<div class="cnt" style="--c:var(${v})" title="${PLAIN[c]}"><div class="ctop"><span class="name">${CAT_NAME(c)}</span><span class="cnum"><span class="num">${cnt[c]}</span><span class="bstat"><span class="delta">${d === 0 ? "同預設" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span>${win && cnt[c] ? `<span class="okn" title="通過空頭驗證的檔數（定義見說明頁）">通過驗證 ${cntOk[c]} 檔</span>` : ""}</span></span></div><span class="plain">${PLAIN[c]}</span></div>`;
   }).join("");
   const q1 = rows.filter(r => r.x.c !== BN && r.m.cagr > B.cagr && r.m.mdd > B.mdd), q1ok = q1.filter(r => r.ok);
   // 卡片下方：只講卡片（檔數、換類別）；散布圖的說明放在圖裡
@@ -1080,7 +1082,7 @@ function drawChart(rows, B) {
   rows.filter(r => r.x.c !== BN).concat(rows.filter(r => r.x.c === BN)).forEach(r => {
     const isB = r.x.c === BN, ch = r.cat !== r.def, hollow = !isB && (r.cat === "穩強" || r.cat === "猛強") && !r.ok;
     const tags = [r.burst ? "靠爆發" : "", hollow ? "未經空頭驗證" : ""].filter(Boolean).join("・");
-    const tipText = `${r.x.c} ${r.x.n}｜${isB ? "標竿" : CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}&#10;最大回撤 ${pct(r.m.mdd)}${isB ? "" : `&#10;上市以來 vs基準${r.life == null ? "—" : sgn(r.life)}`}`;
+    const tipText = `${r.x.c} ${r.x.n}｜${isB ? "標竿" : CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}&#10;最大回撤 ${pct(r.m.mdd)}${isB ? "" : `&#10;上市以來 vs 基準${r.life == null ? "—" : sgn(r.life)}`}`;
     const cx = sx(r.m.mdd), cy = sy(r.m.cagr);
     if (ch && !isB) g += `<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--fg)" stroke-width="1.5"/>`;
     g += isB
@@ -1243,7 +1245,7 @@ function cellVal(r, k) {
   if (k === "cat") return CATS.findIndex(x => x[0] === r.cat);
   if (k === "mk") return marks.has(r.x.c) ? 1 : 0;
   if (k === "lead") return r.ex == null || r.m.cagr <= base.B.cagr ? null : r.ex - r.bex;
-  if (k === "av") return r.av == null ? null : -r.av;   // 顯示成「跌幅 vs基準」：正數＝跌得比基準淺
+  if (k === "av") return r.av == null ? null : -r.av;   // 顯示成「跌幅 vs 基準」：正數＝跌得比基準淺
   if (k === "nb" || k === "life") return r[k];
   if (TEXT_COLS.has(k)) return r.x[k];
   return r.m[k];
@@ -1278,7 +1280,7 @@ document.addEventListener("click", e => {
   box.dataset.anchor = b.dataset.hf;
   box.innerHTML = HF_OPTS[k]().map(v => `<label><input type="checkbox" value="${v}" ${sel.has(v) ? "checked" : ""}> ${k === "cat" ? CAT_NAME(v) : v}</label>`).join("")
     + `<span class="row" style="gap:10px"><button type="button" class="linkbtn" data-set="1">全選</button><button type="button" class="linkbtn" data-set="0">全不選</button><button type="button" class="btn btn-fill" data-ok style="margin-left:auto;padding:3px 12px">套用</button></span>`
-    + (k === "t" ? `<span class="foot">和左側的「類型」篩選同步</span>` : `<span class="foot">只篩這張表，散布圖和檔數不變</span>`);
+    + (k === "t" ? `<span class="foot">和側欄的「屬性」篩選同步</span>` : `<span class="foot">只篩這張表，散布圖和檔數不變</span>`);
   box.hidden = false;
   const r = b.getBoundingClientRect(); box.style.left = Math.min(r.left, innerWidth - box.offsetWidth - 8) + "px"; box.style.top = (r.bottom + 6) + "px";
   hfApply = () => {
@@ -1488,16 +1490,16 @@ function syncTopScroll() {
     }
   });
 }
-const EPCOLS = [["c", "代號"], ["n", "名稱"], ["t", "屬性"], ["cat", "類別"], ["pick", "畫圖"], ["sel", "這次跌幅"], ["vs", "跌幅 vs基準"], ["rec", "回到前高"], ["chase", "和基準的追趕"], ["av", "平均跌幅 vs基準"], ["slow", "最慢回到前高"]];
+const EPCOLS = [["c", "代號"], ["n", "名稱"], ["t", "屬性"], ["cat", "類別"], ["pick", "畫圖"], ["sel", "這次跌幅"], ["vs", "跌幅 vs 基準"], ["rec", "回到前高"], ["chase", "和基準的追趕"], ["av", "平均跌幅 vs 基準"], ["slow", "最慢回到前高"]];
 const EPLOCKED = new Set(["c", "n", "pick"]);   // 一定顯示，不列在「顯示欄位」選單
 const epDefaultCols = () => new Set(EPCOLS.map(c => c[0]));
 let epVisible = epDefaultCols();
 try { const v = JSON.parse(localStorage.getItem("etf-us-epcols-v2") || "null"); if (Array.isArray(v)) epVisible = new Set([...v, ...EPLOCKED]); } catch (e) {}
 const EPTIPS = {
   sel: "這次跌幅：從基準高點那天起，到基準回到高點為止，這檔最多跌了多少。",
-  vs: "跌幅 vs基準：這次跌幅減基準的跌幅（兩個都是負數）。\n例：基準跌 −24%、這檔跌 −26%：−26% −（−24%）＝ −2.0%，跌得比基準深。\n正數＝跌得比基準淺。",
+  vs: "跌幅 vs 基準：這次跌幅減基準的跌幅（兩個都是負數）。\n例：基準跌 −24%、這檔跌 −26%：−26% −（−24%）＝ −2.0%，跌得比基準深。\n正數＝跌得比基準淺。",
   rec: "回到前高：這檔從這次的高點跌下來，到重新站回高點花了幾個月。",
-  av: "平均跌幅 vs基準：有經歷到的那幾次「跌幅 vs基準」的平均，括號是經歷幾次（次數少的不宜直接比）。\n平均跌得比基準深、超過高波動門檻的，標為高波動。",
+  av: "平均跌幅 vs 基準：有經歷到的那幾次「跌幅 vs 基準」的平均，括號是經歷幾次（次數少的不宜直接比）。\n平均跌得比基準深、超過高波動門檻的，標為高波動。",
   slow: "最慢回到前高：有經歷到的那幾次裡，最久的一次回到高點花了幾個月。",
   pick: "勾選後加到上面的走勢圖（最多 8 條）。",
   chase: "和基準的追趕：從基準高點那天起比累計報酬，看基準跌到最低那天誰領先。\n這檔落後的：幾個月後追上基準；這檔領先的：基準幾個月後追上它。\n追上之後要維持 20 個交易日才算；「同步」＝低點那天兩邊相差不到 1%。\n排序：一直領先的排最前，一直沒追上的排最後。",
@@ -1508,7 +1510,7 @@ function drawEpTable(E, ep) {
     const P = E.per[x.c], s = P.s[epSel];
     const ov = ovMap.get(x.c);
     const cr = x.c === BN ? null : epCross(x.p, ep, D);
-    // vs、av：跌幅 vs基準（正數＝跌得比基準淺）；computeEps 存的 more 是相反方向
+    // vs、av：跌幅 vs 基準（正數＝跌得比基準淺）；computeEps 存的 more 是相反方向
     return { x, ov, cr, sel: s.dd, vs: -s.more, rec: s.rec, n_: P.n, av: P.av == null ? null : -P.av, slow: P.anyOpen ? null : P.slow, open: P.anyOpen, hv: isHV(x.c) };
   });
   // 追趕：月份從基準高點起算。排序值：這檔領先、被基準追上的為正（愈晚被追上愈大），落後、追上基準的為負（愈晚追上愈小），同步＝0
@@ -1636,9 +1638,9 @@ const TOUR = [
   { page: "overview", sel: "#chartPanel", t: "散布圖：一眼看位置", x: "往上＝報酬高，往右＝跌得淺。\n靶心是基準，虛線十字和綠色斜線（划算線）把圖切成五類。\n點一下圓點會標出代號；Ctrl＋滾輪可以縮放。" },
   { page: "overview", sel: "#tblPanel", t: "每檔明細", x: "點表頭排序；「類別」「屬性」旁的 ▾ 可以篩選。\n「標註」打勾會標到散布圖上。\n欄位太多就用「顯示欄位」勾掉，也能下載 CSV。" },
   { page: "overview", sel: "#filterBox", side: 1, t: "篩選", x: "地區、屬性、波動倍數上限、高波動，總覽和空頭頁共用。\n游標移到有底線的字上，會跳出說明。" },
-  { page: "bear", sel: "#epsPanel", t: "空頭：大跌時各檔跌多少", x: "選一次基準的大跌，看同一段時間裡各檔最多跌多少、多久回到高點。\n「跌幅 vs基準」正數＝跌得比基準淺。" },
+  { page: "bear", sel: "#epsPanel", t: "空頭：大跌時各檔跌多少", x: "選一次基準的大跌，看同一段時間裡各檔最多跌多少、多久回到高點。\n「跌幅 vs 基準」正數＝跌得比基準淺。" },
   { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以基準高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」可以加減線；時間軸可以拉長，看誰先回到高點。" },
-  { sel: ".viewset", side: 1, open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按最上面的按鈕。" },
+  { sel: ".viewset", side: 1, open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。" },
   { page: "about", sel: "#page-about .panel", t: "還有疑問就看「說明」", x: "名詞、類別的規則、使用前要知道的限制都在說明頁。\n導覽到這裡結束。" }
 ];
 function bindTour() {
@@ -1757,7 +1759,7 @@ function fillLive() {
     const has = CE.some(ep => ep.tr >= s && ep.pk <= last) && B.mdd <= -CRASH();
     return `${y} 年（${ym(D.dates[s])} 起）：基準最多跌 ${pct(-B.mdd)}，${has ? "包含" : "沒有包含"}大空頭（基準跌 ≥ ${f1(CRASH())}%）`;
   }).join("；<br>") + "。";
-  // 「年化差不多、回撤差很多」的例子：5 年期間年化在區間內、回撤超出的，取年化最接近基準 的一檔
+  // 「年化差不多、回撤差很多」的例子：5 年期間年化在區間內、回撤超出的，取年化最接近基準的一檔
   if (!fits(5)) { $("nearEx").textContent = ""; return; }
   const s5 = windowIdx(D, presetStart(D, last, 5), D.dates[last]).s, cache = {}, B5 = metrics(D.bench_p, D, s5, last, cache);
   const ex = D.etfs.map(x => ({ x, m: x.c === BN ? null : metrics(x.p, D, s5, last, cache) }))
@@ -1799,6 +1801,7 @@ function getState() {
 }
 // 套用：先全部回到預設，再照參數改。看不懂或超出範圍的值：數字夾回拉桿範圍，代號、欄位名只留認得的，其餘略過
 function applyState(q) {
+  FORCE = new Set(); $("q").value = ""; $("qx").hidden = true; $("qmsg").hidden = true;   // 搜尋暫時列出的那一檔不帶進新設定
   const d8 = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "");
   const z = ZONES.includes(q.get("z")) ? q.get("z") : "股票", tx = q.get("tx") === "1";
   if (z !== ZONE || tx !== TAX) { const onlyTax = z === ZONE; ZONE = z; TAX = tx; $("taxOn").checked = tx; buildView(onlyTax); zoneUi(); }
@@ -2111,7 +2114,7 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   setTimeout(() => document.documentElement.classList.remove("booting"), 0);   // 讓這一輪的計算先結束再淡入；不用 requestAnimationFrame，背景分頁不會觸發
   if (!$("page-lev").hidden) renderLev();
   if (location.hash.includes("?")) openShared();
-}).catch(err => { document.documentElement.classList.remove("booting"); $("sub").innerHTML = `<span class="err">資料讀不到（${err.message}）。重新整理一次；還是不行的話，請重新發佈。</span>`; });
+}).catch(err => { document.documentElement.classList.remove("booting"); $("sub").innerHTML = `<span class="err">資料讀不到（${err.message}）。重新整理一次；還是不行的話，請稍後再試。</span>`; });
 </script>
 <script>
 // 台股／美股切換：側欄滑塊和右上角眉標先換過去、內容淡出，再換頁
@@ -2130,7 +2133,12 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
     document.documentElement.classList.add("leaving");
     setTimeout(go, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fade")) * 1000 || 600);
   }));
-  // 用瀏覽器「上一頁」回來時，頁面可能停在離開前的樣子，重新載入
-  addEventListener("pageshow", e => { if (e.persisted) location.reload(); });
+  // 用瀏覽器「上一頁」從快取回來時，頁面停在離開前的樣子：還原滑塊、眉標、淡出，不重新載入（設定才不會丟）
+  const mk0 = [...document.querySelectorAll(".mkt")].map(m => [m, m.className, [...m.querySelectorAll("a")].map(x => x.className)]);
+  const eb = document.querySelector(".eb-name"), eb0 = eb && eb.textContent;
+  addEventListener("pageshow", e => { if (!e.persisted) return;
+    mk0.forEach(([m, c, as]) => { m.className = c; m.querySelectorAll("a").forEach((x, i) => { x.className = as[i]; }); });
+    if (eb) { eb.textContent = eb0; eb.className = "eb-name"; }
+    document.documentElement.classList.remove("leaving"); });
 })();
 </script>
