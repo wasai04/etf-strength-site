@@ -1,0 +1,40 @@
+# 一次性測試：GitHub 的伺服器抓不抓得到 Yahoo 和證交所。只能手動觸發，測完刪掉。
+name: yahoo-probe
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch sample tickers
+        shell: python
+        run: |
+          import json, time, urllib.request
+          H = {"User-Agent": "Mozilla/5.0"}
+          def get(u):
+              t = time.time()
+              try:
+                  r = urllib.request.urlopen(urllib.request.Request(u, headers=H), timeout=30)
+                  return r.status, r.read(), time.time() - t
+              except Exception as e:
+                  return repr(e)[:120], b"", time.time() - t
+          now = int(time.time())
+          for t in ["SPY", "TQQQ", "IBIT", "0050.TW", "00679B.TWO"] * 1:
+              s, b, dt = get(f"https://query1.finance.yahoo.com/v8/finance/chart/{t}?period1=0&period2={now}&interval=1d")
+              n = last = "-"
+              if b:
+                  try:
+                      res = json.loads(b)["chart"]["result"][0]
+                      ts = res["timestamp"]; n = len(ts); last = time.strftime("%Y-%m-%d", time.gmtime(ts[-1]))
+                  except Exception as e:
+                      n = "parse:" + repr(e)[:60]
+              print(f"yahoo {t}: status={s} rows={n} last={last} {dt:.1f}s")
+          # 連續抓 60 檔看會不會被限流
+          ok = 0
+          for i in range(60):
+              s, b, dt = get(f"https://query1.finance.yahoo.com/v8/finance/chart/SPY?period1={now-86400*30}&period2={now}&interval=1d")
+              ok += s == 200
+          print(f"yahoo burst 60: ok={ok}")
+          s, b, dt = get("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY?response=json&date=20261001&stockNo=0050")
+          print(f"twse: status={s} bytes={len(b)} {dt:.1f}s")
