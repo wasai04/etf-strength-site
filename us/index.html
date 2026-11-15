@@ -16,7 +16,7 @@
   --c-steady: #2f7d7a; --c-strong: #b9740f; --c-burst: #a3477e; --c-tie: #76699a; --c-safe: #5a88bd; --c-weak: #9aa3ab;
   --l1: #24467f; --l2: #b9740f; --l3: #a3477e; --l4: #2f7d7a; --l5: #76699a; --l6: #c23b2e; --l7: #5a88bd; --l8: #7d6a4c;
   --red: #c23b2e; --green: #1f8a55; --up: var(--red); --dn: var(--green); --calmar: #2e8b57; --burstflag: #9a6a00;
-  --warn-bg: #fbfcfc; --warn-fg: #1b2531; --hl: #fff3c4; --shadow: rgba(27,37,49,.14); --band: rgba(185,116,15,.09);
+  --warn-bg: #fbfcfc; --warn-fg: #1b2531; --shadow: rgba(27,37,49,.14); --band: rgba(185,116,15,.09);
   /* 字型統一：英文與數字用 IBM Plex Sans，中文落到 Noto Sans TC；數字欄另外開等寬數字（tabular-nums）對齊，不換字型 */
   --f-body: "IBM Plex Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   --f-num: var(--f-body);
@@ -26,16 +26,22 @@
   --c-steady: #5fb3ae; --c-strong: #e0a345; --c-burst: #d483b3; --c-tie: #ab9fd0; --c-safe: #86b2e3; --c-weak: #7b7f85;
   --l1: #8fb0e6; --l2: #e0a345; --l3: #d483b3; --l4: #5fb3ae; --l5: #ab9fd0; --l6: #ee7b6e; --l7: #86b2e3; --l8: #c8ad82;
   --red: #ee7b6e; --green: #5cc28c; --calmar: #5cc28c; --burstflag: #d9b05c;
-  --warn-bg: #242528; --warn-fg: #e6e7e9; --hl: #3a3417; --shadow: rgba(0,0,0,.5); --band: rgba(224,163,69,.10); color-scheme: dark } }
+  --warn-bg: #242528; --warn-fg: #e6e7e9; --shadow: rgba(0,0,0,.5); --band: rgba(224,163,69,.10); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #1b1c1e; --panel: #242528; --fg: #e6e7e9; --muted: #9da1a7; --line: #3a3c40; --accent: #8fb0e6; --quad: rgba(143,176,230,.07);
   --c-steady: #5fb3ae; --c-strong: #e0a345; --c-burst: #d483b3; --c-tie: #ab9fd0; --c-safe: #86b2e3; --c-weak: #7b7f85;
   --l1: #8fb0e6; --l2: #e0a345; --l3: #d483b3; --l4: #5fb3ae; --l5: #ab9fd0; --l6: #ee7b6e; --l7: #86b2e3; --l8: #c8ad82;
   --red: #ee7b6e; --green: #5cc28c; --calmar: #5cc28c; --burstflag: #d9b05c;
-  --warn-bg: #242528; --warn-fg: #e6e7e9; --hl: #3a3417; --shadow: rgba(0,0,0,.5); --band: rgba(224,163,69,.10); color-scheme: dark }
+  --warn-bg: #242528; --warn-fg: #e6e7e9; --shadow: rgba(0,0,0,.5); --band: rgba(224,163,69,.10); color-scheme: dark }
 /* 漲跌顏色：預設台股（紅漲綠跌），美股模式對調 */
 #levtbl tr.thin td { opacity: .55; }
 :root[data-ud="us"] { --up: var(--green); --dn: var(--red); }
+/* 介面強調色 --hl（2026-11-16 定案鈷藍）：分區選中、情境列、觀察卡色條、新手導覽鈕、搜尋框、進站提醒。原本直接用「猛強」的 --c-strong，意思會混；
+   試過墨色、靛藍、紫、深金、磚橙、深青（後兩個太接近紅、綠，會和漲跌色搞混），JC 選鈷藍 */
+:root { --hl: #1f5fcf; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --hl: #7ea8ff; } }
+:root[data-theme="dark"] { --hl: #7ea8ff; }
+.ins .btn-fill { background: var(--c-strong); border-color: var(--c-strong); color: var(--panel); }   /* 觀察卡按鈕橘色，和鈷藍色條、藍黑按鈕分開 */
 /* 獨立部署（GitHub Pages）時沒有 Artifact 外殼的基本設定，這裡自己補上 */
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
@@ -52,7 +58,7 @@ h3 { font-size: 1rem; margin: 0; }
 .note { background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--line); border-left: 3px solid var(--fg); border-radius: 2px; padding: 10px 14px; font-size: .9rem; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 18px; min-width: 0; }
 .term { border-bottom: 1px dotted var(--muted); cursor: help; }
-:root:not([data-tb="0"]) { scroll-padding-top: 64px; }   /* 置頂欄 52px；捲到某一塊時不被蓋住（情境列另外有 scroll-margin） */
+:root { scroll-padding-top: 64px; }   /* 置頂欄 52px；捲到某一塊時不被蓋住（情境列另外有 scroll-margin） */
 .term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 th button[data-tip], td[data-tip] { text-decoration: underline dotted var(--muted); text-underline-offset: 4px; }   /* 有說明的表頭和格子也要看得出可以滑過 */
 td[data-tip] { cursor: help; }
@@ -109,7 +115,7 @@ input[aria-invalid=true] { outline: 2px solid var(--red); outline-offset: 1px; }
 .hint { color: var(--muted); font-size: .8rem; margin: 2px 0 0; }
 .missing { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 8px 14px; font-size: .86rem; margin: 0 0 12px; }
 .missing .linkbtn { font-size: inherit; }
-.missing.regime { border-left: 4px solid var(--c-strong); }
+.missing.regime { border-left: 4px solid var(--hl); }
 .okn { font-size: .76rem; color: var(--muted); }
 .flag.nv { border-color: var(--muted); color: var(--muted); }
 .flag.bu { border-color: var(--burstflag); color: var(--burstflag); }
@@ -136,7 +142,7 @@ td .t2 { color: var(--muted); }
 .attr-fine { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 6px; }
 .attr-fine.solo { border-top: 0; margin-top: 2px; padding-top: 0; }
 .attr-fine .gl { color: var(--muted); font-size: .78rem; margin-bottom: 3px; }
-.achip.clr { background: var(--c-strong); border-color: var(--c-strong); color: #fff; font-weight: 700; margin-top: 6px; }
+.achip.clr { background: var(--hl); border-color: var(--hl); color: var(--panel); font-weight: 700; margin-top: 6px; }
 .linkbtn { font: inherit; font-size: .8rem; background: none; border: 0; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
 .stack { display: grid; gap: 10px; }
 .counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
@@ -211,7 +217,7 @@ details.cols { position: relative; }
 .search .qx { position: absolute; right: 4px; top: 4px; width: 26px; height: 26px; border: 0; background: none; color: var(--muted); font-size: 1.1rem; line-height: 1; cursor: pointer; border-radius: 4px; }
 .search .qx:hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 8%, transparent); }
 .side > .search { padding: 0 2px; box-sizing: border-box; }
-.search input { width: 100%; box-sizing: border-box; font: inherit; font-size: .9rem; padding: 7px 30px 7px 10px; border: 1.5px solid var(--c-strong); border-radius: 4px; background: var(--panel); color: var(--fg); }
+.search input { width: 100%; box-sizing: border-box; font: inherit; font-size: .9rem; padding: 7px 30px 7px 10px; border: 1.5px solid var(--hl); border-radius: 4px; background: var(--panel); color: var(--fg); }
 .search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .qlist { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 25; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 16px var(--shadow); padding: 4px; display: grid; max-height: min(360px, 60vh); overflow-y: auto; }
 .qlist [role=option] { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: .86rem; }
@@ -265,7 +271,7 @@ svg.chart { max-height: 68vh; }
 .sitefoot { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; color: var(--muted); font-size: .82rem; display: grid; gap: 8px; }
 .sitefoot p { margin: 0; }
 /* 進站提醒（2026-11-15）：取代每頁頂端的提醒和頁尾的完整免責聲明 */
-dialog.intro { width: min(520px, calc(100vw - 32px)); border: 1px solid var(--line); border-top: 4px solid var(--c-strong); border-radius: 6px; background: var(--panel); color: var(--fg); padding: 18px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+dialog.intro { width: min(520px, calc(100vw - 32px)); border: 1px solid var(--line); border-top: 4px solid var(--hl); border-radius: 6px; background: var(--panel); color: var(--fg); padding: 18px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
 dialog.intro::backdrop { background: rgba(0,0,0,.45); }
 dialog.intro h2 { margin: 0 0 10px; font-size: 1.15rem; }
 dialog.intro ul { margin: 0 0 10px; }
@@ -285,9 +291,6 @@ dialog.intro .foot { margin: 0 0 10px; }
 header.hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 4px 16px; flex-wrap: wrap; position: relative; }
 header.hd > div { flex: 1 1 320px; min-width: 0; }   /* 副標題在左欄裡換行，眉標盡量留在右上 */
 .eyebrow { display: flex; gap: 14px; align-items: baseline; margin: .7em 0 0; font-size: .78rem; font-weight: 600; letter-spacing: .14em; color: var(--accent); white-space: nowrap; overflow: hidden; }
-.eb-name { display: inline-block; transition: transform .2s ease-in, opacity .2s ease-in; }
-.eb-name.roll-out { transform: translateY(-100%); opacity: 0; }
-.eb-name.roll-in { transform: translateY(100%); opacity: 0; transition: none; }
 .eyebrow a { color: var(--muted); font-weight: 500; letter-spacing: .04em; text-decoration: none; border-bottom: 1px solid transparent; transition: color .2s, border-color .2s; }
 .eyebrow a:hover { color: var(--accent); border-bottom-color: currentColor; }
 @media (max-width: 900px) { .eyebrow { order: -1; margin: 0; flex-basis: 100%; } }   /* 窄螢幕放到標題上方 */
@@ -297,19 +300,19 @@ header.hd > div { flex: 1 1 320px; min-width: 0; }   /* 副標題在左欄裡換
 :root { --fade: .6s; }
 @view-transition { navigation: auto; }
 ::view-transition-group(root) { animation-duration: var(--fade); }
-.wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt) { transition: opacity var(--fade) ease; }
+.wrap > :not(header), header.hd .sub, .side > * { transition: opacity var(--fade) ease; }
 header.hd h1 { animation: h1in .5s cubic-bezier(.2, .7, .2, 1) backwards; transition: opacity .35s ease-in, transform .35s ease-in; }   /* 標題不等資料，一進頁面就從下方捲入；離開時往上捲出 */
 .hdt { overflow: hidden; }   /* 捲入時超出標題列的部分裁掉，像眉標那樣 */
 :root.leaving header.hd h1 { opacity: 0; transform: translateY(-100%); }
 @keyframes h1in { from { opacity: 0; transform: translateY(100%); } }
 :root.zsw { --fade: .25s; }   /* 換分區：比換市場快 */
-:root.zfade :is(.wrap > :not(header, #zoneTop, #insBar), header.hd .sub, .side > :not(.viewset)) { opacity: 0; }
-:root.leaving :is(.wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt)) { opacity: 0; }
-:root.booting :is(.wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt)) { opacity: 0; transition: none; }
+:root.zfade :is(.wrap > :not(header, #zoneTop, #insBar), header.hd .sub, .side > *) { opacity: 0; }
+:root.leaving :is(.wrap > :not(header), header.hd .sub, .side > *) { opacity: 0; }
+:root.booting :is(.wrap > :not(header), header.hd .sub, .side > *) { opacity: 0; transition: none; }
 :root:is(.booting, .loading) header.hd::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 2px; border-radius: 1px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent) 0 0 / 40% 100% no-repeat; animation: loadbar 1.1s ease-in-out infinite; }
 @keyframes loadbar { from { background-position: -60% 0; } to { background-position: 160% 0; } }
-@media (prefers-reduced-motion: reduce) { .mkt::before, .mkt a, .eb-name, .wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt), header.hd h1 { transition: none; } header.hd::after, header.hd h1 { animation: none; } ::view-transition-group(root) { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .mkt::before, .mkt a, .wrap > :not(header), header.hd .sub, .side > *, header.hd h1 { transition: none; } header.hd::after, header.hd h1 { animation: none; } ::view-transition-group(root) { animation: none; } }
 /* 分頁專用的設定放在分頁裡、側欄只放通用的（JC 2026-11-11）：總覽頂端「回看期間」＋可展開的「分類門檻」；空頭頁頂端「大跌門檻」 */
 .pctl .head h2 .term { color: inherit; }
 .adj, .pctl .ctl { background: var(--adj-bg); border-radius: 4px; padding: 8px 10px; }   /* 可以手動調整的地方一律淡灰底（和側欄的 .cbox、.ctl 同一個色），使用者看到灰底就知道能動 */
@@ -347,7 +350,6 @@ details.fold .controls { gap: 14px 28px; }
 :is(.adj, .side .cbox, .side .ctl, details.fold, .pctl .ctl) :is(.seg, .btn, .chips button, .zoom button, input[type=date]) { border-color: var(--adj-line); }
 :is(.adj, .side .cbox, .side .ctl, details.fold, .pctl .ctl) .seg { background: var(--panel); }
 :is(.adj, .side .cbox, .side .ctl, details.fold, .pctl .ctl) .ptrack { background: var(--adj-line); }
-.viewset { display: grid; gap: 10px; justify-items: stretch; padding-bottom: 14px; border-bottom: 1px solid var(--line); }   /* 顯示設定＋搜尋自成一塊，和下面的分頁隔開 */
 .sysbox { display: grid; gap: 8px; }
 /* 側欄的按鈕組一律撐滿寬度、每顆一樣寬、字置中，不留零碎的邊 */
 .btnpair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -373,7 +375,7 @@ body:is([data-page="overview"], [data-page="bear"]) .zonetop { display: flex; }
 .zonetop button:hover:not([aria-pressed="true"]) .zn { color: var(--fg); }
 .zonetop button:not([aria-pressed="true"]):not(:first-child)::before { content: ""; position: absolute; left: 0; top: 25%; bottom: 25%; border-left: 1px solid var(--line); }
 .zonetop button[aria-pressed="true"] + button::before { display: none; }
-.zonetop button[aria-pressed="true"] { padding: 8px 22px; background: var(--c-strong); box-shadow: 0 3px 12px color-mix(in srgb, var(--c-strong) 45%, transparent); }
+.zonetop button[aria-pressed="true"] { padding: 8px 22px; background: var(--hl); box-shadow: 0 3px 12px color-mix(in srgb, var(--hl) 45%, transparent); }
 .zonetop button[aria-pressed="true"] :is(.zn, .zc, .zb) { color: var(--bg); }
 .zonetop button[aria-pressed="true"] .zn { font-weight: 800; }
 .zonetop button[aria-pressed="true"] .zc::after { content: " 檔"; }
@@ -389,42 +391,27 @@ body:not(:is([data-page="overview"], [data-page="bear"])) .zonetop { display: no
 body:not(:is([data-page="overview"], [data-page="bear"])) .hdtax { display: none; }
 .side .fzrow { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 6px; width: 100%; }
 .side .fzrow button { padding: 4px 0; }
-.tourbtn { background: var(--c-strong); border-color: var(--c-strong); color: var(--panel); font-weight: 700; }
+.tourbtn { background: var(--hl); border-color: var(--hl); color: var(--panel); font-weight: 700; }
 .tourbtn:hover { filter: brightness(1.08); }
 .fzrow > span { margin-right: 4px; }
-.viewset .seg button { padding: 4px 10px; }
 .side .controls { grid-template-columns: 1fr; gap: 14px; }
 .side-sec { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
 .side-sec > h2 { font-size: .88rem; color: var(--muted); font-weight: 500; }
 .side-head, .closeset, .bottombar { display: none; }
-/* 置頂欄試做（JC 2026-11-15，參考 Claude desktop 收在置頂欄的側欄按鈕）：html[data-tb]＝0（現行）／A／B／C；定案後拿掉其他 */
-.topbar { display: none; }
-:root:not([data-tb="0"]) .topbar { display: block; position: sticky; top: 0; z-index: 20; margin: -20px -16px 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
+/* 置頂欄（2026-11-16 定案 C3，參考 Claude desktop）：左＝側欄按鈕、新手導覽、分享；正中間＝底線式的市場分頁；右＝顯示設定的下拉選單 */
+.topbar { display: block; position: sticky; top: 0; z-index: 20; margin: -20px -16px 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
 .tb-in { position: relative; max-width: 1800px; height: 52px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 14px; }
 .tb-sp { flex: 1; }
 .tb-in .eyebrow { margin: 0; }
 .tb-in .mkt { flex: none; }
 .tb-in .mkt a { padding: 4px 18px; }
-:root:not([data-tb="0"]) :is(.hdt > .sidetog, .side-mkt, header.hd > .eyebrow) { display: none; }
-:root:not([data-tb="0"]) .side { top: 64px; max-height: calc(100vh - 76px); }
-:root:not([data-tb="0"]) .insbar { top: 52px; }
-/* A：左＝側欄按鈕＋市場切換，右＝地區名 */
-[data-tb="A"] .tb-in > .eyebrow { order: 3; }
-[data-tb="A"] .tb-sp { order: 2; }
-/* B：左＝側欄按鈕＋地區名，右＝市場切換 */
-[data-tb="B"] .tb-in > .eyebrow { order: 0; }
-[data-tb="B"] .tb-sp { order: 1; }
-[data-tb="B"] .tb-in > .mkt { order: 2; }
-/* C：左＝側欄按鈕＋地區名，正中間＝底線式的市場分頁 */
-[data-tbc] .tb-in > .mkt { position: absolute; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); border: 0; border-radius: 0; background: none; }
-[data-tbc] .tb-in > .mkt::before { top: auto; height: 3px; border-radius: 2px 2px 0 0; }
-[data-tbc] .tb-in > .mkt a { display: grid; place-items: center; padding: 0 26px; font-size: 1.02rem; color: var(--muted); }
-[data-tbc] .tb-in > .mkt a.on { color: var(--fg); }
-@media (max-width: 900px) { .tb-in > .sidetog { display: none; } [data-tbc] .tb-in > .mkt { position: relative; left: auto; transform: none; margin-left: auto; } .tb-in .eyebrow { flex-basis: auto; order: 0; } }
-/* C1、C2：地區名回到右邊，新手導覽、分享放進置頂欄；C2 再加顯示設定的下拉選單 */
-:root:is([data-tb="C1"], [data-tb="C2"]) .tb-in > .eyebrow { order: 2; }
-.tb-r { display: none; }
-:root:is([data-tb="C1"], [data-tb="C2"]) .tb-r { display: flex; align-items: center; gap: 8px; order: 3; position: relative; }
+:root .side { top: 64px; max-height: calc(100vh - 76px); }   /* :root 提高權重，蓋過手機版抽屜的 inset／max-height（和試做時相同） */
+:root .insbar { top: 52px; }   /* 情境列黏在置頂欄下面；:root 提高權重，蓋過後面 .insbar 的 top: 0 */
+.tb-in > .mkt { position: absolute; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); border: 0; border-radius: 0; background: none; }
+.tb-in > .mkt::before { top: auto; height: 3px; border-radius: 2px 2px 0 0; }
+.tb-in > .mkt a { display: grid; place-items: center; padding: 0 26px; font-size: 1.02rem; color: var(--muted); }
+.tb-in > .mkt a.on { color: var(--fg); }
+@media (max-width: 900px) { .tb-in > .sidetog { display: none; } .tb-in > .mkt { position: relative; left: auto; transform: none; margin-left: auto; } .tb-in .eyebrow { flex-basis: auto; order: 0; } }
 .tb-r .toprow { display: flex; gap: 8px; }
 .tb-r .btn { padding: 4px 12px; font-size: .85rem; }
 .tb-r #shareMsg { position: absolute; right: 0; top: calc(100% + 10px); z-index: 30; margin: 0; padding: 6px 10px; white-space: nowrap; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
@@ -440,24 +427,15 @@ body:not(:is([data-page="overview"], [data-page="bear"])) .hdtax { display: none
 .tb-r .seg button { text-align: center; padding-inline: 4px; }
 .tb-r .fzrow { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 6px; align-items: center; }
 @media (max-width: 900px) { .tb-r .btn, .tb-r .sysdet > summary { padding: 4px 8px; } }
-@media (max-width: 1280px) { [data-tbc] .tb-in > .mkt { position: relative; left: auto; transform: none; } [data-tbc] .tb-sp { order: 1; } }   /* 窄一點時正中間放不下，市場分頁改接在側欄按鈕後面 */
-/* C3：左＝新手導覽、分享，正中間＝市場分頁，右＝顯示設定；地區名先拿掉（和分頁重複） */
-.tb-l { display: none; }
-[data-tb="C3"] .tb-l { display: flex; align-items: center; gap: 8px; position: relative; }
-[data-tb="C3"] .tb-r { display: flex; align-items: center; gap: 8px; order: 3; position: relative; }
-[data-tb="C3"] .tb-in > .eyebrow { display: none; }
-[data-tb="C3"] .viewset { display: none; }
-[data-tb="C3"] .tb-in > .mkt a { font-size: 1.2rem; padding: 0 40px; }
+@media (max-width: 1280px) { .tb-in > .mkt { position: relative; left: auto; transform: none; } .tb-sp { order: 1; } }   /* 窄一點時正中間放不下，市場分頁改接在側欄按鈕後面 */
+.tb-l { display: flex; align-items: center; gap: 8px; position: relative; }
+.tb-r { display: flex; align-items: center; gap: 8px; order: 3; position: relative; }
+.tb-in > .mkt a { font-size: 1.2rem; padding: 0 40px; }
 .tb-l .toprow { display: flex; gap: 8px; }
 .tb-l .btn { padding: 4px 12px; font-size: .85rem; }
 .tb-l #shareMsg { position: absolute; left: 0; top: calc(100% + 10px); z-index: 30; margin: 0; padding: 6px 10px; white-space: nowrap; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
-@media (min-width: 1001px) { [data-tb="C3"] .tb-in > .mkt { position: absolute; left: 50%; transform: translateX(-50%); } }   /* C3 一律置中，放不下（≤ 1000px）才接在按鈕後面 */
-@media (max-width: 1000px) { [data-tb="C3"] .tb-in > .mkt { position: relative; left: auto; transform: none; } }
-/* 試做切換鈕（定案後拿掉） */
-.tbtry { position: fixed; right: 12px; bottom: 12px; z-index: 60; display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: .8rem; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 14px color-mix(in srgb, var(--fg) 18%, transparent); }
-.tbtry button { font: inherit; padding: 3px 10px; border: 1px solid var(--line); border-radius: 5px; background: none; color: var(--fg); cursor: pointer; }
-.tbtry button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); font-weight: 700; }
-@media (max-width: 900px) { .tbtry { bottom: 64px; } }
+@media (min-width: 1001px) { .tb-in > .mkt { position: absolute; left: 50%; transform: translateX(-50%); } }   /* C3 一律置中，放不下（≤ 1000px）才接在按鈕後面 */
+@media (max-width: 1000px) { .tb-in > .mkt { position: relative; left: auto; transform: none; } }
 /* 側欄收合（電腦版）：標題左邊的按鈕切換，收起時側欄寬度變 0 */
 .hdt { display: flex; align-items: center; gap: 10px; }
 .sidetog { flex: none; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--adj-line); border-radius: 6px; background: var(--adj-bg); color: var(--fg); cursor: pointer; }
@@ -492,25 +470,25 @@ body:not(:is([data-page="overview"], [data-page="bear"])) .hdtax { display: none
 .epl.dim, #eplegend .dim { opacity: .18; }
 #eplegend .on { font-weight: 600; }
 .ep-dim { opacity: .45; } .ep-on { font-weight: 600; }
-.beta { display: inline-block; vertical-align: middle; font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--c-strong); color: var(--c-strong); margin-left: 6px; }
+.beta { display: inline-block; vertical-align: middle; font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--hl); color: var(--hl); margin-left: 6px; }
 /* 觀察頁：一則一張卡，按鈕把總覽／空頭頁設成那則說的狀況 */
 .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
-.ins { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-left: 4px solid var(--c-strong); border-radius: 4px; padding: 12px 14px; background: color-mix(in srgb, var(--fg) 3%, var(--panel)); }
+.ins { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-left: 4px solid var(--hl); border-radius: 4px; padding: 12px 14px; background: color-mix(in srgb, var(--fg) 3%, var(--panel)); }
 .ins h3 { margin: 0; font-size: 1rem; }
 .ins p { margin: 0; font-size: .9rem; }
 .ins > .row, .ins > .btn { margin-top: auto; }   /* 按鈕置底，內文長短不同也對齊 */
 .ins > .btn { align-self: flex-start; }
 .ins > .row { gap: 6px; }   /* 兩顆塞不下時換行，上下疊 */
 /* 情境列：從觀察頁點過去才出現，同一張卡的幾個情境可以直接切換；× 或回觀察頁就收掉 */
-.insbar { position: sticky; top: 0; z-index: 8; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 12px; padding: 8px 12px; border: 3px solid var(--c-strong); border-radius: 6px; background: var(--panel); box-shadow: 0 3px 10px color-mix(in srgb, var(--fg) 14%, transparent); }
+.insbar { position: sticky; top: 0; z-index: 8; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 12px; padding: 8px 12px; border: 3px solid var(--hl); border-radius: 6px; background: var(--panel); box-shadow: 0 3px 10px color-mix(in srgb, var(--fg) 14%, transparent); }
 body:has(#insBar:not([hidden])) .panel { scroll-margin-top: 64px; }   /* 捲到圖或表時不被情境列蓋住 */
 .levlink { margin: 0 0 12px; }
 .lvhead { margin: 0; font-size: 1.02rem; font-weight: 600; }
 #lvNav .lvs { transition: opacity .15s; } #lvNav .lvs.dim { opacity: .18; }
 .insbar .ib-t { font-weight: 700; font-size: .92rem; }
-.insbar .ib-t small { display: inline-block; background: var(--c-strong); color: var(--bg); font-weight: 700; font-size: .95rem; padding: 2px 11px; border-radius: 999px; margin-right: 8px; }
+.insbar .ib-t small { display: inline-block; background: var(--hl); color: var(--bg); font-weight: 700; font-size: .95rem; padding: 2px 11px; border-radius: 999px; margin-right: 8px; }
 .insbar .ib-go { display: flex; flex-wrap: wrap; gap: 6px; }
-.insbar .btn[aria-pressed="true"] { background: var(--c-strong); border-color: var(--c-strong); color: var(--bg); }
+.insbar .btn[aria-pressed="true"] { background: var(--hl); border-color: var(--hl); color: var(--bg); }
 .insbar .ib-end { margin-left: auto; display: flex; gap: 6px; }
 @media (pointer: coarse) { .mouse-only { display: none; } }
 .pstat { margin: 0; font-size: .86rem; color: var(--muted); }
@@ -539,29 +517,20 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
 </script>
 <div class="topbar" id="topbar"><div class="tb-in">
   <button type="button" class="sidetog" aria-controls="side" aria-expanded="true" aria-label="收起側欄" title="收起側欄"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
-  <div class="tb-l" id="tbL"></div>
-  <p class="eyebrow"><span class="eb-name">UNITED STATES · 美股</span></p>
+  <div class="tb-l" id="tbL"><div class="btnpair toprow"><button type="button" class="btn tourbtn" id="tourBtn">新手導覽</button><button type="button" class="btn" id="shareBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>分享目前頁面設定</button></div><p class="hint" id="shareMsg" hidden></p></div>
   <span class="tb-sp"></span>
   <nav class="mkt tb-mkt at-us" aria-label="切換市場（置頂欄）"><a href="../" data-go="台股">台股</a><a href="./" data-go="美股" class="on" aria-current="page">美股</a></nav>
-  <div class="tb-r" id="tbR"></div>
+  <div class="tb-r" id="tbR"><details class="sysdet fold" id="sysDet"><summary>顯示設定<span class="sd-sub">主題、漲跌色、字級</span></summary>
+    <div class="cbox sysbox">
+      <div class="seg" id="themeSeg" role="group" aria-label="主題"><button type="button" data-th="auto">系統</button><button type="button" data-th="light">亮色</button><button type="button" data-th="dark">暗色</button></div>
+      <div class="seg" id="udSeg" role="group" aria-label="漲跌顏色"><button type="button" data-ud="tw">紅漲（台股）</button><button type="button" data-ud="us">綠漲（美股）</button></div>
+      <div class="zoom fzrow" role="group" aria-label="文字大小"><span>文字大小</span><button type="button" data-fz="-1" aria-label="縮小文字">A−</button><output id="fzOut">100%</output><button type="button" data-fz="1" aria-label="放大文字">A+</button></div>
+    </div></details></div>
 </div></div>
-<script>try { const u = new URLSearchParams(location.search).get("tb"); if (u) localStorage.setItem("etf-tb-try", u); const v = u || localStorage.getItem("etf-tb-try") || "C3"; document.documentElement.dataset.tb = v; document.documentElement.toggleAttribute("data-tbc", v[0] === "C"); } catch (e) { document.documentElement.dataset.tb = "C3"; document.documentElement.setAttribute("data-tbc", ""); }</script>
 <div class="shell">
 <script>try { if (localStorage.getItem("etf-side-off") === "1") document.currentScript.parentElement.classList.add("sideoff"); } catch (e) {}</script>
 <aside class="side" id="side" aria-label="分頁與設定">
   <div class="side-head"><strong>設定</strong><button type="button" class="btn closeset" id="closeSet">完成</button></div>
-  <div class="viewset" aria-label="顯示設定">
-    <nav class="mkt side-mkt at-us" aria-label="切換市場"><a href="../" data-go="台股">台股</a><a href="./" data-go="美股" class="on" aria-current="page">美股</a></nav>
-    <div class="btnpair toprow"><button type="button" class="btn tourbtn" id="tourBtn">新手導覽</button><button type="button" class="btn" id="shareBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>分享目前頁面設定</button></div>
-    <p class="hint" id="shareMsg" hidden></p>
-    <details class="sysdet fold" id="sysDet" open><summary>顯示設定<span class="sd-sub">主題、漲跌色、字級</span></summary>
-    <div class="cbox sysbox">
-      <div class="seg" id="themeSeg" role="group" aria-label="主題"><button type="button" data-th="auto">系統</button><button type="button" data-th="light">亮色</button><button type="button" data-th="dark">暗色</button></div>
-      <div class="seg" id="udSeg" role="group" aria-label="漲跌顏色"><button type="button" data-ud="tw">紅漲（台股）</button><button type="button" data-ud="us">綠漲（美股）</button></div>
-      <div class="zoom fzrow" role="group" aria-label="文字大小"><span>文字大小</span><button type="button" data-fz="-1" aria-label="縮小文字">A−</button><output id="fzOut">100%</output><button type="button" data-fz="1" aria-label="放大文字">A+</button></div>
-    </div></details>
-    <script>try { if (localStorage.getItem("etf-sysdet") === "0") document.getElementById("sysDet").open = false; } catch (e) {}</script>
-  </div>
   <nav class="tabs" role="tablist" aria-label="分頁">
     <button type="button" role="tab" data-page="overview" aria-selected="true">總覽</button>
     <button type="button" role="tab" data-page="bear" aria-selected="false">空頭</button>
@@ -603,9 +572,8 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
 
 <main class="wrap">
   <header class="hd">
-    <div><div class="hdt"><button type="button" class="sidetog" id="sideTog" aria-controls="side" aria-expanded="true" aria-label="收起側欄" title="收起側欄"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button><h1>美股 ETF 強度檔</h1></div>
+    <div><div class="hdt"><h1>美股 ETF 強度檔</h1></div>
     <p class="sub"><span id="sub">讀取資料中…</span></p></div>
-    <p class="eyebrow"><span class="eb-name">UNITED STATES · 美股</span><a href="../" data-go="台股">切換到台股 →</a></p>
     <p class="hdtax"><label class="chk" id="taxLbl"><input type="checkbox" id="taxOn"> <span class="term" tabindex="0" data-tip="開啟後，每次配息只把 70% 再投入，基準也一樣扣。">股息扣 30% 預扣稅（台灣居民）</span></label></p>
   </header>
 
@@ -632,7 +600,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
         <div class="controls">
           <div class="ctl burstctl"><p class="sentence"><span class="term" tabindex="0" data-tip="連續幾週加起來漲到這個幅度，算一段急漲（爆發段）。&#10;1 週＝單週大漲；拉長週數可以抓到「連漲好幾週、但每週都不算大」的段落，上限 4 週（約一個月）。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;參考：1 週配 7.5%、4 週配 20%，SPY 在 1999～2026-11 分別只有 5 段、2 段。&#10;漲幅上限 30%：1999～2026-11 SPY 任何 4 週最多漲 25.3%，超過 30% 只剩槓桿型、加密貨幣的少數極端週。">爆發段</span>：在 <output id="o-weeks"></output>內上漲 <output id="o-burst"></output> 以上，就算一段急漲。</p>
             <label for="weeks" class="sub">週數</label><input type="range" id="weeks" min="1" max="4" step="1"><div class="rticks" id="tk-weeks" aria-hidden="true"></div>
-            <label for="burst" class="sub">漲幅</label><input type="range" id="burst" min="3" max="30" step="0.5"><div class="rticks" id="tk-burst" aria-hidden="true"></div>
+            <label for="burst" class="sub">漲幅</label><input type="range" id="burst" min="1" max="30" step="0.5"><div class="rticks" id="tk-burst" aria-hidden="true"></div>
             <p class="hint">預設 <span class="def" data-k="weeks"></span>內上漲 <span class="def" data-k="burst"></span>。</p><p class="hint" id="calib"></p></div>
           <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和基準直接相減。&#10;例：設 ±1.5%、基準年化 11% 時，年化 9.5%～12.5%、而且最大回撤和基準相差 3% 以內的，算接近基準。&#10;追蹤同一指數的 ETF（例如 VOO、IVV 對 SPY）會落在這裡；年化接近但回撤差很多的，照划算線分到其他四類。&#10;參考：5 年累積下來，±1% 約差 5%、±1.5% 約差 7%、±2% 約差 10%。">接近基準的年化區間</span><output id="o-tie"></output></label>
             <input type="range" id="tie" min="0" max="5" step="0.25"><div class="rticks" id="tk-tie" aria-hidden="true"></div><p class="hint">報酬和基準差多少以內算接近（回撤也要相差 3% 以內）。<br>預設 ±<span class="def" data-k="tie"></span>。</p></div>
@@ -707,15 +675,15 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <p class="hint">用預設門檻看到的現象，換期間或門檻可能就不成立。<br>有不同看法歡迎到 <a href="https://github.com/wasai04/etf-strength-site/issues" rel="noopener">GitHub</a> 回報。</p>
       <div class="row"><button type="button" class="btn" data-ins="">回到預設畫面</button></div>
       <div class="insights">
-        <article class="ins"><h3>有沒有碰到 2022，槓桿差很多</h3><p>3 年期間（<span data-n="l3s">2023 年 11 月</span>起）沒碰到空頭：USD 年化 <span data-n="l3USD">76%</span>、TQQQ <span data-n="l3TQQQ">42%</span>、SOXL <span data-n="l3SOXL">37%</span>。<br>拉長到 5 年、把 2022 算進去，變成 <span data-n="l5USD">34%</span>、<span data-n="l5TQQQ">5%</span>、<span data-n="l5SOXL">−5%</span>，中途最深跌了 <span data-n="l5dd">78%～90%</span>。<br>槓桿的成績，很看那段期間有沒有大跌。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="z=槓桿&amp;w=3&amp;so=-cagr" data-to="tblPanel">看 3 年</button><button type="button" class="btn btn-fill" data-ins="z=槓桿&amp;w=5&amp;so=-cagr" data-to="tblPanel">看 5 年</button></div></article>
-        <article class="ins"><h3>原型漲了，2 倍、3 倍卻沒賺到</h3><p>最近 1 年 SOXX 漲 <span data-n="x1SOXX">38%</span>，追同一類半導體的 SOXL（3 倍）只剩 <span data-n="x1SOXL">7%</span>，USD（2 倍）<span data-n="x1USD">大約打平</span>，中途最深各跌 <span data-n="d1SOXL">86%</span>、<span data-n="d1USD">55%</span>。<br>上上下下的行情裡，每天重設倍數會一直耗損。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="z=槓桿&amp;w=1&amp;mk=SOXL,USD" data-to="chartPanel">看 1 年</button><button type="button" class="btn btn-fill" data-ins="p=lev" data-to="">看槓桿耗損</button></div></article>
-        <article class="ins"><h3>領先的那一群會換人</h3><p>5 年期間，能源 <span data-n="e5n">14</span> 檔有 <span data-n="e5w">12</span> 檔贏 SPY（2022 年油價大漲）；同一批到了 3 年期間只剩 <span data-n="e3w">2</span> 檔。<br>3 年期間換成科技、金融領先，大多數都贏（科技 <span data-n="t3a">22 檔有 15 檔</span>、金融 <span data-n="t3b">12 檔有 11 檔</span>）。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=能源&amp;so=-cagr" data-to="tblPanel">5 年看能源</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;ty=科技,金融&amp;so=-cagr" data-to="tblPanel">3 年看科技、金融</button></div></article>
+        <article class="ins"><h3>有沒有碰到 2022，槓桿差很多</h3><p>3 年期間（<span data-n="l3s">2023 年 11 月</span>起）沒碰到空頭：USD 年化 <span data-n="l3USD">76%</span>、TQQQ <span data-n="l3TQQQ">42%</span>、SOXL <span data-n="l3SOXL">37%</span>。<br>拉長到 5 年、把 2022 算進去，變成 <span data-n="l5USD">34%</span>、<span data-n="l5TQQQ">5%</span>、<span data-n="l5SOXL">−5%</span>，中途最深跌了 <span data-n="l5dd">78%～90%</span>。<br>槓桿的成績，很看那段期間有沒有大跌。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="z=lv&amp;w=3&amp;so=-cagr" data-to="tblPanel">看 3 年</button><button type="button" class="btn btn-fill" data-ins="z=lv&amp;w=5&amp;so=-cagr" data-to="tblPanel">看 5 年</button></div></article>
+        <article class="ins"><h3>原型漲了，2 倍、3 倍卻沒賺到</h3><p>最近 1 年 SOXX 漲 <span data-n="x1SOXX">38%</span>，追同一類半導體的 SOXL（3 倍）只剩 <span data-n="x1SOXL">7%</span>，USD（2 倍）<span data-n="x1USD">大約打平</span>，中途最深各跌 <span data-n="d1SOXL">86%</span>、<span data-n="d1USD">55%</span>。<br>上上下下的行情裡，每天重設倍數會一直耗損。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="z=lv&amp;w=1&amp;mk=SOXL,USD" data-to="chartPanel">看 1 年</button><button type="button" class="btn btn-fill" data-ins="p=lev" data-to="">看槓桿耗損</button></div></article>
+        <article class="ins"><h3>領先的那一群會換人</h3><p>5 年期間，能源 <span data-n="e5n">14</span> 檔有 <span data-n="e5w">12</span> 檔贏 SPY（2022 年油價大漲）；同一批到了 3 年期間只剩 <span data-n="e3w">2</span> 檔。<br>3 年期間換成科技、金融領先，大多數都贏（科技 <span data-n="t3a">22 檔有 15 檔</span>、金融 <span data-n="t3b">12 檔有 11 檔</span>）。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=en&amp;so=-cagr" data-to="tblPanel">5 年看能源</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;ty=tefi&amp;so=-cagr" data-to="tblPanel">3 年看科技、金融</button></div></article>
         <article class="ins"><h3>最近 3 年跑最前面的是貴金屬礦業</h3><p>3 年期間股票區年化最高的是黃金、白銀礦業（RING、SIL、GDXJ，都超過 <span data-n="g3min">45%</span>），半導體 SMH 排第 <span data-n="smh3">5</span>。<br>5 年期間排第一的換成 <span data-n="top5">SMH</span>，黃金礦業跟在後面，但中途都跌過<span data-n="dd5">四成多</span>。</p><button type="button" class="btn btn-fill" data-ins="w=3&amp;so=-cagr&amp;mk=RING,SIL,GDXJ,SMH" data-to="chartPanel">依年化排序看</button></article>
         <article class="ins"><h3>SPY 本身就很難贏</h3><p>5 年期間股票區 <span data-n="a5n">567</span> 檔，分到穩強、猛強（年化贏 SPY）的，大約只有<span data-n="a5f">兩成</span>。<br>SPY 是美國大型股，這幾年由大型科技股帶著漲。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;cat=01&amp;so=-cagr" data-to="tblPanel">只看穩強、猛強</button></article>
-        <article class="ins"><h3>中小型、房地產、消費，5 年<span data-n="m5h">沒有一檔贏</span></h3><p>5 年期間，中小型 <span data-n="m5a">29</span> 檔、房地產 <span data-n="m5b">14</span> 檔、消費 <span data-n="m5c">11</span> 檔，<span data-n="m5w">沒有一檔贏 SPY</span>；成長型 <span data-n="g5n">42</span> 檔也只贏 <span data-n="g5w">4</span> 檔。<br>這幾年的漲幅集中在大型股。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=中小型,房地產,消費&amp;so=-cagr" data-to="chartPanel">看這幾類</button></article>
-        <article class="ins"><h3>緩衝型、選擇權收益：跌得少，賺得更少</h3><p>這兩類用選擇權換掉一部分漲幅，回撤多半比 SPY 淺。<br>但年化贏 SPY 的，3 年期間 <span data-n="b3n">40</span> 檔<span data-n="b3w">只有 1 檔</span>，5 年期間 <span data-n="b5n">29</span> 檔<span data-n="b5w">一檔都沒有</span>。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=緩衝型,選擇權收益&amp;so=-rr" data-to="chartPanel">看這兩類</button></article>
-        <article class="ins"><h3>債券的 2022：浮動利率反而贏</h3><p>5 年期間 AGG 年化 <span data-n="agg">−0.3%</span>，中途最深跌 <span data-n="aggd">17%</span>（2022 年升息）。<br>浮動利率的貸款和 CLO（JAAA、FLRT、BKLN）利息跟著升，年化 <span data-n="flt">5%</span> 左右，回撤也淺。</p><button type="button" class="btn btn-fill" data-ins="z=債券&amp;w=5&amp;mk=JAAA,FLRT,BKLN,AGG" data-to="chartPanel">看債券 5 年</button></article>
-        <article class="ins"><h3>比特幣現貨 ETF，幾乎是同一個東西</h3><p>IBIT、FBTC、BITB、ARKB 這些現貨 ETF，年化和最大回撤幾乎一模一樣。<br>差別主要在費率，選的時候看發行商公告的費用。</p><button type="button" class="btn btn-fill" data-ins="z=加密貨幣&amp;w=1&amp;so=-cagr" data-to="tblPanel">看加密貨幣 1 年</button></article>
+        <article class="ins"><h3>中小型、房地產、消費，5 年<span data-n="m5h">沒有一檔贏</span></h3><p>5 年期間，中小型 <span data-n="m5a">29</span> 檔、房地產 <span data-n="m5b">14</span> 檔、消費 <span data-n="m5c">11</span> 檔，<span data-n="m5w">沒有一檔贏 SPY</span>；成長型 <span data-n="g5n">42</span> 檔也只贏 <span data-n="g5w">4</span> 檔。<br>這幾年的漲幅集中在大型股。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=smreco&amp;so=-cagr" data-to="chartPanel">看這幾類</button></article>
+        <article class="ins"><h3>緩衝型、選擇權收益：跌得少，賺得更少</h3><p>這兩類用選擇權換掉一部分漲幅，回撤多半比 SPY 淺。<br>但年化贏 SPY 的，3 年期間 <span data-n="b3n">40</span> 檔<span data-n="b3w">只有 1 檔</span>，5 年期間 <span data-n="b5n">29</span> 檔<span data-n="b5w">一檔都沒有</span>。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=bfoi&amp;so=-rr" data-to="chartPanel">看這兩類</button></article>
+        <article class="ins"><h3>債券的 2022：浮動利率反而贏</h3><p>5 年期間 AGG 年化 <span data-n="agg">−0.3%</span>，中途最深跌 <span data-n="aggd">17%</span>（2022 年升息）。<br>浮動利率的貸款和 CLO（JAAA、FLRT、BKLN）利息跟著升，年化 <span data-n="flt">5%</span> 左右，回撤也淺。</p><button type="button" class="btn btn-fill" data-ins="z=bd&amp;w=5&amp;mk=JAAA,FLRT,BKLN,AGG" data-to="chartPanel">看債券 5 年</button></article>
+        <article class="ins"><h3>比特幣現貨 ETF，幾乎是同一個東西</h3><p>IBIT、FBTC、BITB、ARKB 這些現貨 ETF，年化和最大回撤幾乎一模一樣。<br>差別主要在費率，選的時候看發行商公告的費用。</p><button type="button" class="btn btn-fill" data-ins="z=cr&amp;w=1&amp;so=-cagr" data-to="tblPanel">看加密貨幣 1 年</button></article>
         <article class="ins"><h3>定期定額和一次投入，看起點</h3><p>5 年期間從 <span data-n="d5s">2021 年 11 月</span>起算，之後碰到 2022 大跌，<span data-n="d5p">幾乎每一檔</span>都是定期定額的年化比較高（<span data-n="d5c">567 檔有 554 檔</span>）。<br>1 年期間沒有大跌，反過來<span data-n="d1p">大多</span>是一次投入比較高（<span data-n="d1c">707 檔有 653 檔</span>）。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-dca&amp;cols=%2Bdca" data-to="tblPanel">5 年看定投年化</button><button type="button" class="btn btn-fill" data-ins="w=1&amp;so=-dca&amp;cols=%2Bdca" data-to="tblPanel">1 年看</button></div></article>
       </div>
     </section>
@@ -748,7 +716,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     </section>
     <section class="panel stack">
       <h2>槓桿 ETF 跟「原型 × 倍數」差多少</h2>
-      <p class="foot"><span class="term" tabindex="0" data-tip="把槓桿 ETF 和「原型 × 倍數」都換成連續複利後相減、再除以年數。&#10;理論上約等於 −(倍數² − 倍數) × 原型年化波動率² ÷ 2 −（倍數 − 1）× 短期利率 − 費用：和原型漲跌無關，和波動、倍數、利率有關。&#10;例：3 倍、波動 20% 的原型，光波動每年約少 12%；利率 5% 時再少約 10%，所以利率高的年份耗損明顯較大。&#10;每個持有期間都從每一週各起算一次（各段重疊）。">年化耗損</span>＝每天重設倍數讓槓桿 ETF 每年比「原型 × 倍數」少賺幾 %；波動越大、倍數越高、利率越高，耗損越多。<br>
+      <p class="foot"><span class="term" tabindex="0" data-tip="理論值＝原型每天的漲跌都剛好放大 N 倍、沒有波動耗損和費用時的結果，也就是原型的累積倍數取 N 次方（原型漲 1 倍、3 倍槓桿的理論值是 2³＝8 倍）。&#10;把槓桿 ETF 和理論值都換成連續複利後相減、再除以年數，換回每年多賺或少賺幾 %（負數＝少賺）。&#10;理論上約等於 −(倍數² − 倍數) × 原型年化波動率² ÷ 2 −（倍數 − 1）× 短期利率 − 費用：和原型漲跌無關，和波動、倍數、利率有關。&#10;例：3 倍、波動 20% 的原型，光波動每年約少 12%；利率 5% 時再少約 10%，所以利率高的年份耗損明顯較大。&#10;每個持有期間都從每一週各起算一次（各段重疊）。">比理論值（年化）</span>＝槓桿 ETF 每年比理論值多賺或少賺幾 %，負數＝少賺，也就是每天重設倍數的耗損；波動越大、倍數越高、利率越高，少賺越多。<br>看兩件事：<strong>比理論值</strong>看成本，和這段行情漲跌無關，適合比較哪一檔的結構成本低；<strong>贏過以為的 N 倍</strong>看行情，原型單邊大漲時槓桿常超過 N 倍，小漲、盤整時幾乎贏不了。<br>
         中位數＝一半的起點比它多、一半比它少；第 10～90 百分位＝中間八成的起點落在這個範圍。</p>
       <div class="adj"><div class="row" style="gap:8px 14px"><span class="lbl">持有期間</span><div class="seg" id="levH" role="group" aria-label="持有期間"></div></div></div>
       <div class="tblwrap"><table id="levtbl"><thead></thead><tbody></tbody></table></div>
@@ -1386,7 +1354,7 @@ function bindSearch() {
     if (page !== document.body.dataset.page) showPage("overview", true);
     // 在別的分區：先切過去（分區按鈕、篩選、期間跟著換）
     let moved = "";
-    if (x.z !== ZONE) { moved = `已切換到${x.z}區。`; ZONE = x.z; buildView(); refresh(); }
+    if (x.z !== ZONE) { moved = `已切換到${x.z}區。`; ZONE = x.z; buildView(); resetSliders(); refresh(); }
     x = D.etfs.find(e => e.c === x.c) || x;
     const why = [], fix = [];
     // 沒列出來的原因：期間、左側篩選、表頭的類別篩選，各給一個修正按鈕
@@ -1580,7 +1548,8 @@ function epHover(e) {
   });
   $("ephdots").innerHTML = dots;
   lines.sort((a, b) => b.v - a.v);
-  tip.innerHTML = `<strong>${label}</strong>（相對 ${iso(D.dates[S.ep.pk])} 高點）<br>` + lines.map(l => `<span class="${near == null ? "" : l.on ? "ep-on" : "ep-dim"}"><span class="swatch" style="--c:${l.col}"></span> ${l.c} ${l.n}　<span class="${ud(l.v / 100 - 1)}" style="font-family:var(--f-num)">${pct(l.v / 100 - 1)}</span></span>`).join("<br>");
+  const bv = (lines.find(l => l.c === BN) || {}).v;   // 顏色看「這檔 − 基準」：正數＝這時候比基準好（全站上色原則）；數字照舊是這檔自己的漲跌
+  tip.innerHTML = `<strong>${label}</strong>（相對 ${iso(D.dates[S.ep.pk])} 高點）<br>` + lines.map(l => `<span class="${near == null ? "" : l.on ? "ep-on" : "ep-dim"}"><span class="swatch" style="--c:${l.col}"></span> ${l.c} ${l.n}　<span class="${bv == null || l.c === BN ? "" : ud((l.v - bv) / 100)}" style="font-family:var(--f-num)">${pct(l.v / 100 - 1)}</span></span>`).join("<br>");
   tip.hidden = false;
   const w = tip.getBoundingClientRect().width, h = tip.getBoundingClientRect().height;
   tip.style.left = (e.clientX + 16 + w > innerWidth - 8 ? e.clientX - w - 16 : e.clientX + 16) + "px";
@@ -1824,7 +1793,7 @@ const TOUR = [
   { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以基準高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」加減線（最多 8 條），游標靠近哪條線就突顯哪條。\n拖時間軸兩端調整日期範圍、拖中間的藍色段整段移動，看誰先回到高點；Ctrl（⌘）＋滾輪縮放。\n起迄日期也可以直接輸入，「回到這次大跌」還原。" },
   { page: "notes", sel: "#page-notes .insights", t: "觀察：資料裡看到的幾件事", x: "每張卡的按鈕會把總覽或空頭頁設成那一則的狀況，用目前的資料自己看。\n按下去之後，上方會出現情境列，可以切換同一則的幾個情境，× 收掉。" },
   { page: "lev", sel: "#lvPickPanel", t: "槓桿耗損", x: "選原型和槓桿 ETF，下面的圖都換成這一檔；下表點代號也可以換。\n淨值圖：游標靠近哪條線就突顯哪條。\n淨值圖的「期間」只管上圖；散布圖和下表共用同一個持有期間，下表點表頭排序。" },
-  { sel: "#tbR #sysDet, .viewset", side: 1, open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。\n「分享目前頁面設定」會複製連結，打開就是現在這個畫面。\n電腦版可以按標題左邊的按鈕收起側欄。" },
+  { sel: "#sysDet > .cbox", open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。\n「分享目前頁面設定」會複製連結，打開就是現在這個畫面。\n電腦版可以按左上角的按鈕收起側欄。" },
   { page: "about", sel: "#page-about .panel", t: "還有疑問就看「說明」", x: "名詞、類別的規則、使用前要知道的限制都在說明頁。\n導覽到這裡結束。" }
 ];
 // 進站提醒：localStorage etf-intro-off＝勾了不再顯示；sessionStorage etf-intro-seen＝這次瀏覽已經看過
@@ -1874,7 +1843,7 @@ function bindTour() {
     $("tourNext").focus();
   };
   const end = () => { $("sysDet").open = sysWas; sideOff(sideWas); [hole, card, block].forEach(e => { e.hidden = true; }); document.body.classList.remove("drawer"); if (from) showPage(from, true); scrollTo({ top: 0 }); $("tourBtn").focus(); };
-  $("sysDet").addEventListener("toggle", () => { if (!$("tourCard").hidden) return; try { $("sysDet").open ? localStorage.removeItem("etf-sysdet") : localStorage.setItem("etf-sysdet", "0"); } catch (e) {} });
+  document.addEventListener("click", e => { const d = $("sysDet"); if (d.open && !d.contains(e.target) && $("tourCard").hidden) d.open = false; });   // 置頂欄的顯示設定：點外面就收起
   $("tourBtn").onclick = () => { from = document.body.dataset.page; sysWas = $("sysDet").open; sideWas = sideOff(); sideOff(false); hideTip(); [hole, card, block].forEach(e => { e.hidden = false; }); show(0); };
   $("tourNext").onclick = () => k === TOUR.length - 1 ? end() : show(k + 1);
   $("tourPrev").onclick = () => k > 0 && show(k - 1);
@@ -1959,7 +1928,7 @@ function fillLive() {
   const fits = y => presetStart(D, last, y) >= D.dates[0];   // 加密貨幣區只有約 3 年資料，3、5 年不算
   $("periodNotes").innerHTML = [1, 3, 5].filter(fits).map(y => {
     const s = windowIdx(D, presetStart(D, last, y), D.dates[last]).s, B = metrics(D.bench_p, D, s, last, {});
-    const has = CE.some(ep => ep.tr >= s && ep.pk <= last) && B.mdd <= -CRASH();
+    const has = B.mdd <= -CRASH();   // 期間內基準最多跌到大空頭門檻才算「包含」；和總覽的 #regime 提醒同一個判斷（兩頁一致，2026-11-16）
     return `${y} 年（${ym(D.dates[s])} 起）：基準最多跌 ${pct(-B.mdd)}，${has ? "包含" : "沒有包含"}大空頭（基準跌 ≥ ${f1(CRASH())}%）`;
   }).join("；<br>") + "。";
   // 「年化差不多、回撤差很多」的例子：5 年期間年化在區間內、回撤超出的，取年化最接近基準的一檔
@@ -2015,6 +1984,17 @@ function setSeg(v) { ["dStart", "dEnd"].forEach(i => $(i).setAttribute("aria-inv
 // ── 畫面狀態 ⇄ 一串短參數：「分享目前畫面」和觀察頁的按鈕共用。只記和預設不同的；主題、漲跌顏色、文字大小是看的人自己的偏好，不記。
 // 代號都用英文：中文放進網址會變成三倍長的 %E5…
 
+// 分享參數的英文短代號（照台股版：中文放進網址會變成三倍長）。每個兩個字母，接在一起不用逗號。
+// 名單更新出現新的屬性、地區時，這裡沒有的會自動改用中文加逗號，舊連結（中文）也照樣讀得懂。
+// 代號不可以全由台股的字母組成（屬性 m h a l、地區 d o），不然台股頁會誤讀；台股頁也只接受全由自己字母組成的值。
+const ZC = { "股票": "eq", "債券": "bd", "原物料": "cm", "加密貨幣": "cr", "槓桿": "lv" };
+const RC = { "美國": "us", "國際已開發": "dm", "國際含新興": "ac", "新興市場": "em", "全球": "gl", "單一國家": "sc", "無": "na" };
+const TC = { "基準": "bn", "AI": "ai", "ESG": "es", "中小型": "sm", "低波動": "lo", "價值": "va", "公用事業": "ut", "動能": "mo", "半導體": "se", "原物料": "cm",
+  "品質": "qu", "國防航太": "de", "基本面加權": "fw", "多因子": "mf", "大型": "lg", "工業": "in", "成長": "gr", "房地產": "re", "核能鈾": "nu", "機器人": "ro",
+  "消費": "co", "生技": "bt", "科技": "te", "等權重": "ew", "緩衝型": "bf", "股債配置": "ba", "股利高股息": "dv", "能源": "en", "自由現金流": "fc", "資安": "cy",
+  "通訊": "cs", "選擇權收益": "oi", "避險型": "hg", "醫療": "hc", "金融": "fi", "雲端軟體": "sw", "電網電力": "gd", "黃金礦業": "gm", "債券": "bd", "加密貨幣": "cr", "槓桿": "lv" };
+const enc = (list, map) => list.length && list.every(n => map[n]) ? list.map(n => map[n]).join("") : list.join(",");
+const dec = (v, map, all) => /^([a-z]{2})+$/.test(v) ? v.match(/../g).map(c => Object.keys(map).find(n => map[n] === c)).filter(n => n && all.includes(n)) : v.split(",").filter(n => all.includes(n));
 let DEF_PICKS = [];
 const sameSet = (a, b) => a.size === b.size && [...a].every(x => b.has(x));
 function getState() {
@@ -2024,10 +2004,10 @@ function getState() {
   for (const id in DEF) if (Math.abs(+$(id).value - DEF[id]) > 1e-9) q.set(id, $(id).value);
   if ($("hvx").checked) q.set("hvx", "1");
   const rg = REGIONS.filter(r => $("r-" + r).checked), ty = TYPES.filter(t => $("t-" + t).checked);
-  if (ZONE !== "股票") q.set("z", ZONE);
+  if (ZONE !== "股票") q.set("z", ZC[ZONE]);
   if (TAX) q.set("tx", "1");
-  if (rg.length < REGIONS.length) q.set("rg", rg.join(",") || "-");
-  if (ty.length < TYPES.length) q.set("ty", ty.join(",") || "-");
+  if (rg.length < REGIONS.length) q.set("rg", enc(rg, RC) || "-");
+  if (ty.length < TYPES.length) q.set("ty", enc(ty, TC) || "-");
   if (TF.size) q.set("tf", [...TF].join(","));
   const catq = sc => CATS.map((c, i) => hfCat[sc].has(c[0]) ? i : "").join("") || "-";
   if (hfCat.ov.size < CATS.length) q.set("cat", catq("ov"));
@@ -2046,7 +2026,7 @@ function getState() {
 function applyState(q) {
   FORCE = new Set(); $("q").value = ""; $("qx").hidden = true; $("qmsg").hidden = true;   // 搜尋暫時列出的那一檔不帶進新設定
   const d8 = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "");
-  const z = ZONES.includes(q.get("z")) ? q.get("z") : "股票", tx = q.get("tx") === "1";
+  const zq = q.get("z"), z = ZONES.find(n => n === zq || ZC[n] === zq) || "股票", tx = q.get("tx") === "1";
   if (z !== ZONE || tx !== TAX) { const onlyTax = z === ZONE; ZONE = z; TAX = tx; $("taxOn").checked = tx; buildView(onlyTax); zoneUi(); }
   resetSliders();
   st.win = ["1", "3", "5", "c"].includes(q.get("w")) ? q.get("w") : "5";
@@ -2054,8 +2034,8 @@ function applyState(q) {
   setSeg(st.win);
   for (const id of ["weeks", "burst", "tie", "vmax", "hv", "epth"]) if (q.has(id) && isFinite(+q.get(id))) { const el = $(id); el.value = Math.min(+el.max, Math.max(+el.min, +q.get(id))); }
   $("hvx").checked = q.get("hvx") === "1";
-  const pick = (k, all) => { const v = q.get(k); return v == null ? null : v.split(",").filter(n => all.includes(n)); };
-  const rg = pick("rg", REGIONS), ty = pick("ty", TYPES);
+  const pick = (k, map, all) => { const v = q.get(k); return v == null ? null : dec(v, map, all); };
+  const rg = pick("rg", RC, REGIONS), ty = pick("ty", TC, TYPES);
   REGIONS.forEach(r => { $("r-" + r).checked = !rg || !rg.length || rg.includes(r); });
   setTypes(ty && ty.length < TYPES.length ? ty : []);
   TF.clear(); (q.get("tf") || "").split(",").filter(k => k.includes("|") && TYPES.includes(k.split("|")[0])).forEach(k => TF.add(k)); drawAttr();
@@ -2120,7 +2100,15 @@ function insBar(card, cur) {
 function markBar(cur) { $("insBar").querySelectorAll(".ib-go [data-ins]").forEach(x => x.setAttribute("aria-pressed", x.dataset.ins === cur)); }
 function hideBar() { $("insBar").hidden = true; }
 document.addEventListener("click", e => { if (e.target.closest("#insX")) hideBar(); if (e.target.closest("[data-insback]")) { showPage("notes", true); scrollTo({ top: 0 }); } });
-function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("burst").value = d.burst * 100; $("tie").value = d.tie * 100; $("vmax").value = 3; $("hv").value = (d.hv ?? 0.05) * 100; $("hvx").checked = false; $("epth").value = (d.epth ?? 0.15) * 100; epCache = null; }
+// 拉桿範圍、刻度和「預設 …」字樣跟著分區換（加密貨幣的「接近基準」預設 5%，上限放寬到 15%）
+function zoneSliders() {
+  const wide = ZONE === "加密貨幣", rt = (id, vals, fmt) => { const a = +$(id).min, b = +$(id).max; $("tk-" + id).innerHTML = vals.map(v => `<span style="left:${(v - a) / (b - a) * 100}%">${fmt(v)}</span>`).join(""); };
+  $("tie").max = wide ? 15 : 5;
+  rt("tie", wide ? [0, 3, 6, 9, 12, 15] : [0, 1, 2, 3, 4, 5], v => v + "%"); rt("burst", [1, 5, 10, 15, 20, 25, 30], v => v + "%");
+  const dd = D.defaults, DF = { weeks: dd.weeks + " 週", burst: f1(dd.burst) + "%", tie: f1(dd.tie) + "%", hv: f1(dd.hv ?? 0.05) + "%", epth: f1(dd.epth ?? 0.15) + "%" };
+  document.querySelectorAll(".def").forEach(el => { el.textContent = DF[el.dataset.k]; });
+}
+function resetSliders() { zoneSliders(); const d = D.defaults; $("weeks").value = d.weeks; $("burst").value = d.burst * 100; $("tie").value = d.tie * 100; $("vmax").value = 3; $("hv").value = (d.hv ?? 0.05) * 100; $("hvx").checked = false; $("epth").value = (d.epth ?? 0.15) * 100; epCache = null; }
 
 
 // ===== 美股版：分區與扣稅 =====
@@ -2128,6 +2116,9 @@ function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("b
 // D.etfs＝這一區的 ETF、D.bench_p＝這一區的基準、D.market_p＝SPY；日期從基準的第一筆開始（AGG 2003、IBIT 2024）
 let RAW = null, ZONE = "股票", TAX = false, BN = "SPY", BYC = {}, winBefore = null;
 const ZONES = ["股票", "債券", "原物料", "加密貨幣", "槓桿"];
+// 各分區的門檻預設（JC 2026-11-16）：依基準的年化波動和 SPY（約 16%）的比例縮放後取整。債券 AGG 約 6%、加密貨幣 IBIT 約 50%；
+// 原物料 GLD 約 19%、槓桿區的基準也是 SPY，照股票區。沒列的用 data.json 的 defaults。換分區時拉桿回到該區的預設
+const ZDEF = { "債券": { tie: 0.005, near_dd: 0.01, burst: 0.025, hv: 0.02, epth: 0.10 }, "加密貨幣": { tie: 0.05, near_dd: 0.10, burst: 0.25, hv: 0.15, epth: 0.20 } };
 const ZONE_PICKS = { "股票": ["QQQ", "XLK", "SMH", "SCHD"], "債券": ["TLT", "BND", "SHY", "LQD"], "原物料": ["SLV", "USO", "DBC"],
   "加密貨幣": ["FBTC", "ETHA", "BITO"], "槓桿": ["TQQQ", "SSO", "SOXL", "TMF"] };
 function prep(d) {
@@ -2157,7 +2148,7 @@ function zoneD(Z, rate) {
   const list = RAW.etfs.filter(x => x.z === Z).map(x => ({ ...x, p: cut(full(x.c)) })).filter(x => x.p.some(v => v != null));
   if (!list.some(x => x.c === bn)) list.unshift({ c: bn, n: (BYC[bn] && BYC[bn].n) || bn, z: Z, t: "基準", r: "美國", p: cut(bp) });
   return { ...RAW, dates: cut(RAW.dates), bench_p: cut(bp), market_p: cut(full("SPY")), etfs: list,
-    defaults: { ...RAW.defaults, crash: Z === "債券" ? RAW.defaults.crash_bond : RAW.defaults.crash } };
+    defaults: { ...RAW.defaults, crash: Z === "債券" ? RAW.defaults.crash_bond : RAW.defaults.crash, ...(ZDEF[Z] || {}) } };
 }
 function buildView(keepSel) {
   const rate = TAX ? (RAW.defaults.tax ?? 0.3) : 0;
@@ -2184,7 +2175,7 @@ function buildZoneSeg() {
   document.querySelectorAll("#zoneSeg button, #zoneTop button").forEach(b => b.onclick = () => {
     if (b.dataset.z === ZONE) return;
     document.querySelectorAll("#zoneSeg button, #zoneTop button").forEach(x => x.setAttribute("aria-pressed", x === b || x.dataset.z === b.dataset.z));
-    zoneFade(() => { ZONE = b.dataset.z; buildView(); refresh(); });
+    zoneFade(() => { ZONE = b.dataset.z; buildView(); resetSliders(); refresh(); });
   });
 }
 // 換分區：內容淡出 → 換資料 → 淡入；分區列本身不淡
@@ -2200,6 +2191,7 @@ function zoneUi() {
   syncSub(); buildFilters(); setSeg(st.win);
   $("levLink").hidden = ZONE !== "槓桿";
   const lo = iso(D.dates[0]);
+  zoneSliders();
   $("dStart").min = $("dEnd").min = $("epFrom").min = $("epTo").min = lo;
   if ($("dStart").value < lo) $("dStart").value = lo;
   $("epthN").textContent = episodes(D, D.defaults.epth ?? 0.15).length;
@@ -2211,7 +2203,9 @@ function refresh() { zoneUi(); render(); }
 
 // ===== 槓桿耗損分頁 =====
 // 每檔槓桿 ETF 對自己的 1 倍原型，持有 h 個交易日：
-//   年化耗損 v ＝〔ln(1＋槓桿報酬) − 倍數 × ln(1＋原型報酬)〕÷ 年數，顯示成 e^v − 1（每年少賺幾 %）。
+//   年化耗損 v ＝〔ln(1＋槓桿報酬) − 倍數 × ln(1＋原型報酬)〕÷ 年數，顯示成 e^v − 1（每年比理論值多賺或少賺幾 %，負數＝少賺；全站「和基準比」的數字都是正數＝比較好）。
+//   理論值＝原型累積倍數的 N 次方（零波動、零費用時每天 N 倍連乘的結果）；在對數裡是線性的，所以年化後不會因為次方而爆掉。
+//   另算「贏過以為的 N 倍的比例」：累積報酬 > 倍數 × 原型累積報酬的起點比例（和散布圖的虛線同一條基準；2026-11-16 JC 選方案 C）。
 //   理論上 v ≈ −(倍數² − 倍數) × 原型波動率² ÷ 2 −（倍數 − 1）× 短期利率 − 費用：和原型漲跌無關，但和利率有關
 //   （稽核 2026-11-08 實測：零利率的 2013～15 年和 5% 利率的 2023～26 年，3 倍型的耗損差約 10 個百分點）。
 //   另列「最近一段」的簡單差距（槓桿累積報酬 − 倍數 × 原型累積報酬），當作直覺參考。
@@ -2220,13 +2214,13 @@ const LEV_H = [["1 個月", 21], ["3 個月", 63], ["6 個月", 126], ["1 年", 
 // 每檔的說明（原型不同、倍數改過）和改倍數的日期 ls 由資料腳本給（nt、ls）
 const LEVTIPS = {
   since: "可比起點：槓桿 ETF 和原型都有資料、倍數也沒再改過的第一天。",
-  med: "年化耗損的中位數：所有起點裡排在正中間的那個。",
+  med: "比理論值（年化）的中位數：所有起點裡排在正中間的那個。負數＝每年比理論值少賺這麼多，就是耗損。",
   rng: "第 10～90 百分位：去掉最差、最好各一成後，中間八成的起點落在這個範圍。",
-  neg: "耗損為負的比例：所有起點裡，槓桿反而比「原型 × 倍數」多賺的比例（多半是單邊大漲的時候）。",
+  beat: "贏過以為的 N 倍：所有起點裡，槓桿的累積報酬比「原型 × 倍數」還高的比例。多半發生在原型單邊大漲的時候；原型小漲、盤整時幾乎贏不了。",
   gap: "差距：最近這段期間，槓桿的累積報酬減「原型 × 倍數」，單位是百分點；會被那段行情放大，只當參考。"
 };
-let levH = 252, LEVC = null, levSort = "med", levDir = 1;
-const ann = v => Math.exp(v) - 1;
+let levH = 252, LEVC = null, levSort = "med", levDir = 1;   // 預設少賺最多的排前面
+const ann = v => Math.exp(v) - 1;   // 比理論值（年化）：負數＝少賺
 function levStats() {
   if (LEVC) return LEVC;
   LEVC = RAW.etfs.filter(e => e.x).concat(RAW.lev_extra || []).map(x => {
@@ -2236,17 +2230,17 @@ function levStats() {
     const f = Math.max(L.findIndex(v => v != null), U.findIndex(v => v != null), ls), last = L.length - 1;
     row.since = iso(RAW.dates[f]); row.spanY = (last - f) / 252;
     for (const [, h] of LEV_H) {
-      const g = []; let neg = 0;
+      const g = []; let beat = 0;
       for (let i = f; i + h <= last; i += 5) {
         const a = L[i], b = L[i + h], c = U[i], d = U[i + h];
         if (a == null || b == null || c == null || d == null) continue;
-        const v = (Math.log(b / a) - x.x * Math.log(d / c)) / (h / 252); g.push(v); if (v < 0) neg++;
+        const v = (Math.log(b / a) - x.x * Math.log(d / c)) / (h / 252); g.push(v); if (b / a - 1 > x.x * (d / c - 1)) beat++;
       }
       if (g.length < 10) continue;
       g.sort((a, b) => a - b);
       const q = k => ann(g[Math.round(k * (g.length - 1))]), i0 = last - h;
       const cur = L[i0] != null && U[i0] != null ? { lr: L[last] / L[i0] - 1, ur: U[last] / U[i0] - 1 } : null;
-      row.by[h] = { n: g.length, med: q(0.5), p10: q(0.1), p90: q(0.9), neg: neg / g.length,
+      row.by[h] = { n: g.length, med: q(0.5), p10: q(0.1), p90: q(0.9), beat: beat / g.length,
         thin: row.spanY < 3 * h / 252, cur: cur && { ...cur, gap: cur.lr - x.x * cur.ur } };
     }
     return row;
@@ -2262,10 +2256,10 @@ function renderLev() {
     $(id).querySelectorAll("button").forEach(b => b.onclick = () => { levH = +b.dataset.h; renderLev(); });
   }
   const cols = [["c", "代號"], ["n", "名稱"], ["xx", "倍數"], ["u", "原型"], ["since", "可比起點"],
-    ["med", "年化耗損（中位數）"], ["rng", "第 10～90 百分位"], ["neg", "耗損為負的比例"], ["lr", "最近 " + hl + "：槓桿"], ["ur", "原型 × 倍數"], ["gap", "差距（百分點）"]];
+    ["med", "比理論值（年化中位數）"], ["rng", "第 10～90 百分位"], ["beat", "贏過以為的 N 倍"], ["lr", "最近 " + hl + "：槓桿"], ["ur", "原型 × 倍數"], ["gap", "差距（百分點）"]];
   const val = (r, k) => { const b = r.by[levH]; switch (k) {
     case "c": case "n": return r.x[k]; case "xx": return r.x.x; case "u": return r.x.u || ""; case "since": return r.since || "";
-    case "med": return b ? b.med : null; case "rng": return b ? b.p10 : null; case "neg": return b ? b.neg : null;
+    case "med": return b ? b.med : null; case "rng": return b ? b.p10 : null; case "beat": return b ? b.beat : null;
     case "lr": return b && b.cur ? b.cur.lr : null; case "ur": return b && b.cur ? b.cur.ur * r.x.x : null; case "gap": return b && b.cur ? b.cur.gap : null; } };
   const sorted = rows.slice().sort((a, b) => { const va = val(a, levSort), vb = val(b, levSort);
     if (va == null) return 1; if (vb == null) return -1; return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * levDir; });
@@ -2277,8 +2271,8 @@ function renderLev() {
       + `<td class="txt left">${canDraw ? `<button type="button" class="linkbtn" data-lv="${r.x.c}" aria-label="在上面的圖看 ${r.x.c}">${r.x.c}</button>` : r.x.c}${note ? ` <span class="term" tabindex="0" data-tip="${note}">*</span>` : ""}${b && b.thin ? ` <span class="flag term" tabindex="0" data-tip="${thinTip(r)}">樣本少</span>` : ""}`
       + `${r.x.small ? ` <span class="flag term" tabindex="0" data-tip="規模 1～10 億美元，不在總覽名單裡，只列在這頁">規模小</span>` : ""}</td>`
       + `<td class="txt left">${enName(r.x)}</td><td>${r.x.x} 倍</td><td class="txt left">${r.x.u || "—"}</td><td>${r.since || "—"}</td>`
-      + `<td class="${b ? ud(b.med) : ""}">${b ? pct(b.med) : "—"}</td><td>${b ? pct(b.p10) + " ～ " + pct(b.p90) : "—"}</td><td>${b ? pct(b.neg, 0) : "—"}</td>`
-      + `<td class="${c ? ud(c.lr) : ""}">${c ? pct(c.lr) : "—"}</td><td class="${c ? ud(c.ur) : ""}">${c ? pct(c.ur * r.x.x) : "—"}</td><td class="${c ? ud(c.gap) : ""}">${c ? ppt(c.gap) : "—"}</td></tr>`; }).join("");
+      + `<td class="${b ? ud(b.med) : ""}">${b ? pct(b.med) : "—"}</td><td>${b ? pct(b.p10) + " ～ " + pct(b.p90) : "—"}</td><td>${b ? pct(b.beat, 0) : "—"}</td>`
+      + `<td>${c ? pct(c.lr) : "—"}</td><td>${c ? pct(c.ur * r.x.x) : "—"}</td><td class="${c ? ud(c.gap) : ""}">${c ? ppt(c.gap) : "—"}</td></tr>`; }).join("");
   $("levtbl").querySelectorAll("th button").forEach(b => b.onclick = () => { const k = b.dataset.k; if (levSort === k) levDir = -levDir; else { levSort = k; levDir = 1; } renderLev(); });
   $("levtbl").querySelectorAll("[data-lv]").forEach(b => b.onclick = () => { lvCur = b.dataset.lv; lvPicker(); lvDraw(); renderLevRows(); $("lvPrev").scrollIntoView({ block: "start" }); });
   const no = rows.filter(r => !r.by[levH]).map(r => r.x.c);
@@ -2334,9 +2328,9 @@ function lvDraw() {
   let py = null; idx.forEach((i, k) => { const yv = iso(RAW.dates[i]).slice(0, 4); if (yv !== py && py !== null) { const step = idx.length > 252 * 12 ? 2 : 1; if (+yv % step === 0) g += `<line x1="${sx(k)}" x2="${sx(k)}" y1="${m.t}" y2="${y2 + H2}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${sx(k)}" y="${y2 + H2 + B - 12}" text-anchor="middle">${yv}</text>`; } py = yv; });
   const line = (a, fy, col, w) => `<path d="M${a.map((v, k) => sx(k).toFixed(1) + "," + fy(v).toFixed(1)).join("L")}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
   const area = (a, col) => `<path d="M${sx(0)},${sd(0)}L${a.map((v, k) => sx(k).toFixed(1) + "," + sd(v).toFixed(1)).join("L")}L${sx(a.length - 1)},${sd(0)}Z" fill="${col}" opacity=".5"/>`;
-  g += `<g class="lvs" data-s="L">${area(dl, "var(--dn)")}${line(nl, sy, "var(--l1)", 2.2)}</g>`;
+  g += `<g class="lvs" data-s="L">${area(dl, "var(--l1)")}${line(nl, sy, "var(--l1)", 2.2)}</g>`;
   g += `<g class="lvs" data-s="U">${area(du, "var(--muted)")}${line(du, sd, "var(--fg)", 1.2)}${line(nu, sy, "var(--muted)", 2)}</g>`;
-  g += `<g id="lvCur" pointer-events="none" hidden><line class="vl" y1="${m.t}" y2="${y2 + H2}" stroke="var(--fg)" stroke-dasharray="3 3"/><circle class="cL" r="4" fill="var(--l1)"/><circle class="cU" r="4" fill="var(--muted)" stroke="var(--fg)"/><circle class="dL" r="3.5" fill="var(--dn)"/><circle class="dU" r="3.5" fill="var(--muted)" stroke="var(--fg)"/></g>`;
+  g += `<g id="lvCur" pointer-events="none" hidden><line class="vl" y1="${m.t}" y2="${y2 + H2}" stroke="var(--fg)" stroke-dasharray="3 3"/><circle class="cL" r="4" fill="var(--l1)"/><circle class="cU" r="4" fill="var(--muted)" stroke="var(--fg)"/><circle class="dL" r="3.5" fill="var(--l1)"/><circle class="dU" r="3.5" fill="var(--muted)" stroke="var(--fg)"/></g>`;
   g += `<text id="lvRead" x="${W - m.r}" y="${m.t + 12}" text-anchor="end" style="font-weight:600"></text>`;
   $("lvNav").innerHTML = g;
   // 游標：在淨值區比淨值、在回撤區比回撤，離哪條近就突顯哪條（同空頭頁走勢圖）
@@ -2352,7 +2346,7 @@ function lvDraw() {
   const tl = nl[nl.length - 1] / 100 - 1, tu = nu[nu.length - 1] / 100 - 1, yrs = (idx.length - 1) / 252;
   const cg = v => (Math.pow(1 + v, 1 / yrs) - 1);
   $("lvHead1").innerHTML = `${iso(RAW.dates[idx[0]])} 起 ${yrs.toFixed(1)} 年：<span style="color:var(--l1)">${x.c}</span> 年化 ${pct(cg(tl))}、最深跌 ${pct(Math.min(...dl), 0)}；原型 ${x.u} 年化 ${pct(cg(tu))}、最深跌 ${pct(Math.min(...du), 0)}。`;
-  $("lvLeg1").innerHTML = `<span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--l1)" stroke-width="3"/></svg>${x.c}（${x.x} 倍）</span><span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--muted)" stroke-width="3"/></svg>原型 ${x.u}</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--dn)" opacity=".5"/></svg>${x.c} 回撤</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--muted)" opacity=".5" stroke="var(--fg)"/></svg>${x.u} 回撤</span><span>淨值：起點＝100，對數座標（同樣高度＝同樣漲幅 %）</span>`;
+  $("lvLeg1").innerHTML = `<span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--l1)" stroke-width="3"/></svg>${x.c}（${x.x} 倍）</span><span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--muted)" stroke-width="3"/></svg>原型 ${x.u}</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--l1)" opacity=".5"/></svg>${x.c} 回撤</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--muted)" opacity=".5" stroke="var(--fg)"/></svg>${x.u} 回撤</span><span>淨值：起點＝100，對數座標（同樣高度＝同樣漲幅 %）</span>`;
   lvScatter(r, x, L, U, last);
 }
 
@@ -2373,14 +2367,14 @@ function lvScatter(r, x, L, U, last) {
   for (let v = Math.ceil(xlo / sxs) * sxs; v <= xhi + 1e-9; v += sxs) { const z = Math.abs(v) < 1e-9; g += `<line x1="${px(v)}" x2="${px(v)}" y1="${F.t}" y2="${FH - F.b}" stroke="${z ? "var(--fg)" : "var(--line)"}"/><text x="${px(v)}" y="${FH - F.b + 16}" text-anchor="middle">${pct(v, 0)}</text>`; }
   g += `<text x="${(F.l + W - F.r) / 2}" y="${FH - 6}" text-anchor="middle">原型 ${x.u} 持有 ${hl}的報酬</text><text x="${F.l + 6}" y="${F.t + 12}">${x.c} 實際報酬 ↑</text>`;
   // 「以為的 N 倍」：y = 倍數 × x；低於 −100% 的部分夾在底線（實際上會歸零）
-  g += `<line x1="${px(xlo)}" y1="${py(x.x * xlo)}" x2="${px(xhi)}" y2="${py(x.x * xhi)}" stroke="var(--c-strong)" stroke-width="2" stroke-dasharray="6 4"/>`;
+  g += `<line x1="${px(xlo)}" y1="${py(x.x * xlo)}" x2="${px(xhi)}" y2="${py(x.x * xhi)}" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="6 4"/>`;
   const below = p => p.l < x.x * p.u;
   g += pts.map(p => `<circle cx="${px(p.u).toFixed(1)}" cy="${py(p.l).toFixed(1)}" r="3" fill="${below(p) ? "var(--dn)" : "var(--up)"}" fill-opacity=".55" data-tip="${iso(RAW.dates[p.i])} 起持有 ${hl}：${x.u} ${pct(p.u)}，以為 ${x.x} 倍 ${pct(x.x * p.u)}，實際 ${x.c} ${pct(p.l)}"></circle>`).join("");
   $("lvSc").innerHTML = g;
   const nb = pts.filter(below).length, flat = pts.filter(p => Math.abs(p.u) <= 0.1), fb = flat.filter(below).length;
   $("lvHead2").innerHTML = `${pts.length} 個起點裡，${pct(nb / pts.length, 0)} 實際報酬低於「${x.u} × ${x.x}」` + (flat.length >= 10 ? `；${x.u} 漲跌在 ±10% 以內的時候（盤整），${pct(fb / flat.length, 0)} 低於。` : "。")
     + (thin ? `<br>樣本少：可比期間約 ${r.spanY.toFixed(1)} 年，不到持有期間的 3 倍，點大多重疊在同幾段行情，只當參考。` : "");
-  $("lvLeg2").innerHTML = `<span><svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="var(--c-strong)" stroke-width="2" stroke-dasharray="6 4"/></svg><span class="term" tabindex="0" data-tip="多數人以為的「${x.x} 倍」。&#10;原型來回震盪、最後沒漲沒跌時，點多半在虛線下方；單邊大漲時在上方；大跌時跌不到 ${x.x} 倍，也不會跌超過 −100%。">以為的：${x.u} 報酬 × ${x.x}</span></span><span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--dn)" fill-opacity=".7"/></svg>實際比以為的少</span><span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--up)" fill-opacity=".7"/></svg>實際比以為的多</span><span>${r.since} 起、每週一個起點</span>`;
+  $("lvLeg2").innerHTML = `<span><svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="6 4"/></svg><span class="term" tabindex="0" data-tip="多數人以為的「${x.x} 倍」。&#10;原型來回震盪、最後沒漲沒跌時，點多半在虛線下方；單邊大漲時在上方；大跌時跌不到 ${x.x} 倍，也不會跌超過 −100%。">以為的：${x.u} 報酬 × ${x.x}</span></span><span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--dn)" fill-opacity=".7"/></svg>實際比以為的少</span><span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--up)" fill-opacity=".7"/></svg>實際比以為的多</span><span>${r.since} 起、每週一個起點</span>`;
   $("lvFoot").innerHTML = "";
 }
 
@@ -2404,12 +2398,10 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   buildZoneSeg(); buildControls(); resetSliders(); buildPeriod(); buildEpPeriod(); fillLive(); fillNotes(); bindSearch(); bindTour(); bindShare(); showIntro();
   const rticks = (id, vals, fmt) => { const a = +$(id).min, b = +$(id).max; $("tk-" + id).innerHTML = vals.map(v => `<span style="left:${(v - a) / (b - a) * 100}%">${fmt(v)}</span>`).join(""); };
   rticks("vmax", [0.5, 1, 1.5, 2, 2.5, 3], v => v === 3 ? "不限" : v); rticks("hv", [1, 5, 10, 15, 20, 25], v => v + "%");
-  rticks("tie", [0, 1, 2, 3, 4, 5], v => v + "%"); rticks("epth", [10, 15, 20, 25, 30], v => v + "%");
+  rticks("epth", [10, 15, 20, 25, 30], v => v + "%");
   rticks("weeks", [1, 2, 3, 4], v => v + " 週");
-  // 側欄「預設 …」的數字都從 data.json 的 defaults 來，改預設只改資料腳本
-  const dd = d.defaults, DF = { weeks: dd.weeks + " 週", burst: f1(dd.burst) + "%", tie: f1(dd.tie) + "%", hv: f1(dd.hv ?? 0.05) + "%", epth: f1(dd.epth ?? 0.15) + "%" };
-  document.querySelectorAll(".def").forEach(el => { el.textContent = DF[el.dataset.k]; });
-  $("epthN").textContent = episodes(D, dd.epth ?? 0.15).length; rticks("burst", [5, 10, 15, 20, 25, 30], v => v + "%");
+  // 側欄「預設 …」的數字：data.json 的 defaults，再套分區的 ZDEF（zoneSliders）
+  zoneSliders(); $("epthN").textContent = episodes(D, D.defaults.epth ?? 0.15).length;
   ["weeks", "burst", "tie", "vmax", "hv", "hvx"].forEach(id => $(id).addEventListener("input", render));
   $("epth").addEventListener("input", () => { epCache = null; epSel = null; epView = null; render(); });
   $("f-region").addEventListener("change", render); $("f-type").addEventListener("change", render);
@@ -2460,7 +2452,13 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   });
   syncFz();
   render();
-  setTimeout(() => document.documentElement.classList.remove("booting"), 0);   // 讓這一輪的計算先結束再淡入；不用 requestAnimationFrame，背景分頁不會觸發
+  // 讓這一輪的計算先結束再淡入；不用 requestAnimationFrame，背景分頁不會觸發。
+  // 拿掉前先讀一次內容的計算樣式：資料在快取裡、讀得很快時（台股常見），瀏覽器可能還沒算過「隱藏」那一刻的樣式，
+  // 淡入就不會觸發，內容整塊冒出來像閃一下（2026-11-16 JC 回報，美股資料大、讀得慢所以不會）
+  // 也等網頁字型載完（最多 1.5 秒）：Noto Sans TC 依用到的字分批下載，內容出現得太快時會先用系統字畫、字型到了再換掉，
+  // 在 Firefox 核心（Zen）上看起來像閃一下；美股資料讀得久，字型早就到了（JC 2026-11-16 回報）
+  const reveal = () => setTimeout(() => { const R = document.documentElement; void getComputedStyle(document.querySelector("main.wrap > section") || R).opacity; R.classList.remove("booting"); }, 0);
+  Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 1500))]).then(reveal, reveal);
   if (!$("page-lev").hidden) renderLev();
   if (location.hash.includes("?")) openShared();
 }).catch(err => { document.documentElement.classList.remove("booting"); $("sub").innerHTML = `<span class="err">資料讀不到（${err.message}）。重新整理一次；還是不行的話，請稍後再試。</span>`; });
@@ -2469,7 +2467,6 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
 // 台股／美股切換：側欄滑塊和右上角眉標先換過去、內容淡出，再換頁
 (() => {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const NAME = { 台股: "TAIWAN · 台股", 美股: "UNITED STATES · 美股" };
   document.querySelectorAll("a[data-go]").forEach(a => a.addEventListener("click", e => {
     if (a.hasAttribute("aria-current")) return e.preventDefault();
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
@@ -2477,40 +2474,13 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
     const go = () => { location.href = a.href; };
     if (reduce) return go();
     document.querySelectorAll(".mkt").forEach(m => { m.classList.toggle("at-us"); m.querySelectorAll("a").forEach(x => x.classList.toggle("on")); });
-    document.querySelectorAll(".eb-name").forEach(el => { el.classList.add("roll-out"); setTimeout(() => { el.textContent = NAME[a.dataset.go]; el.classList.replace("roll-out", "roll-in"); el.offsetWidth; el.classList.remove("roll-in"); }, 200); });
     document.documentElement.classList.add("leaving");
     setTimeout(go, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fade")) * 1000 || 600);
   }));
-  // 用瀏覽器「上一頁」從快取回來時，頁面停在離開前的樣子：還原滑塊、眉標、淡出，不重新載入（設定才不會丟）
+  // 用瀏覽器「上一頁」從快取回來時，頁面停在離開前的樣子：還原滑塊、淡出，不重新載入（設定才不會丟）
   const mk0 = [...document.querySelectorAll(".mkt")].map(m => [m, m.className, [...m.querySelectorAll("a")].map(x => x.className)]);
-  const ebs = [...document.querySelectorAll(".eb-name")], eb0 = ebs.map(x => x.textContent);
   addEventListener("pageshow", e => { if (!e.persisted) return;
     mk0.forEach(([m, c, as]) => { m.className = c; m.querySelectorAll("a").forEach((x, i) => { x.className = as[i]; }); });
-    ebs.forEach((x, i) => { x.textContent = eb0[i]; x.className = "eb-name"; });
     document.documentElement.classList.remove("leaving"); });
 })();
-</script>
-<div class="tbtry" role="group" aria-label="置頂欄試做"><span>置頂欄試做</span><button type="button" data-tbv="0">現行</button><button type="button" data-tbv="A">A</button><button type="button" data-tbv="B">B</button><button type="button" data-tbv="C">C</button><button type="button" data-tbv="C1">C1</button><button type="button" data-tbv="C2">C2</button><button type="button" data-tbv="C3">C3</button></div>
-<script>
-// 置頂欄試做切換（定案後拿掉）：記在 localStorage etf-tb-try，台股、美股共用
-(() => { const R = document.documentElement, bs = document.querySelectorAll("[data-tbv]"), tbR = document.getElementById("tbR"), tbL = document.getElementById("tbL");
-  // C1／C2 把側欄的按鈕列、分享訊息（C2 再加顯示設定）搬進置頂欄；其他版本搬回原位
-  const els = [document.querySelector(".viewset .toprow"), document.getElementById("shareMsg"), document.getElementById("sysDet")];
-  const home = els.map(el => [el, el.parentNode, el.nextSibling]);
-  let sysWas = els[2].open;
-  const sb = document.getElementById("shareBtn"), sbHTML = sb.innerHTML;   // 置頂欄裡縮成「分享」，滑過看全名
-  const place = v => {
-    sb.innerHTML = sbHTML; sb.removeAttribute("title");
-    if (v === "C1" || v === "C2") { sb.innerHTML = sbHTML.replace("分享目前頁面設定", "分享"); sb.title = "分享目前頁面設定"; }
-    if (els[2].parentNode === tbR) els[2].open = sysWas;
-    home.slice().reverse().forEach(([el, p, nx]) => p.insertBefore(el, nx));
-    if (v === "C1" || v === "C2") tbR.append(els[0], els[1]);
-    if (v === "C3") tbL.append(els[0], els[1]);
-    if (v === "C2" || v === "C3") { sysWas = els[2].open; els[2].open = false; tbR.append(els[2]); }
-  };
-  const mark = () => bs.forEach(b => b.setAttribute("aria-pressed", b.dataset.tbv === R.dataset.tb));
-  bs.forEach(b => b.onclick = () => { const v = b.dataset.tbv; R.dataset.tb = v; R.toggleAttribute("data-tbc", v[0] === "C"); try { localStorage.setItem("etf-tb-try", v); } catch (e) {} place(v); mark(); });
-  // 下拉的顯示設定：點外面就收起
-  document.addEventListener("click", e => { if (els[2].parentNode === tbR && els[2].open && !els[2].contains(e.target)) els[2].open = false; });
-  place(R.dataset.tb); mark(); })();
 </script>
