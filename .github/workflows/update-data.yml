@@ -1,0 +1,186 @@
+# 每週更新資料並發布網站。規劃與手動操作方式見 pipeline/README.md。
+#
+# 排程：每週六、日、一的 UTC 01:00（台北早上 9 點）。週六成功後，週日、週一看到這週已經有資料就跳過；
+#       週六失敗（抓不到、檢查沒過）時，週日、週一自動重試。
+# 手動：Actions 頁 → update-data → Run workflow
+#       mode=update   重抓資料（和排程一樣）
+#       mode=redeploy 不重抓，用 tag 指定的那一版資料重新發布（空白＝最新一版）；退回上一版、改了程式要重新發布時用
+# push 到 main：只重新發布（用最新一版資料＋新程式）
+name: update-data
+
+on:
+  schedule:
+    - cron: "0 1 * * 6"
+    - cron: "0 1 * * 0"
+    - cron: "0 1 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "update＝重抓資料；redeploy＝用某一版資料重新發布"
+        type: choice
+        options: [update, redeploy]
+        default: update
+      tag:
+        description: "redeploy 用哪一版（例如 data-2026-11-13）；空白＝最新一版"
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths-ignore:
+      - "pipeline/**"
+      - "README.md"
+
+permissions:
+  contents: write
+  issues: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  ISSUE_LABEL: data-update
+
+jobs:
+  data:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'update')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      tag: ${{ steps.asof.outputs.tag }}
+      skip: ${{ steps.asof.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 決定資料截止日（最近一個週五）
+        id: asof
+        run: |
+          asof=$(date -u -d "last friday" +%F)
+          tag="data-$asof"
+          echo "asof=$asof" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "這週（$tag）已經更新過，跳過"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.asof.outputs.skip == 'false'
+        with:
+          python-version: "3.11"
+
+      - name: 安裝套件
+        if: steps.asof.outputs.skip == 'false'
+        run: pip install -r pipeline/requirements.txt
+
+      - name: 抓台股
+        if: steps.asof.outputs.skip == 'false'
+        working-directory: pipeline
+        run: python -X utf8 tw_etf_strength.py --asof ${{ steps.asof.outputs.asof }} --out ../out/tw --export ../new/data.json
+
+      - name: 抓美股
+        if: steps.asof.outputs.skip == 'false'
+        working-directory: pipeline
+        run: >
+          python -X utf8 us_etf_strength.py --asof ${{ steps.asof.outputs.asof }}
+          --list lists/us-etf-1b.csv --tags lists/us-etf-tags.csv --names lists/us-etf-names.csv
+          --out ../out/us --export ../new/us-data.json
+
+      - name: 下載上一版
+        if: steps.asof.outputs.skip == 'false'
+        run: |
+          mkdir -p prev
+          last=$(gh release list --limit 20 --json tagName,createdAt --jq '[.[] | select(.tagName | startswith("data-"))] | sort_by(.createdAt) | last | .tagName // ""')
+          echo "上一版：${last:-（沒有）}"
+          if [ -n "$last" ]; then gh release download "$last" --dir prev --pattern "*.json"; fi
+
+      - name: 發布前檢查
+        id: check
+        if: steps.asof.outputs.skip == 'false'
+        run: |
+          if [ -f prev/data.json ]; then prev="--prev prev"; else prev=""; fi
+          python -X utf8 pipeline/check_data.py --new new $prev --report report.md
+
+      - name: 存成新版本
+        if: steps.asof.outputs.skip == 'false'
+        run: |
+          {
+            echo "資料截至 ${{ steps.asof.outputs.asof }}（自動更新，[執行紀錄](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})）"
+            echo
+            cat report.md
+          } > notes.md
+          gh release create "${{ steps.asof.outputs.tag }}" new/data.json new/us-data.json --title "${{ steps.asof.outputs.tag }}" --notes-file notes.md
+
+      - name: 之前的失敗 Issue 關掉（檢查的紀錄寫在這一版的 Release 說明）
+        if: steps.asof.outputs.skip == 'false'
+        run: |
+          open=$(gh issue list --label "$ISSUE_LABEL" --state open --json number --jq '.[0].number // ""')
+          if [ -n "$open" ]; then gh issue close "$open" --comment "這週（${{ steps.asof.outputs.tag }}）已經更新成功。"; fi
+
+      - name: 失敗時開 Issue（同一個問題只開一張）
+        if: failure()
+        run: |
+          gh label create "$ISSUE_LABEL" --color D93F0B --description "資料自動更新" --force >/dev/null
+          {
+            echo "資料自動更新沒有完成，網站維持上一版。週六失敗的話，週日、週一同一時間會自動重試。"
+            echo
+            echo "- 執行紀錄：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "- 目標截止日：${{ steps.asof.outputs.asof }}"
+            echo
+            if [ -f report.md ]; then cat report.md; else echo "（還沒跑到檢查就失敗了，原因看執行紀錄）"; fi
+          } > issue.md
+          open=$(gh issue list --label "$ISSUE_LABEL" --state open --json number --jq '.[0].number // ""')
+          if [ -n "$open" ]; then gh issue comment "$open" --body-file issue.md
+          else gh issue create --title "資料自動更新失敗" --label "$ISSUE_LABEL" --body-file issue.md; fi
+
+      - name: 失敗時保留這次產生的檔案（方便檢查）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-data
+          path: |
+            new/
+            out/*/meta.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  deploy:
+    needs: data
+    # 資料更新成功、push、手動 redeploy 時發布；資料更新失敗、或這週已經更新過（重試日跳過）就不發布
+    if: always() && (needs.data.result == 'skipped' || (needs.data.result == 'success' && needs.data.outputs.skip != 'true'))
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 下載要發布的那一版資料
+        run: |
+          tag="${{ inputs.tag }}"
+          if [ -z "$tag" ]; then
+            tag=$(gh release list --limit 20 --json tagName,createdAt --jq '[.[] | select(.tagName | startswith("data-"))] | sort_by(.createdAt) | last | .tagName // ""')
+          fi
+          if [ -z "$tag" ]; then echo "還沒有任何一版資料"; exit 1; fi
+          echo "發布資料版本：$tag"
+          mkdir -p rel && gh release download "$tag" --dir rel --pattern "*.json"
+
+      - name: 組網站
+        run: |
+          mkdir -p _site/us
+          cp index.html _site/
+          cp us/index.html _site/us/
+          cp rel/data.json _site/data.json
+          cp rel/us-data.json _site/us/data.json
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: pages
+        uses: actions/deploy-pages@v4
