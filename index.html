@@ -51,7 +51,10 @@ h3 { font-size: 1rem; margin: 0; }
 .note { background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--line); border-left: 3px solid var(--fg); border-radius: 2px; padding: 10px 14px; font-size: .9rem; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 18px; min-width: 0; }
 .term { border-bottom: 1px dotted var(--muted); cursor: help; }
+:root:not([data-tb="0"]) { scroll-padding-top: 64px; }   /* 置頂欄 52px；捲到某一塊時不被蓋住（情境列另外有 scroll-margin） */
 .term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+th button[data-tip], td[data-tip] { text-decoration: underline dotted var(--muted); text-underline-offset: 4px; }   /* 有說明的表頭和格子也要看得出可以滑過 */
+td[data-tip] { cursor: help; }
 /* 分頁列 */
 .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); display: flex; gap: 4px; border-bottom: 1px solid var(--line); padding-top: 6px; overflow-x: auto; }
 .tabs button { font: inherit; font-weight: 500; background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); padding: 8px 14px; cursor: pointer; white-space: nowrap; }
@@ -123,14 +126,16 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .stack { display: grid; gap: 10px; }
 .counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .cnt { border-top: 4px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--panel)); box-shadow: -1px 0 0 var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
-.cnt .ctop { display: flex; justify-content: space-between; align-items: center; gap: 8px; }   /* 卡片第一行：類別名＋檔數（JC 2026-11-12），第二行說明 */
-.cnt .name { font-weight: 700; font-size: 1.05rem; }
-.cnt .cnum { display: inline-flex; align-items: center; gap: 6px; }
-.cnt .cnum .bstat { display: grid; gap: 0; line-height: 1.3; text-align: right; white-space: nowrap; font-size: .74rem; color: var(--muted); }
+.cnt .ctop { display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr); align-items: center; gap: 8px; }   /* 卡片第一行：類別名＋檔數（JC 2026-11-12），第二行說明 */
+.cnt .name { font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
+.cnt .cnum { display: contents; }   /* 數字在整張卡的正中間，右邊的小字靠右（JC 2026-11-15：原本靠左緊貼數字，改靠右比較均衡） */
+.cnt .cnum .bstat { display: grid; gap: 0; line-height: 1.3; text-align: right; justify-self: end; white-space: nowrap; font-size: .74rem; color: var(--muted); }
 .cnt .cnum .delta { font-size: .74rem; }
-.cnt .plain { font-size: .8rem; color: var(--muted); }
+.cnt .plain { font-size: .8rem; color: var(--muted); flex: 1; display: flex; align-items: center; }
+/* 卡片太窄（約 5 欄並排、側欄打開時）放不下一行：名稱和數字一行，小字移到下一行靠左 */
+.cnt { container-type: inline-size; }
+@container (max-width: 240px) { .cnt .ctop { grid-template-columns: auto auto; justify-content: space-between; row-gap: 2px; } .cnt .cnum .bstat { grid-column: 1 / -1; } }   /* 說明在剩下的高度裡上下置中，短的不會留一大塊空白 */
 @media (min-width: 1100px) { .counts { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-.cnt .rule { font-size: .74rem; color: var(--muted); line-height: 1.4; text-wrap: pretty; }
 /* 卡片底部：大數字在左，右邊「與預設相同」（穩強、猛強再加一行驗證檔數）整組上下置中；各卡片底部留一樣高，數字才會對齊 */
 .cnt .bottom { margin-top: auto; padding-top: 6px; border-top: 1px dashed var(--line); display: flex; align-items: center; gap: 10px; min-height: 0; }   /* 高度跟內容走，最少約兩行字高；各卡片底部 margin-top:auto 貼齊 */
 .cnt .bottom .bstat { white-space: nowrap; }   /* 字不換行：窄卡片也放得下的短字（同預設、通過驗證 N 檔） */
@@ -143,8 +148,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .legend svg { flex: none; }
 svg.chart { width: 100%; height: auto; display: block; -webkit-user-select: none; user-select: none; }
 svg.chart text { fill: var(--muted); font-family: var(--f-num); font-variant-numeric: tabular-nums; font-size: 11px; }
-@media (max-width: 600px) { svg.chart text { font-size: 22px; } svg.chart text.q { font-size: 0; } }   /* 手機上圖縮到約 1/3，字要放大才看得到；四個角的象限說明拿掉 */
-svg.chart text.q { font-family: var(--f-body); font-size: 12px; }
+svg.chart text.q, svg.chart text.q4 { font-family: var(--f-body); font-size: 12px; }   /* q＝划算線的標籤，q4＝四個角的象限說明 */
+@media (max-width: 600px) { svg.chart text, svg.chart text.q { font-size: 22px; } svg.chart text.q4 { display: none; } }   /* 手機上圖縮到約 1/3，字要放大才看得到；四個角的象限說明拿掉 */
 .ctl output, .cnt .num, .cnt .delta, .chips button, .zoom output { font-variant-numeric: tabular-nums; }
 .tip { position: fixed; white-space: pre-line; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .84rem; line-height: 1.5; box-shadow: 0 4px 16px var(--shadow); max-width: 300px; z-index: 30; }
 .topscroll { overflow-x: auto; overflow-y: hidden; }
@@ -185,7 +190,7 @@ tr.changed td:first-child { box-shadow: inset 4px 0 0 var(--fg); }
 .swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; }
 details.cols { position: relative; }
 /* 搜尋：側欄分頁和篩選之間；邊打邊跳建議 */
-.search { position: relative; width: 100%; }
+.search { display: block; position: relative; width: 100%; }
 .search input::-webkit-search-cancel-button { display: none; }
 .search .qx { position: absolute; right: 4px; top: 4px; width: 26px; height: 26px; border: 0; background: none; color: var(--muted); font-size: 1.1rem; line-height: 1; cursor: pointer; border-radius: 4px; }
 .search .qx:hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 8%, transparent); }
@@ -240,9 +245,15 @@ svg.chart { max-height: 68vh; }
 .side .tabs button[aria-selected=true] { border-left-color: var(--fg); background: color-mix(in srgb, var(--accent) 14%, transparent); font-weight: 700; }
 .side .cbox, .side .ctl { background: var(--adj-bg); border-radius: 4px; padding: 8px 10px; }
 .side .cbox { display: grid; gap: 6px; }
-.side-sec > h3 .term { color: var(--muted); }
+.side-sec > h2 .term { color: var(--muted); }
 .sitefoot { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; color: var(--muted); font-size: .82rem; display: grid; gap: 8px; }
 .sitefoot p { margin: 0; }
+/* 進站提醒（2026-11-15）：取代每頁頂端的提醒和頁尾的完整免責聲明 */
+dialog.intro { width: min(520px, calc(100vw - 32px)); border: 1px solid var(--line); border-top: 4px solid var(--c-strong); border-radius: 6px; background: var(--panel); color: var(--fg); padding: 18px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+dialog.intro::backdrop { background: rgba(0,0,0,.45); }
+dialog.intro h2 { margin: 0 0 10px; font-size: 1.15rem; }
+dialog.intro ul { margin: 0 0 10px; }
+dialog.intro .foot { margin: 0 0 10px; }
 .sitefoot a { color: var(--accent); }
 .head > .tblnote { flex-basis: 100%; align-items: flex-end; }
 .colctl { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
@@ -271,9 +282,10 @@ header.hd > div { flex: 1 1 320px; min-width: 0; }   /* 副標題在左欄裡換
 @view-transition { navigation: auto; }
 ::view-transition-group(root) { animation-duration: var(--fade); }
 .wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt) { transition: opacity var(--fade) ease; }
-header.hd h1 { animation: h1in var(--fade) ease backwards; transition: opacity var(--fade) ease; }   /* 標題不等資料，一進頁面就淡入 */
-:root.leaving header.hd h1 { opacity: 0; }
-@keyframes h1in { from { opacity: 0; } }
+header.hd h1 { animation: h1in .5s cubic-bezier(.2, .7, .2, 1) backwards; transition: opacity .35s ease-in, transform .35s ease-in; }   /* 標題不等資料，一進頁面就從下方捲入；離開時往上捲出 */
+.hdt { overflow: hidden; }   /* 捲入時超出標題列的部分裁掉，像眉標那樣 */
+:root.leaving header.hd h1 { opacity: 0; transform: translateY(-100%); }
+@keyframes h1in { from { opacity: 0; transform: translateY(100%); } }
 :root.leaving :is(.wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt)) { opacity: 0; }
 :root.booting :is(.wrap > :not(header), header.hd .sub, .side > :not(.viewset), .viewset > :not(.side-mkt)) { opacity: 0; transition: none; }
 :root:is(.booting, .loading) header.hd::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 2px; border-radius: 1px;
@@ -334,8 +346,79 @@ details.fold .controls { gap: 14px 28px; }
 .viewset .seg button { padding: 4px 10px; }
 .side .controls { grid-template-columns: 1fr; gap: 14px; }
 .side-sec { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
-.side-sec > h3 { font-size: .88rem; color: var(--muted); font-weight: 500; }
+.side-sec > h2 { font-size: .88rem; color: var(--muted); font-weight: 500; }
 .side-head, .closeset, .bottombar { display: none; }
+/* 置頂欄試做（JC 2026-11-15，參考 Claude desktop 收在置頂欄的側欄按鈕）：html[data-tb]＝0（現行）／A／B／C；定案後拿掉其他 */
+.topbar { display: none; }
+:root:not([data-tb="0"]) .topbar { display: block; position: sticky; top: 0; z-index: 20; margin: -20px -16px 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tb-in { position: relative; max-width: 1800px; height: 52px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 14px; }
+.tb-sp { flex: 1; }
+.tb-in .eyebrow { margin: 0; }
+.tb-in .mkt { flex: none; }
+.tb-in .mkt a { padding: 4px 18px; }
+:root:not([data-tb="0"]) :is(.hdt > .sidetog, .side-mkt, header.hd > .eyebrow) { display: none; }
+:root:not([data-tb="0"]) .side { top: 64px; max-height: calc(100vh - 76px); }
+/* A：左＝側欄按鈕＋市場切換，右＝地區名 */
+[data-tb="A"] .tb-in > .eyebrow { order: 3; }
+[data-tb="A"] .tb-sp { order: 2; }
+/* B：左＝側欄按鈕＋地區名，右＝市場切換 */
+[data-tb="B"] .tb-in > .eyebrow { order: 0; }
+[data-tb="B"] .tb-sp { order: 1; }
+[data-tb="B"] .tb-in > .mkt { order: 2; }
+/* C：左＝側欄按鈕＋地區名，正中間＝底線式的市場分頁 */
+[data-tbc] .tb-in > .mkt { position: absolute; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); border: 0; border-radius: 0; background: none; }
+[data-tbc] .tb-in > .mkt::before { top: auto; height: 3px; border-radius: 2px 2px 0 0; }
+[data-tbc] .tb-in > .mkt a { display: grid; place-items: center; padding: 0 26px; font-size: 1.02rem; color: var(--muted); }
+[data-tbc] .tb-in > .mkt a.on { color: var(--fg); }
+@media (max-width: 900px) { .tb-in > .sidetog { display: none; } [data-tbc] .tb-in > .mkt { position: relative; left: auto; transform: none; margin-left: auto; } .tb-in .eyebrow { flex-basis: auto; order: 0; } }
+/* C1、C2：地區名回到右邊，新手導覽、分享放進置頂欄；C2 再加顯示設定的下拉選單 */
+:root:is([data-tb="C1"], [data-tb="C2"]) .tb-in > .eyebrow { order: 2; }
+.tb-r { display: none; }
+:root:is([data-tb="C1"], [data-tb="C2"]) .tb-r { display: flex; align-items: center; gap: 8px; order: 3; position: relative; }
+.tb-r .toprow { display: flex; gap: 8px; }
+.tb-r .btn { padding: 4px 12px; font-size: .85rem; }
+.tb-r #shareMsg { position: absolute; right: 0; top: calc(100% + 10px); z-index: 30; margin: 0; padding: 6px 10px; white-space: nowrap; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.tb-r .sysdet { position: relative; background: none; padding: 0; }
+.tb-r .sysdet[open] > summary { margin-bottom: 0; }
+.tb-r .sysdet > summary { list-style: none; cursor: pointer; padding: 4px 12px; font-size: .85rem; white-space: nowrap; background: var(--adj-bg); border: 1px solid var(--adj-line); border-radius: 6px; }
+.tb-r .sysdet > summary::-webkit-details-marker { display: none; }
+.tb-r .sysdet > summary::before { content: none; }
+.tb-r .sysdet[open] > summary { background: color-mix(in srgb, var(--fg) 16%, transparent); }
+.tb-r .sd-sub { display: none; }
+.tb-r .sysdet > .cbox { position: absolute; right: 0; top: calc(100% + 10px); z-index: 30; width: 300px; display: grid; gap: 8px; padding: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px color-mix(in srgb, var(--fg) 20%, transparent); }
+.tb-r .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.tb-r .seg button { text-align: center; padding-inline: 4px; }
+.tb-r .fzrow { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 6px; align-items: center; }
+@media (max-width: 900px) { .tb-r .btn, .tb-r .sysdet > summary { padding: 4px 8px; } }
+@media (max-width: 1280px) { [data-tbc] .tb-in > .mkt { position: relative; left: auto; transform: none; } [data-tbc] .tb-sp { order: 1; } }   /* 窄一點時正中間放不下，市場分頁改接在側欄按鈕後面 */
+/* C3：左＝新手導覽、分享，正中間＝市場分頁，右＝顯示設定；地區名先拿掉（和分頁重複） */
+.tb-l { display: none; }
+[data-tb="C3"] .tb-l { display: flex; align-items: center; gap: 8px; position: relative; }
+[data-tb="C3"] .tb-r { display: flex; align-items: center; gap: 8px; order: 3; position: relative; }
+[data-tb="C3"] .tb-in > .eyebrow { display: none; }
+[data-tb="C3"] .viewset { display: none; }
+[data-tb="C3"] .tb-in > .mkt a { font-size: 1.2rem; padding: 0 40px; }
+.tb-l .toprow { display: flex; gap: 8px; }
+.tb-l .btn { padding: 4px 12px; font-size: .85rem; }
+.tb-l #shareMsg { position: absolute; left: 0; top: calc(100% + 10px); z-index: 30; margin: 0; padding: 6px 10px; white-space: nowrap; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+@media (min-width: 1001px) { [data-tb="C3"] .tb-in > .mkt { position: absolute; left: 50%; transform: translateX(-50%); } }   /* C3 一律置中，放不下（≤ 1000px）才接在按鈕後面 */
+@media (max-width: 1000px) { [data-tb="C3"] .tb-in > .mkt { position: relative; left: auto; transform: none; } }
+/* 試做切換鈕（定案後拿掉） */
+.tbtry { position: fixed; right: 12px; bottom: 12px; z-index: 60; display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: .8rem; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 14px color-mix(in srgb, var(--fg) 18%, transparent); }
+.tbtry button { font: inherit; padding: 3px 10px; border: 1px solid var(--line); border-radius: 5px; background: none; color: var(--fg); cursor: pointer; }
+.tbtry button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); font-weight: 700; }
+@media (max-width: 900px) { .tbtry { bottom: 64px; } }
+/* 側欄收合（電腦版）：標題左邊的按鈕切換，收起時側欄寬度變 0 */
+.hdt { display: flex; align-items: center; gap: 10px; }
+.sidetog { flex: none; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--adj-line); border-radius: 6px; background: var(--adj-bg); color: var(--fg); cursor: pointer; }
+.sidetog:hover { background: color-mix(in srgb, var(--fg) 16%, transparent); }
+.sideoff .sidetog { color: var(--fg); }
+@media (max-width: 900px) { .sidetog { display: none; } }
+@media (min-width: 901px) {
+  .shell { transition: grid-template-columns .25s ease, gap .25s ease; }
+  .shell.sideoff { grid-template-columns: 0 minmax(0, 1fr); gap: 0; }
+  .shell.sideoff > .side { visibility: hidden; overflow: hidden; padding: 0; border: 0; }
+}
 .wrap { margin: 0; max-width: none; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: minmax(0, 1fr); }
@@ -362,19 +445,20 @@ details.fold .controls { gap: 14px 28px; }
 .beta { display: inline-block; vertical-align: middle; font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--c-strong); color: var(--c-strong); margin-left: 6px; }
 /* 觀察頁：一則一張卡，按鈕把總覽／空頭頁設成那則說的狀況 */
 .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
-.ins { display: grid; gap: 8px; align-content: start; border: 1px solid var(--line); border-left: 4px solid var(--c-strong); border-radius: 4px; padding: 12px 14px; background: color-mix(in srgb, var(--fg) 3%, var(--panel)); }
+.ins { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-left: 4px solid var(--c-strong); border-radius: 4px; padding: 12px 14px; background: color-mix(in srgb, var(--fg) 3%, var(--panel)); }
 .ins h3 { margin: 0; font-size: 1rem; }
 .ins p { margin: 0; font-size: .9rem; }
-.ins .btn { justify-self: start; margin-top: auto; }
-.touch-only { display: none; }
-@media (pointer: coarse) { .mouse-only { display: none; } .touch-only { display: inline; } }
+.ins > .row, .ins > .btn { margin-top: auto; }   /* 按鈕置底，內文長短不同也對齊 */
+.ins > .btn { align-self: flex-start; }
+.ins > .row { gap: 6px; }   /* 兩顆塞不下時換行，上下疊 */
+@media (pointer: coarse) { .mouse-only { display: none; } }
 .pstat { margin: 0; font-size: .86rem; color: var(--muted); }
 .loading .side { pointer-events: none; opacity: .5; }
 /* 新手導覽：整頁變暗，只留要說明的那一塊亮著（挖洞用很大的陰影），旁邊放說明卡；導覽中頁面不能點 */
 .tour-block { position: fixed; inset: 0; z-index: 50; }
 .tour-hole { position: fixed; z-index: 51; border-radius: 6px; pointer-events: none; box-shadow: 0 0 0 200vmax rgba(0, 0, 0, .62); outline: 2px solid var(--panel); transition: top .25s, left .25s, width .25s, height .25s; }
 .tour-card { position: fixed; z-index: 52; width: min(380px, calc(100vw - 32px)); background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; box-shadow: 0 8px 28px rgba(0, 0, 0, .35); display: grid; gap: 8px; }
-.tour-card h3 { margin: 0; font-size: 1.02rem; }
+.tour-card h2 { margin: 0; font-size: 1.02rem; }
 .tour-card p { margin: 0; font-size: .9rem; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } details.fold > summary::before { transition: none; } tr.flash td { animation: none !important; } }
 </style>
@@ -391,7 +475,17 @@ try { if (localStorage.getItem("etf-ud") === "us") document.documentElement.data
 document.documentElement.classList.add("loading");   // 資料讀進來前側欄不能點（點了也沒反應）
 try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) document.documentElement.style.setProperty("--fz", z); } catch (e) {}
 </script>
+<div class="topbar" id="topbar"><div class="tb-in">
+  <button type="button" class="sidetog" aria-controls="side" aria-expanded="true" aria-label="收起側欄" title="收起側欄"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+  <div class="tb-l" id="tbL"></div>
+  <p class="eyebrow"><span class="eb-name">TAIWAN · 台股</span></p>
+  <span class="tb-sp"></span>
+  <nav class="mkt tb-mkt" aria-label="切換市場（置頂欄）"><a href="./" data-go="台股" class="on" aria-current="page">台股</a><a href="us/" data-go="美股">美股</a></nav>
+  <div class="tb-r" id="tbR"></div>
+</div></div>
+<script>try { const u = new URLSearchParams(location.search).get("tb"); if (u) localStorage.setItem("etf-tb-try", u); const v = u || localStorage.getItem("etf-tb-try") || "C3"; document.documentElement.dataset.tb = v; document.documentElement.toggleAttribute("data-tbc", v[0] === "C"); } catch (e) { document.documentElement.dataset.tb = "C3"; document.documentElement.setAttribute("data-tbc", ""); }</script>
 <div class="shell">
+<script>try { if (localStorage.getItem("etf-side-off") === "1") document.currentScript.parentElement.classList.add("sideoff"); } catch (e) {}</script>
 <aside class="side" id="side" aria-label="分頁與設定">
   <div class="side-head"><strong>設定</strong><button type="button" class="btn closeset" id="closeSet">完成</button></div>
   <div class="viewset" aria-label="顯示設定">
@@ -414,25 +508,25 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   </nav>
 
   <!-- 搜尋放在分頁和篩選之間（和美股版一樣，JC 2026-11-11）：搜尋和篩選相鄰 -->
-  <div class="search" role="search">
+  <search class="search">
     <input type="search" id="q" placeholder="搜尋代號或名稱（例：878、高股息）" autocomplete="off" spellcheck="false" aria-label="搜尋 ETF" role="combobox" aria-autocomplete="list" aria-controls="qlist" aria-expanded="false">
     <button type="button" class="qx" id="qx" aria-label="清除搜尋" hidden>×</button>
     <div class="qlist" id="qlist" role="listbox" hidden></div>
     <p class="hint" id="qmsg" hidden></p>
-  </div>
+  </search>
 
   <div class="side-sec" id="filterBox">
-    <h3>篩選（總覽和空頭共用）</h3>
+    <h2>篩選（總覽和空頭共用）</h2>
     <div class="stack">
       <div class="cbox"><div class="row"><span class="lbl">地區</span><div class="checks" id="f-region"></div></div></div>
       <div class="cbox"><div class="row"><span class="lbl">類型</span><div class="checks" id="f-type"></div></div>
       <p class="hint">每檔只算一種類型（<span class="term" tabindex="0" data-tip="重疊時依序歸類：槓桿 → 主動式 → 高股息 → 市值／主題。&#10;例：主動式的高股息 ETF 歸主動式。&#10;台股目前沒有正 3，槓桿型都是正 2。">怎麼歸類</span>）。</p></div>
       <div class="controls">
-        <div class="ctl"><label for="vmax"><span class="term" tabindex="0" data-tip="波動倍數＝這檔每週漲跌的幅度，是 0050 的幾倍（週報酬的標準差相除）。&#10;例：1.5＝漲跌幅度大約是 0050 的 1.5 倍；正 2 約 1.3～2。&#10;和 beta 不同：beta 還會被「走勢和 0050 像不像」拉低，海外 ETF 的 beta 可能只有 0.3，實際漲跌卻是 0050 的 2 倍以上。&#10;用總覽選的期間計算；拉到最右邊＝不限制。1／3／5 年最高約 2.0～2.9，所以上限設 3。">波動倍數上限</span><output id="o-vmax"></output></label>
+        <div class="ctl"><label for="vmax"><span class="term" tabindex="0" data-tip="波動倍數＝這檔每週漲跌的幅度，是 0050 的幾倍（週報酬的標準差相除）。&#10;例：1.5＝漲跌幅度大約是 0050 的 1.5 倍；正 2 約 1.3～2。&#10;和 beta 不同：beta 還會被「走勢和 0050 像不像」拉低，海外 ETF 的 beta 可能只有 0.3，實際漲跌卻是 0050 的 2 倍以上。&#10;用總覽選的期間計算；拉到最右邊＝不限制。1／3／5 年最高約 2.0～2.9（2026-11 資料），所以上限設 3。">波動倍數上限</span><output id="o-vmax"></output></label>
           <input type="range" id="vmax" min="0.5" max="3" step="0.1"><div class="rticks" id="tk-vmax" aria-hidden="true"></div><p class="hint">只看漲跌沒那麼猛的。<br>預設不限制。</p></div>
         <div class="ctl"><label for="hv"><span class="term" tabindex="0" data-tip="每次大跌：這檔的跌幅減 0050 的跌幅（跌幅都是負數）＝跌幅 vs 0050。&#10;例：0050 跌 −24%、這檔跌 −29%：−29% −（−24%）＝ −5%，跌得比 0050 深 5%。&#10;這檔上市後經歷過的每一次大跌都算，取平均；和空頭頁選哪一次無關。&#10;哪些算大跌由空頭頁的「大跌門檻」決定，改了門檻結果也會跟著變。&#10;只經歷過 1～2 次大跌的（多半是新上市的），樣本少，參考就好。">高波動門檻</span><output id="o-hv"></output></label>
           <input type="range" id="hv" min="1" max="25" step="1"><div class="rticks" id="tk-hv" aria-hidden="true"></div>
-          <p class="hint">歷次大跌平均跌得比 0050 深這麼多以上（空頭跌幅 vs 0050 ≤ −門檻），名稱旁標「高波動」。大跌用「空頭」頁的大跌門檻認定。<br>預設 <span class="def" data-k="hv"></span>。</p>
+          <p class="hint">平均跌得比 0050 深這麼多，名稱旁標「高波動」。<br>預設 <span class="def" data-k="hv"></span>。</p>
           <label for="hvx" class="chk"><input type="checkbox" id="hvx"> 排除高波動的 ETF</label></div>
       </div>
     </div>
@@ -440,41 +534,38 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
 
 </aside>
 
-<div class="wrap">
+<main class="wrap">
   <header class="hd">
-    <div><h1>台股 ETF 強度檔</h1>
+    <div><div class="hdt"><button type="button" class="sidetog" id="sideTog" aria-controls="side" aria-expanded="true" aria-label="收起側欄" title="收起側欄"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button><h1>台股 ETF 強度檔</h1></div>
     <p class="sub" id="sub">讀取資料中…</p></div>
     <p class="eyebrow"><span class="eb-name">TAIWAN · 台股</span><a href="us/" data-go="美股">切換到美股 →</a></p>
   </header>
-
-  <div class="note"><strong>這是歷史資料，不代表往後會一樣，也不是買賣建議。</strong>
-    <br>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）；進進出出的人，實際報酬可能差很多。<br>名單只有目前掛牌的 ETF，已下市的不在裡面。詳見「說明」。</div>
 
   <!-- ── 總覽 -->
   <section class="page" id="page-overview" role="tabpanel" aria-label="總覽">
     <section class="panel stack pctl" id="periodPanel" aria-label="回看期間與分類門檻">
       <div class="adj stack">
-        <div class="row ptop"><span class="plabel"><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：1 年是一段大多頭，3 年沒包含 2022 的大空頭，5 年才有。&#10;自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。&#10;拖下方時間軸的把手就會切到自訂；軸上的色塊是 0050 跌 20% 以上的大空頭，看得出選的期間有沒有包含到。&#10;拖兩端的把手改起迄日；拖中間的藍色段，長度不變、整段移動（例如先按「1 年」，再一路往前滑，看右上角的檔怎麼換）。">回看期間</span></span><div class="seg" id="win" role="group" aria-label="回看期間">
+        <div class="row ptop"><span class="plabel"><span class="term" tabindex="0" data-tip="1／3／5 年從資料最後一天往回算。&#10;期間愈短，結果愈只代表那段行情：每段有沒有包含大空頭，看「說明」頁的期間說明。&#10;自訂可以選 2015-01-01 之後的任何一段，例如只看 2022 年的空頭。&#10;軸上的色塊是 0050 的大空頭，看得出選的期間有沒有包含到。">回看期間</span></span><div class="seg" id="win" role="group" aria-label="回看期間">
             <button type="button" data-v="1">1 年</button><button type="button" data-v="3">3 年</button><button type="button" data-v="5" aria-pressed="true">5 年</button><button type="button" data-v="c">自訂</button>
           </div><span id="customBox" class="row" hidden>
             <label>起 <input type="date" id="dStart"></label>
             <label>迄 <input type="date" id="dEnd"></label>
           </span></div>
         <div class="period" id="period"><div class="ptrack" id="ptrack"><div class="pfill" id="pfill"></div></div><input type="range" id="pS" aria-label="回看期間的起日" step="1"><input type="range" id="pE" aria-label="回看期間的迄日" step="1"><div class="pticks" id="pticks" aria-hidden="true"></div></div>
-        <div class="row pnav"><div class="btnpair"><button type="button" class="btn" data-pstep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-pstep="21">往後 1 個月 ▶</button></div><p class="hint"><span class="pkey"></span>色塊＝0050 跌 20% 以上的大空頭。</p></div>
+        <div class="row pnav"><div class="btnpair"><button type="button" class="btn" data-pstep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-pstep="21">往後 1 個月 ▶</button></div><p class="hint"><span class="pkey"></span>色塊＝0050 跌 <span class="crashTh">20%</span> 以上的大空頭。</p></div>
       </div>
       <p class="pstat" id="pstat"></p>
       <p class="hint" id="cover"></p>
       <details class="thr fold" id="thrBox"><summary>分類門檻（爆發段、接近 0050）</summary>
         <div class="controls">
-          <div class="ctl burstctl"><p class="sentence"><span class="term" tabindex="0" data-tip="連續幾週加起來漲到這個幅度，算一段急漲（爆發段）。&#10;1 週＝單週大漲；拉長週數可以抓到「連漲好幾週、但每週都不算大」的段落，上限 4 週（約一個月）。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;參考：1 週配 7.5%、4 週配 20%，0050 在 2015 年以來分別只有 4 段、1 段。&#10;漲幅上限 30%：0050 任何 4 週都沒漲超過 23%，超過 30% 只剩槓桿型的少數極端週。">爆發段</span>：在 <output id="o-weeks"></output>內上漲 <output id="o-burst"></output> 以上，就算一段急漲。</p>
+          <div class="ctl burstctl"><p class="sentence"><span class="term" tabindex="0" data-tip="連續幾週加起來漲到這個幅度，算一段急漲（爆發段）。&#10;1 週＝單週大漲；拉長週數可以抓到「連漲好幾週、但每週都不算大」的段落，上限 4 週（約一個月）。&#10;從前往後找，找到一段就跳過那幾週，不重複計算。&#10;參考：1 週配 7.5%、4 週配 20%，0050 在 2015～2026-11 分別只有 4 段、1 段。&#10;漲幅上限 30%：2015～2026-11 0050 任何 4 週都沒漲超過 23%，超過 30% 只剩槓桿型的少數極端週。">爆發段</span>：在 <output id="o-weeks"></output>內上漲 <output id="o-burst"></output> 以上，就算一段急漲。</p>
             <label for="weeks" class="sub">週數</label><input type="range" id="weeks" min="1" max="4" step="1"><div class="rticks" id="tk-weeks" aria-hidden="true"></div>
             <label for="burst" class="sub">漲幅</label><input type="range" id="burst" min="3" max="30" step="0.5"><div class="rticks" id="tk-burst" aria-hidden="true"></div>
             <p class="hint">預設 <span class="def" data-k="weeks"></span>內上漲 <span class="def" data-k="burst"></span>。</p><p class="hint" id="calib"></p></div>
           <div class="ctl"><label for="tie"><span class="term" tabindex="0" data-tip="年化報酬和 0050 直接相減。&#10;例：設 ±1.5%、0050 年化 29% 時，年化 27.5%～30.5%、而且最大回撤和 0050 相差 3% 以內的，算接近 0050。&#10;追蹤同一指數的 ETF（例如 006208）會落在這裡；年化接近但回撤差很多的，照划算線分到其他四類。&#10;參考：5 年累積下來，±1% 約差 5%、±1.5% 約差 7%、±2% 約差 10%。">接近 0050 的年化區間</span><output id="o-tie"></output></label>
             <input type="range" id="tie" min="0" max="5" step="0.25"><div class="rticks" id="tk-tie" aria-hidden="true"></div><p class="hint">報酬和 0050 差多少以內算接近（回撤也要相差 3% 以內）。<br>預設 ±<span class="def" data-k="tie"></span>。</p></div>
         </div>
-        <div class="row"><button type="button" class="btn" id="reset">回到預設門檻</button><span class="hint">類別的定義見「說明」</span></div>
+        <div class="row"><button type="button" class="btn" id="reset">回到預設門檻</button></div>
       </details>
     </section>
     <p class="missing regime" id="regime" hidden></p>
@@ -484,17 +575,16 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <p class="foot" id="countnote"></p></section>
 
     <section class="panel stack" id="chartPanel">
-      <div class="head"><h2>年化報酬 × 最大回撤</h2><span class="zoom"><button type="button" data-zc="sc:in" aria-label="放大圖表">＋</button><button type="button" data-zc="sc:out" aria-label="縮小圖表">−</button><button type="button" data-zc="sc:reset">重設</button><span class="hint mouse-only">Ctrl（⌘）＋滾輪縮放・拖曳移動</span><span class="hint touch-only">用＋−縮放</span></span></div>
+      <div class="head"><h2>年化報酬 × 最大回撤</h2><span class="zoom"><button type="button" data-zc="sc:in" aria-label="放大圖表">＋</button><button type="button" data-zc="sc:out" aria-label="縮小圖表">−</button><button type="button" data-zc="sc:reset">重設</button></span></div>
       <svg id="chart" class="chart" viewBox="0 0 900 420" role="img" aria-label="各 ETF 的年化報酬與最大回撤散布圖"></svg>
       <div class="legend" id="legend"></div>
       <p class="foot" id="scnote"></p>
-      <p class="foot">虛線交叉點是 0050。往上＝報酬比較高，往右＝跌得比較淺；淡色的右上角是「報酬更高、跌得更少」。<br>
-        <span style="color:var(--calmar)">綠色斜虛線＝划算線</span>：年化 ÷ 最大回撤（Calmar 比率）和 0050 相同，線的上方比 0050 划算。<span id="negnote" hidden><br>這段期間 0050 年化是負的，年化 ÷ 回撤沒有意義，划算線改成 0050 回撤那條直線（也畫成綠色）：在它右邊＝跌得比 0050 淺，就算划算。</span><br>類別就是這兩條線切出來的，<span class="mouse-only">游標移到點上看名稱；</span>點一下會標出代號，再點一次取消。</p>
+      <p class="foot">虛線交叉點＝0050，越往右上越好（報酬高、跌得淺）；<span class="term" tabindex="0" data-tip="年化 ÷ 最大回撤（Calmar 比率）和 0050 相同的線；線的上方＝每承受 1% 回撤換到的報酬比 0050 多。&#10;類別就是這條線和 0050 的年化切出來的，定義見「說明」。&#10;0050 年化是負的時候，年化 ÷ 回撤沒有意義，改用 0050 回撤那條直線。" style="color:var(--calmar)">綠色斜虛線＝划算線</span>。<span id="negnote" hidden><br>這段期間 0050 年化是負的，划算線改成 0050 回撤那條直線：在它右邊就算划算。</span></p>
     </section>
 
     <section class="panel stack" id="tblPanel">
       <div class="head"><h2>每檔明細</h2>
-        <div class="row tblnote"><span class="foot">點整格表頭排序；列底色＝類別；左側黑條＝類別和預設門檻不同。<br>勾「標註」的會在上面的散布圖標出代號（點圖上的點也可以標註或取消）。<br><span class="flag">高波動</span>　大跌時平均跌得比 0050 深 <span class="hvval"></span> 以上（門檻在<span class="side-where">左側欄</span>）<br><span class="flag bu">靠爆發</span>　贏 0050 主要靠少數幾段急漲<br><span class="flag nv">未經空頭驗證</span>　穩強、猛強裡上市以來沒經歷過大空頭，或年化輸 0050 超過 1%</span>
+        <div class="row tblnote"><span class="foot">左側黑條＝類別和預設門檻不同；和 0050 比的欄位，「漲」的顏色＝比 0050 好。<br><span class="flag term" tabindex="0" data-tip="歷次大跌平均跌得比 0050 深，超過高波動門檻（門檻在左側欄的篩選）。">高波動</span> <span class="flag bu term" tabindex="0" data-tip="贏 0050 主要靠少數幾段急漲；中途進出、剛好錯過那幾段就不一定贏。">靠爆發</span> <span class="flag nv term" tabindex="0" data-tip="穩強、猛強裡，上市以來沒經歷過大空頭，或上市以來的年化輸 0050 超過 1%。">未經空頭驗證</span></span>
           <span class="colctl"><details class="cols"><summary class="btn btn-fill">顯示欄位 ▾</summary><div class="colbox" id="colbox"></div></details><button type="button" class="btn" id="colReset">回復預設欄位</button><button type="button" class="btn" data-csv="tbl">下載 CSV</button><button type="button" class="btn" id="mkClear" hidden>清除標註</button></span></div></div>
       <div class="topscroll" aria-hidden="true"><div></div></div>
       <div class="tblwrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
@@ -506,7 +596,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     <div class="pair73">
       <section class="panel stack" id="epsPanel">
         <h2>0050 大跌時，各檔跌多少</h2>
-        <p class="hint">用 0050 的大跌當共同時間表：每一次都從 0050 的高點算起，看各檔在同一段日期裡最多跌多少、比 0050 深或淺多少、多久回到原來的高點。<br>「跌幅 vs 0050」是這檔跌幅減 0050 跌幅（都是負數）：正數＝跌得比 0050 淺，負數＝比較深；下一次不一定一樣。<br>只有和 0050 比的欄位上色：比 0050 好用「漲」的顏色，比較差用「跌」的顏色。<br>大跌門檻在本頁的「大跌門檻」區，高波動門檻在<span class="side-where">左側欄</span>。</p>
+        <p class="hint">每一次都從 0050 的高點算起，看各檔在同一段日期最多跌多少、多久回到高點。</p>
         <div class="stack adj"><h3 class="adjh">選一次大跌</h3><div class="chips" id="eps" role="group" aria-label="選一次大跌"></div></div>
       </section>
       <section class="panel stack pctl" id="crashPanel" aria-label="大跌門檻"><h2>大跌門檻</h2><div class="controls">
@@ -517,10 +607,10 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     <section class="panel stack" id="epChartPanel">
       <div class="head"><span class="foot" id="epnote"></span><div class="legend" id="eplegend"></div></div>
       <div class="adj stack">
-      <div class="row"><span class="lbl"><span class="term" tabindex="0" data-tip="只改走勢圖顯示的日期範圍，0% 基準一樣是這次大跌 0050 高點那天。&#10;把迄日往後拉，可以看誰先回到高點、什麼時候被追上。&#10;下表的跌幅和回到前高不受影響。">圖表區間</span></span>
+      <div class="row"><span class="lbl"><span class="term" tabindex="0" data-tip="只改走勢圖顯示的日期範圍，0% 基準一樣是這次大跌 0050 高點那天。&#10;下表的跌幅和回到前高不受影響。">圖表區間</span></span>
         <label>起 <input type="date" id="epFrom"></label><label>迄 <input type="date" id="epTo"></label>
         <button type="button" class="btn" id="epReset">回到這次大跌</button>
-        <span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button><span class="hint mouse-only">Ctrl（⌘）＋滾輪縮放・拖曳移動</span><span class="hint touch-only">用＋−縮放</span></span></div>
+        <span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button></span></div>
       <div class="period" id="epperiod">
         <div class="ptrack" id="eptrack"><div class="pfill" id="epfill"></div></div>
         <input type="range" id="eS" aria-label="走勢圖的起日" step="1"><input type="range" id="eE" aria-label="走勢圖的迄日" step="1">
@@ -528,10 +618,10 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       </div>
       <div class="row" style="gap:6px;justify-content:center"><button type="button" class="btn" data-estep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-estep="21">往後 1 個月 ▶</button></div>
       </div>
-      <p class="hint"><span class="pkey"></span>色塊＝0050 的大跌期間（從高點跌到低點，依本頁的大跌門檻），顏色越深跌越多，灰掉的是沒選的。<br>拖兩端的把手調整走勢圖的日期範圍；拖中間的藍色段，長度不變、整段移動。</p>
+      <p class="hint"><span class="pkey"></span>色塊＝0050 的大跌，越深跌越多。</p>
       <svg id="epchart" class="chart" viewBox="0 0 900 360" role="img" aria-label="大跌期間各 ETF 的走勢，起點高點設為 100"></svg>
-      <p class="foot">走勢以 0050 高點那天 = 100；淡色區＝0050 從高點跌到低點。<br>勾選下表的「畫圖」可以加減線（最多 8 條）。</p>
-      <div class="head"><span class="foot">點整格表頭排序；列底色＝總覽目前的類別</span>
+      <p class="foot">走勢以 0050 高點那天 = 100。</p>
+      <div class="head"><span class="foot">列底色＝總覽目前的類別；和 0050 比的欄位，「漲」的顏色＝比 0050 好。</span>
         <span class="colctl"><details class="cols"><summary class="btn btn-fill">顯示欄位 ▾</summary><div class="colbox" id="epcolbox"></div></details><button type="button" class="btn" id="epcolReset">回復預設欄位</button><button type="button" class="btn" data-csv="eptbl">下載 CSV</button></span></div>
       <div class="topscroll" aria-hidden="true"><div></div></div>
       <div class="tblwrap"><table id="eptbl"><thead></thead><tbody></tbody></table></div>
@@ -542,8 +632,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <section class="page" id="page-notes" role="tabpanel" aria-label="觀察" hidden>
     <section class="panel stack">
       <h2>這份資料看到的幾件事 <span class="beta">Beta</span></h2>
-      <p class="hint"><strong>試行中。</strong>這些是用預設門檻看到的現象，換期間、換門檻可能就不成立；解讀見仁見智，有不同看法歡迎到 <a href="https://github.com/wasai04/etf-strength-site/issues" rel="noopener">GitHub</a> 回報。</p>
-      <p class="hint">每一則按下去，會把總覽或空頭頁設成對應的期間、篩選和標註，用目前的資料自己看。<br>看完想回到一開始的樣子，按「回到預設畫面」。歷史資料，不是買賣建議。</p>
+      <p class="hint">用預設門檻看到的現象，換期間或門檻可能就不成立。<br>有不同看法歡迎到 <a href="https://github.com/wasai04/etf-strength-site/issues" rel="noopener">GitHub</a> 回報。</p>
       <div class="row"><button type="button" class="btn" data-ins="">回到預設畫面</button></div>
       <div class="insights">
         <article class="ins"><h3>0050 本身就很難贏</h3><p>5 年期間，年化贏 0050 超過「接近 0050 的區間」的只有少數幾檔，排在最前面的多半是正 2。<br>0050 偏重台積電和科技股，本身就比大盤積極。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-cagr" data-to="tblPanel">依年化排序看</button></article>
@@ -562,13 +651,19 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <!-- ── 說明 -->
   <section class="page" id="page-about" role="tabpanel" aria-label="說明" hidden>
     <section class="panel stack">
+      <h2>免責聲明</h2>
+      <p>本站整理公開市場的歷史價格，只供參考，不構成投資建議，也不是任何證券的買賣邀約或推介。<br>
+        作者不是證券投資顧問。<br>資料可能有誤差或延遲，使用前請自行查證；投資決定與盈虧由使用者自行負責。</p>
+      <p class="foot" id="dataAge"></p>
+    </section>
+    <section class="panel stack">
       <h2>使用前要知道的事</h2>
       <ul class="plainlist">
-        <li>這是歷史資料，不代表往後會一樣，也不是買賣建議。<br>2021～2026 剛好是台灣半導體與 AI 的大多頭，換一段期間（例如 2022 年）結果可能完全相反。</li>
-        <li>所有數字的前提是「買了就一直持有」（一次投入或定期定額都是，中途不賣）。<br>進進出出的人，實際報酬可能差很多：例如標「靠爆發」的，領先全靠少數幾段急漲，剛好錯過那幾段就不會贏 0050。</li>
+        <li>這是歷史資料，不代表往後會一樣。<br>結果很看期間：2021～2026 年是台灣半導體與 AI 的大多頭，換成 2022 年這種空頭，結果可能完全相反。</li>
+        <li>所有數字都假設買了就一直持有（一次投入或定期定額，中途不賣）。<br>進進出出的實際報酬可能差很多，例如標「靠爆發」的，錯過那幾段急漲就不會贏 0050。</li>
         <li>期間愈短，分類愈只代表那一段行情。<br><span id="periodNotes"></span></li>
         <li>名單只有目前掛牌的 ETF，已下市的不在裡面（存活者偏差）。</li>
-        <li>成交清淡的 ETF 常有好幾天收盤價不變（多半是那天沒有成交），算出來的回撤、波動倍數會偏小，看起來比實際穩；冷門的小型 ETF 看數字時要打點折扣。</li>
+        <li>成交清淡的 ETF 常有好幾天收盤價不變（那天沒有成交），回撤、波動倍數會算得偏小，看數字時要打點折扣。</li>
       </ul>
       <p class="foot" id="foot"></p>
     </section>
@@ -594,13 +689,10 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   </section>
 
   <footer class="sitefoot">
-    <p><strong>免責聲明</strong><br>
-      本站整理公開市場的歷史價格，只供參考，不構成投資建議，也不是任何證券的買賣邀約或推介。<br>
-      作者不是證券投資顧問。<br>資料可能有誤差或延遲，使用前請自行查證；投資決定與盈虧由使用者自行負責。</p>
-    <p>資料截至 <span id="footEnd">—</span> 收盤。<br>
+    <p>資料截至 <span id="footEnd">—</span> 收盤。歷史資料，不構成投資建議。<br>
       原始碼與錯誤回報在 <a href="https://github.com/wasai04/etf-strength-site" rel="noopener">GitHub</a>，覺得有用可以在那裡按個星號。</p>
   </footer>
-</div>
+</main>
 </div>
 <nav class="bottombar" role="tablist" aria-label="分頁">
   <button type="button" role="tab" data-page="overview" aria-selected="true">總覽</button>
@@ -609,10 +701,21 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <button type="button" role="tab" data-page="about" aria-selected="false">說明</button>
   <button type="button" class="setbtn" id="openSet">設定</button>
 </nav>
-<div class="tip" id="tip" hidden></div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
 <div class="colbox hfbox" id="hfbox" hidden></div>
 <div class="tour-block" id="tourBlock" hidden></div><div class="tour-hole" id="tourHole" hidden></div>
-<div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourT" hidden><p class="foot" id="tourN"></p><h3 id="tourT"></h3><p id="tourX"></p>
+<dialog class="intro" id="intro" aria-labelledby="introT">
+  <h2 id="introT">使用前先知道</h2>
+  <ul class="plainlist">
+    <li>這裡整理 ETF 的歷史報酬和回撤，和 0050 比較。</li>
+    <li><strong>只是歷史資料，不代表以後會一樣，也不是買賣建議。</strong>作者不是證券投資顧問。</li>
+    <li>數字的前提是「買了就一直持有」，中途進出的人結果可能差很多。</li>
+  </ul>
+  <p class="foot">完整說明和免責聲明在「說明」頁。</p>
+  <label class="chk"><input type="checkbox" id="introNo"> 下次不再顯示</label>
+  <div class="row" style="justify-content:flex-end;gap:8px"><button type="button" class="btn" id="introSkip">直接開始</button><button type="button" class="btn btn-fill" id="introTour">開始新手導覽</button></div>
+</dialog>
+<div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourT" hidden><p class="foot" id="tourN"></p><h2 id="tourT"></h2><p id="tourX"></p>
   <div class="row" style="gap:8px"><button type="button" class="btn" id="tourEnd">結束</button><span style="margin-left:auto"></span><button type="button" class="btn" id="tourPrev">上一步</button><button type="button" class="btn btn-fill" id="tourNext">下一步</button></div></div>
 
 <script id="engine">
@@ -740,6 +843,7 @@ if (typeof module !== "undefined") module.exports = { metrics, classify, lifeChe
 
 <script>
 const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["約等於0050","--c-tie"],["穩但不強","--c-safe"],["弱","--c-weak"]];
+const FLAG_TIP = { hv: "歷次大跌平均跌得比 0050 深，超過高波動門檻（門檻在左側欄的篩選）。", bu: "贏 0050 主要靠少數幾段急漲；中途進出、剛好錯過那幾段就不一定贏。", nv: "穩強、猛強裡，上市以來沒經歷過大空頭，或上市以來的年化輸 0050 超過 1%。", fo: "被目前的篩選擋掉，因為搜尋選了它才暫時列出；再打字或按 × 就收回。" };   // 標記的說明（表格和表上方共用）
 const CAT_NAME = c => c === "約等於0050" ? "接近 0050" : c;
 const colorOf = c => `var(${CATS.find(x => x[0] === c)[1]})`;
 const REGIONS = ["國內", "海外"], TYPES = ["市值／主題", "高股息", "主動式", "槓桿"];
@@ -780,7 +884,7 @@ const TIPS = {
   rec: "回到前高：最大回撤那次，從跌前高點到重新站回高點花了幾個月。\n「未回復」＝到期末還沒回到高點。",
   rr: "報酬／回撤（Calmar 比率）：年化報酬 ÷ 最大回撤的幅度。\n每承受 1% 的回撤，換到多少年化報酬；愈高愈划算。\n不低於 0050 的，在散布圖的划算線上方。",
   life: "上市以來 vs 0050：從上市日（最早 2015 年初）到資料最後一天，年化減 0050 同期的年化。\n不受上面選的期間影響，用來看這檔長期有沒有贏。",
-  lead: "平時領先：把這檔的爆發段漲幅當成 0 重算年化，0050 在同樣那幾週也當成 0 重算，兩者相減。\n正數＝大漲那幾段以外的時間也比 0050 好，數字就是好多少；只有報酬高於 0050 的才算。\n贏 0050 超過「接近 0050 的年化區間」、這欄卻不是正數的，標「靠爆發」。\n游標移到格子上看兩邊重算後的年化。",
+  lead: "平時領先：把這檔的爆發段漲幅當成 0 重算年化，0050 在同樣那幾週也當成 0 重算，兩者相減。\n正數＝大漲那幾段以外的時間也比 0050 好，數字就是好多少；只有報酬高於 0050 的才算。\n贏 0050 超過「接近 0050 的年化區間」、這欄卻不是正數的，標「靠爆發」。",
   nb: "爆發段數：符合「連續 N 週累積漲幅 ≥ 門檻」的段數（不重疊）。",
   vr: "波動倍數：這檔每週漲跌的幅度是 0050 的幾倍（週報酬標準差相除）。\n大於 1＝漲跌比 0050 猛。\n和 beta 不同，不會因為走勢和 0050 不像而被拉低。",
   bm: "beta（大盤）：加權指數每漲跌 1%，這檔平均跟著動多少。",
@@ -791,7 +895,7 @@ const TIPS = {
   t: "類型：槓桿＝正 2；主動式＝代號 A 結尾；高股息＝名稱含「息」或「收益」；其餘為市值／主題。",
   cat: "類別：依「說明」頁五種類別的規則，用目前的拉桿數字判定。\n名稱旁的標記：靠爆發＝贏 0050 主要靠少數幾段急漲；\n未經空頭驗證＝上市以來沒經歷過大空頭，或上市以來年化輸 0050 超過 1%。",
   r: "地區：上市依證交所基金類型（國內／國外成分），上櫃為人工標記。",
-  mk: "標註：勾選後在上面的散布圖標出代號，方便找點。\n點散布圖上的點也可以標註或取消。"
+  mk: "標註：勾選後在上面的散布圖標出代號，方便找點。"
 };
 
 const COLS = [
@@ -809,19 +913,29 @@ try { const v = JSON.parse(localStorage.getItem("etf-cols-v5") || "null"); if (A
 
 // ── 說明框（游標、鍵盤焦點、點一下都會開）
 const tip = $("tip");
+let tipFor = null;   // 目前提示屬於哪個元素：它帶 aria-describedby，螢幕閱讀器才念得到提示
 function showTip(el, text) {
+  clearTimeout(hideTip.t);
+  if (tipFor && tipFor !== el) tipFor.removeAttribute("aria-describedby");
+  tipFor = el; el.setAttribute("aria-describedby", "tip");
   tip.textContent = text; tip.hidden = false;
   const r = el.getBoundingClientRect(), w = Math.min(300, innerWidth - 24);
   tip.style.maxWidth = w + "px";
   tip.style.left = Math.min(Math.max(8, r.left), innerWidth - w - 12) + "px"; tip.style.top = (r.bottom + 8) + "px";
   const th = tip.getBoundingClientRect().height; if (r.bottom + 8 + th > innerHeight - 8) tip.style.top = Math.max(8, r.top - th - 8) + "px";
 }
-function hideTip() { tip.hidden = true; }
-document.addEventListener("mouseover", e => { const t = e.target.closest("[data-tip]"); if (t) showTip(t, t.dataset.tip); });
-document.addEventListener("mouseout", e => { if (e.target.closest("[data-tip]")) hideTip(); });
+function hideTip() { clearTimeout(hideTip.t); tip.hidden = true; if (tipFor) { tipFor.removeAttribute("aria-describedby"); tipFor = null; } }
+const hideSoon = () => { clearTimeout(hideTip.t); hideTip.t = setTimeout(hideTip, 150); };   // 留 0.15 秒，游標可以移到提示框上
+document.addEventListener("mouseover", e => { const t = e.target.closest("[data-tip]"); if (t) showTip(t, t.dataset.tip); else if (e.target.closest("#tip")) clearTimeout(hideTip.t); });
+document.addEventListener("mouseout", e => { if (e.target.closest("[data-tip], #tip")) hideSoon(); });
 document.addEventListener("focusin", e => { const t = e.target.closest("[data-tip]"); if (t) showTip(t, t.dataset.tip); });
 document.addEventListener("focusout", hideTip);
-document.addEventListener("click", e => { const t = e.target.closest(".term"); if (t) { if (!t.closest("label")) e.preventDefault(); showTip(t, t.dataset.tip); } else if (!e.target.closest("#tip, [data-tip]")) hideTip(); });
+// 點一下：.term 和卡片、格子這類本身不是按鈕的都會開；按鈕、連結、輸入框照原本的動作，不攔
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-tip]"), ctl = e.target.closest("button, a, input, select, summary");
+  if (t && (t.matches(".term") || !ctl || !t.contains(ctl))) { if (t.matches(".term") && !t.closest("label")) e.preventDefault(); showTip(t, t.dataset.tip); }
+  else if (!e.target.closest("#tip, [data-tip]")) hideTip();
+});
 document.addEventListener("scroll", hideTip, { passive: true, capture: true });   // capture：手機設定抽屜裡捲動也會收起
 
 // ── 分頁
@@ -829,7 +943,7 @@ function showPage(p, push) {
   p = (p || "").split("?")[0];   // 分享連結是「#分頁?設定」，分頁只看 ? 前面
   if (!PAGES.includes(p)) p = "overview";
   PAGES.forEach(x => { $("page-" + x).hidden = x !== p; });
-  document.querySelectorAll("[data-page]").forEach(b => b.setAttribute("aria-selected", b.dataset.page === p));
+  document.querySelectorAll('[role="tab"][data-page]').forEach(b => b.setAttribute("aria-selected", b.dataset.page === p));
   $("filterBox").hidden = !(p === "overview" || p === "bear");
   document.querySelectorAll("[data-for]").forEach(el => { el.hidden = el.dataset.for !== p; });
   $("openSet").hidden = !(p === "overview" || p === "bear");
@@ -839,7 +953,7 @@ function showPage(p, push) {
   hideTip();
 }
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-page]"); if (t) showPage(t.dataset.page, true);
+  const t = e.target.closest('[role="tab"][data-page]'); if (t) showPage(t.dataset.page, true);   // body 也有 data-page（目前分頁），只認分頁按鈕
 });
 // 手機版：「設定」打開抽屜，「完成」關閉；手機上說明文字裡的「左側欄」改成「設定」
 document.addEventListener("click", e => {
@@ -928,7 +1042,7 @@ function render(light) {   // light：拖時間軸途中只更新檔數和散布
   $("regime").innerHTML = `這段期間 0050 最多只跌 ${pct(-B.mdd)}，沒有經過大空頭（跌 ≥ ${f1(CRASH())}%），分類只代表這段行情。<br>長期有沒有贏，看「上市以來 vs 0050」欄和散布圖的空心點。`;
   const rows = all.filter(r => passFilters(r.x, r.m));
   ovMap = new Map(all.map(r => [r.x.c, r]));
-  $("cover").innerHTML = `${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}：全期都有資料的 ${all.length} 檔（上市晚於起點超過 7 天的不列入；名單共 ${D.etfs.length} 檔）。<br>自訂期間最早 ${iso(D.dates[0])}。`;
+  $("cover").innerHTML = `列入 ${all.length} 檔（名單共 ${D.etfs.length} 檔；上市晚於起點的不列入）。`;
   // 符合篩選、但上市不滿這段期間而沒列入的：依上市滿 1 年／半年／3 個月各給一個按鈕，把起點改到那群都有資料的那天（期間愈短、列入愈多）
   const inList = new Set(all.map(r => r.x.c)), firstI = x => x.p.findIndex(v => v != null);
   const miss = D.etfs.filter(x => !inList.has(x.c) && firstI(x) >= 0 && passFilters(x, null));
@@ -940,24 +1054,24 @@ function render(light) {   // light：拖時間軸途中只更新檔數和散布
       const f = miss.filter(x => bs.e - firstI(x) >= days); if (days === 63) n3 = f.length;
       if (f.length && f.length !== (opts.at(-1) || {}).n) opts.push({ s1: Math.max(...f.map(firstI)), n: f.length, lab });
     }
-    $("missing").innerHTML = `目前篩選有 ${miss.length} 檔上市不滿這段期間，沒有列入（${byType}）。`
-      + (opts.length ? "<br>改看：" + opts.map(o => `<button type="button" class="linkbtn" data-s1="${o.s1}">${iso(D.dates[o.s1])} 以來（上市${o.lab}，多 ${o.n} 檔）</button>`).join("・") : "")
-      + (miss.length > n3 ? `<br>上市不到 3 個月的 ${miss.length - n3} 檔期間太短，不提供。` : "");
+    const tip = `類型：${byType}` + (miss.length > n3 ? `&#10;上市不到 3 個月的 ${miss.length - n3} 檔期間太短，沒有按鈕。` : "");
+    $("missing").innerHTML = `另有 <span class="term" tabindex="0" data-tip="${tip}">${miss.length} 檔</span>上市不滿這段期間，沒有列入。`
+      + (opts.length ? "改看：" + opts.map(o => `<button type="button" class="linkbtn" data-s1="${o.s1}" data-tip="上市${o.lab}的都列入">${iso(D.dates[o.s1])} 起（多 ${o.n} 檔）</button>`).join("・") : "");
     $("missing").querySelectorAll("[data-s1]").forEach(b => b.onclick = () => { st.win = "c"; setSeg("c"); $("dStart").value = iso(D.dates[+b.dataset.s1]); $("dEnd").value = iso(D.dates[bs.e]); render(); });
   }
   const cnt = {}, cnt0 = {}, cntOk = {}; CATS.forEach(([c]) => { cnt[c] = 0; cnt0[c] = 0; cntOk[c] = 0; });
   rows.forEach(r => { cnt[r.cat]++; cnt0[r.def]++; if (r.ok) cntOk[r.cat]++; });
   $("counts").innerHTML = CATS.map(([c, v]) => {
     const d = cnt[c] - cnt0[c], win = c === "穩強" || c === "猛強";
-    return `<div class="cnt" style="--c:var(${v})" title="${PLAIN[c]}"><div class="ctop"><span class="name">${CAT_NAME(c)}</span><span class="cnum"><span class="num">${cnt[c]}</span><span class="bstat"><span class="delta">${d === 0 ? "同預設" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span>${win && cnt[c] ? `<span class="okn" title="通過空頭驗證的檔數（定義見說明頁）">通過驗證 ${cntOk[c]} 檔</span>` : ""}</span></span></div><span class="plain">${PLAIN[c]}</span></div>`;
+    return `<div class="cnt" style="--c:var(${v})" tabindex="0" data-tip="${RULE(P)[c]}"><div class="ctop"><span class="name">${CAT_NAME(c)}</span><span class="cnum"><span class="num">${cnt[c]}</span><span class="bstat"><span class="delta">${d === 0 ? "同預設" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span>${win && cnt[c] ? `<span class="okn term" tabindex="0" data-tip="通過空頭驗證：上市以來經歷過一次大空頭再回到高點，而且上市以來的年化沒有輸 0050 超過 1%。">通過驗證 ${cntOk[c]} 檔</span>` : ""}</span></span></div><span class="plain">${PLAIN[c]}</span></div>`;
   }).join("");
   const q1 = rows.filter(r => r.x.c !== "0050" && r.m.cagr > B.cagr && r.m.mdd > B.mdd), q1ok = q1.filter(r => r.ok);
   // 卡片下方：只講卡片（檔數、換類別）；散布圖的說明放在圖裡
   const adj = [...getState().keys()].some(k => ["weeks", "burst", "tie", "vmax", "hv", "epth", "hvx"].includes(k));
   $("pstat").innerHTML = `期間：${st.win === "c" ? "自訂" : st.win + " 年"}（${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}）・門檻：${adj ? "已調整" : "預設"}　<button type="button" class="linkbtn" data-open-set>改門檻</button>`;
-  $("countnote").innerHTML = `共 ${rows.length} 檔（含 0050 自己）；和預設門檻相比換類別的有 ${rows.filter(r => r.cat !== r.def).length} 檔。`
-    + ((D.dates[bs.e] - D.dates[bs.s]) / 365.25 < 0.95 ? `<br><strong>期間不到 1 年</strong>：年化是把這段的報酬換算成一年，漲跌都會被放大，分類參考就好。` : "");
-  $("scnote").innerHTML = `0050（靶心）：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。<br>右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的：${q1ok.length ? q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : "沒有"}` : ""}。`;
+  { const sw = rows.filter(r => r.cat !== r.def).length; $("countnote").innerHTML = `共 ${rows.length} 檔` + (sw ? `，其中 ${sw} 檔的類別和預設門檻不同` : "") + "。"; }
+  $("countnote").innerHTML += ((D.dates[bs.e] - D.dates[bs.s]) / 365.25 < 0.95 ? `<br><strong>期間不到 1 年</strong>：年化是把這段的報酬換算成一年，漲跌都會被放大，分類參考就好。` : "");
+  $("scnote").innerHTML = `0050（靶心）：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。<br>右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的${!q1ok.length ? "：沒有" : q1ok.length <= 6 ? "：" + q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : ` <span class="term" tabindex="0" data-tip="${q1ok.map(r => r.x.c).join("、")}">${q1ok.length} 檔</span>`}` : ""}。`;
   drawChart(rows, B);
   if (light === true) return;   // 事件處理直接傳 render 時，參數是 Event，不算 light
   drawTable(rows); syncTopScroll();
@@ -1001,8 +1115,8 @@ function drawChart(rows, B) {
   if (negB) g += `<text class="q" x="${sx(B.mdd) + 6}" y="${m.t + 34}" style="fill:var(--calmar)">划算線（0050 年化是負的，只看回撤）</text>`;
   g += `</g>`;
   if (!scView) {
-    g += `<text class="q" x="${Wd - m.r - 6}" y="${m.t + 16}" text-anchor="end">報酬更高、跌得更少</text><text class="q" x="${m.l + 6}" y="${m.t + 16}">報酬更高、跌得更深</text>`;
-    g += `<text class="q" x="${Wd - m.r - 6}" y="${H - m.b - 8}" text-anchor="end">跌得少、報酬也少</text><text class="q" x="${m.l + 6}" y="${H - m.b - 8}">報酬少、跌得也深</text>`;
+    g += `<text class="q4" x="${Wd - m.r - 6}" y="${m.t + 16}" text-anchor="end">報酬更高、跌得更少</text><text class="q4" x="${m.l + 6}" y="${m.t + 16}">報酬更高、跌得更深</text>`;
+    g += `<text class="q4" x="${Wd - m.r - 6}" y="${H - m.b - 8}" text-anchor="end">跌得少、報酬也少</text><text class="q4" x="${m.l + 6}" y="${H - m.b - 8}">報酬少、跌得也深</text>`;
   }
   g += `<g clip-path="url(#scClip)">`;
   // 0050 最後畫（不被蓋住），畫成全圖唯一的靶心：深色外圈、淺色環、深色中心，不用類別色
@@ -1215,7 +1329,7 @@ function drawTable(rows) {
     switch (k) {
       case "c": case "t": case "r": return `<td class="txt left">${x[k]}</td>`;
       case "mk": return `<td class="left"><input type="checkbox" data-mk="${x.c}" aria-label="在散布圖標出 ${x.c}" ${marks.has(x.c) ? "checked" : ""}></td>`;
-      case "n": return `<td class="txt left">${x.n}${FORCE.has(x.c) && !passFilters(x, r.m, true) ? ` <span class="flag nv">篩選外</span>` : ""}${isHV(x.c) ? ` <span class="flag">高波動</span>` : ""}${r.burst ? ` <span class="flag bu">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv">未經空頭驗證</span>` : ""}</td>`;
+      case "n": return `<td class="txt left">${x.n}${FORCE.has(x.c) && !passFilters(x, r.m, true) ? ` <span class="flag nv term" tabindex="0" data-tip="${FLAG_TIP.fo}">篩選外</span>` : ""}${isHV(x.c) ? ` <span class="flag term" tabindex="0" data-tip="${FLAG_TIP.hv}">高波動</span>` : ""}${r.burst ? ` <span class="flag bu term" tabindex="0" data-tip="${FLAG_TIP.bu}">靠爆發</span>` : ""}${(r.cat === "穩強" || r.cat === "猛強") && !r.ok ? ` <span class="flag nv term" tabindex="0" data-tip="${FLAG_TIP.nv}">未經空頭驗證</span>` : ""}</td>`;
       case "life": return `<td class="${ud(r.life)}">${r.life == null ? "—" : sgn(r.life)}</td>`;
       case "cat": return `<td class="txt left"><span class="pill" style="--c:${colorOf(r.cat)}">${CAT_NAME(r.cat)}</span>${r.cat !== r.def ? `<span class="was">預設：${CAT_NAME(r.def)}</span>` : ""}</td>`;
       case "rec": return `<td>${m.rec == null ? "未回復" : Math.round(m.rec) + " 個月"}</td>`;
@@ -1434,7 +1548,7 @@ function drawEpTable(E, ep) {
     const b = r.x.c === "0050";
     switch (k) {
       case "c": case "t": return `<td class="txt left">${r.x[k]}</td>`;
-      case "n": return `<td class="txt left">${r.x.n}${r.hv ? ` <span class="flag">高波動</span>` : ""}</td>`;
+      case "n": return `<td class="txt left">${r.x.n}${r.hv ? ` <span class="flag term" tabindex="0" data-tip="${FLAG_TIP.hv}">高波動</span>` : ""}</td>`;
       case "cat": return `<td class="txt left">${r.ov ? `<span class="pill" style="--c:${colorOf(r.ov.cat)}">${CAT_NAME(r.ov.cat)}</span>` : "—"}</td>`;
       case "pick": return `<td class="left"><input type="checkbox" data-c="${r.x.c}" aria-label="把 ${r.x.c} 畫進走勢圖" ${picks.has(r.x.c) ? "checked" : ""} ${b ? "disabled" : ""}></td>`;
       case "sel": return `<td>${pct(r.sel)}</td>`;
@@ -1490,21 +1604,42 @@ function colMenu(boxId, resetId, cols, locked, vis, defs, key, redraw) {
 }
 // ── 新手導覽：一步一個區塊；sel 沒有就置中顯示；side＝在側欄裡（手機版要先打開「設定」抽屜）
 const TOUR = [
-  { t: "這個網站在做什麼", x: "把每一檔台股 ETF 拿來和 0050 比：報酬有沒有比較高、跌的時候有沒有比較深。\n再依這兩件事分成五類。\n全部是歷史資料，不是買賣建議。" },
+  { t: "這個網站在做什麼", x: "把每一檔台股 ETF 拿來和 0050 比：報酬有沒有比較高、跌的時候有沒有比較深。\n再依這兩件事分成五類。\n全部是歷史資料，不是買賣建議。\n有虛線底的字、名稱旁的標記，游標移上去（手機點一下）會出現說明。" },
   { page: "overview", sel: "#q", side: 1, t: "找一檔 ETF", x: "輸入代號或名稱的幾個字（例：878、高股息），從建議裡選。\n在總覽會把它標在散布圖上，並捲到明細那一列。" },
-  { page: "overview", sel: "#periodPanel", t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n色塊是 0050 跌 20% 以上的大空頭，期間有沒有包到它，結果差很多。" },
+  { page: "overview", sel: "#periodPanel", t: "選要比的期間", x: "1／3／5 年從最新一天往回算。\n拖時間軸兩端可以自訂；拖中間的藍色段可以固定長度整段移動。\n色塊是 0050 跌 20% 以上的大空頭，期間有沒有包到它，結果差很多。\n「◀ ▶」一次移動 1 個月；「分類門檻」可以改爆發段和接近 0050 的標準，「回到預設門檻」還原。" },
   { page: "overview", sel: "#counts", t: "五種類別", x: "穩強、猛強：報酬比 0050 高；差在多跌的部分有沒有換到等比例的報酬。\n穩但不強、弱：報酬比 0050 低。\n接近 0050：兩項都差不多。\n動過拉桿時，卡片會顯示和預設相比多或少幾檔。" },
-  { page: "overview", sel: "#chartPanel", t: "散布圖：一眼看位置", x: "往上＝報酬高，往右＝跌得淺。\n靶心是 0050，虛線十字和綠色斜線（划算線）把圖切成五類。\n點一下圓點會標出代號；Ctrl＋滾輪可以縮放。" },
+  { page: "overview", sel: "#chartPanel", t: "散布圖：一眼看位置", x: "往上＝報酬高，往右＝跌得淺。\n靶心是 0050，虛線十字和綠色斜線（划算線）把圖切成五類。\n游標移到點上看名稱，點一下標出代號；Ctrl（⌘）＋滾輪縮放、拖曳移動，手機用＋−。" },
   { page: "overview", sel: "#tblPanel", t: "每檔明細", x: "點表頭排序；「類別」「類型」旁的 ▾ 可以篩選。\n「標註」打勾會標到散布圖上。\n欄位太多就用「顯示欄位」勾掉，也能下載 CSV。" },
-  { page: "overview", sel: "#filterBox", side: 1, t: "篩選", x: "地區、類型、波動倍數上限、高波動，總覽和空頭頁共用。\n游標移到有底線的字上，會跳出說明。" },
+  { page: "overview", sel: "#filterBox", side: 1, t: "篩選", x: "地區、類型、波動倍數上限、高波動，總覽和空頭頁共用。" },
   { page: "bear", sel: "#epsPanel", t: "空頭：大跌時各檔跌多少", x: "選一次 0050 的大跌，看同一段時間裡各檔最多跌多少、多久回到高點。\n「跌幅 vs 0050」正數＝跌得比 0050 淺。" },
-  { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以 0050 高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」可以加減線；時間軸可以拉長，看誰先回到高點。" },
-  { sel: ".viewset", side: 1, open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。" },
+  { page: "bear", sel: "#crashPanel", t: "大跌門檻", x: "拉桿決定 0050 跌多少算一次大跌；調低會多出幾次較小的回檔。\n側欄的「高波動」也用這裡的大跌來算。" },
+  { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以 0050 高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」加減線（最多 8 條），游標靠近哪條線就突顯哪條。\n拖時間軸兩端調整日期範圍、拖中間的藍色段整段移動，看誰先回到高點；Ctrl（⌘）＋滾輪縮放。\n起迄日期也可以直接輸入，「回到這次大跌」還原。" },
+  { page: "notes", sel: "#page-notes .insights", t: "觀察：資料裡看到的幾件事", x: "每張卡的按鈕會把總覽或空頭頁設成那一則的狀況，用目前的資料自己看。" },
+  { sel: "#tbR #sysDet, .viewset", side: 1, open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。\n「分享目前頁面設定」會複製連結，打開就是現在這個畫面。\n電腦版可以按標題左邊的按鈕收起側欄。" },
   { page: "about", sel: "#page-about .panel", t: "還有疑問就看「說明」", x: "名詞、類別的規則、使用前要知道的限制都在說明頁。\n導覽到這裡結束。" }
 ];
+// 進站提醒：localStorage etf-intro-off＝勾了不再顯示；sessionStorage etf-intro-seen＝這次瀏覽已經看過
+function showIntro() {
+  const dlg = $("intro"), get = (st, k) => { try { return window[st + "Storage"].getItem(k); } catch (e) { return null; } };
+  if (get("local", "etf-intro-off") || get("session", "etf-intro-seen") || !dlg.showModal) return;
+  const close = tour => { try { sessionStorage.setItem("etf-intro-seen", "1"); if ($("introNo").checked) localStorage.setItem("etf-intro-off", "1"); } catch (e) {}
+    dlg.close(); if (tour) $("tourBtn").click(); };
+  $("introSkip").onclick = () => close(false); $("introTour").onclick = () => close(true);
+  dlg.addEventListener("cancel", () => close(false));
+  dlg.showModal();
+}
+// 側欄收合：sideOff() 讀狀態，sideOff(true/false) 設定（不寫 localStorage；按鈕才寫）
+function sideOff(v) {
+  const sh = document.querySelector(".shell");
+  if (v === undefined) return sh.classList.contains("sideoff");
+  sh.classList.toggle("sideoff", v);
+  document.querySelectorAll(".sidetog").forEach(b => { b.setAttribute("aria-expanded", !v); b.title = v ? "展開側欄" : "收起側欄"; b.setAttribute("aria-label", b.title); });
+}
+document.querySelectorAll(".sidetog").forEach(b => b.onclick = () => { const v = !sideOff(); sideOff(v); try { localStorage.setItem("etf-side-off", v ? "1" : "0"); } catch (e) {} });
+sideOff(sideOff());
 function bindTour() {
   const hole = $("tourHole"), card = $("tourCard"), block = $("tourBlock");
-  let k = 0, from = null, sysWas = false;   // sysWas：導覽前顯示設定有沒有打開，結束時還原
+  let k = 0, from = null, sysWas = false, sideWas = false;   // sysWas：導覽前顯示設定有沒有打開，結束時還原
   const place = () => {
     const S = TOUR[k], el = S.sel && document.querySelector(S.sel), pad = 6;
     if (!el) { hole.style.cssText = `top:50%;left:50%;width:0;height:0`; card.style.left = (innerWidth - card.offsetWidth) / 2 + "px"; card.style.top = (innerHeight - card.offsetHeight) / 2 + "px"; return; }
@@ -1529,9 +1664,9 @@ function bindTour() {
     requestAnimationFrame(() => requestAnimationFrame(place));
     $("tourNext").focus();
   };
-  const end = () => { $("sysDet").open = sysWas; [hole, card, block].forEach(e => { e.hidden = true; }); document.body.classList.remove("drawer"); if (from) showPage(from, true); scrollTo({ top: 0 }); $("tourBtn").focus(); };
+  const end = () => { $("sysDet").open = sysWas; sideOff(sideWas); [hole, card, block].forEach(e => { e.hidden = true; }); document.body.classList.remove("drawer"); if (from) showPage(from, true); scrollTo({ top: 0 }); $("tourBtn").focus(); };
   $("sysDet").addEventListener("toggle", () => { if (!$("tourCard").hidden) return; try { $("sysDet").open ? localStorage.removeItem("etf-sysdet") : localStorage.setItem("etf-sysdet", "0"); } catch (e) {} });
-  $("tourBtn").onclick = () => { from = document.body.dataset.page; sysWas = $("sysDet").open; hideTip(); [hole, card, block].forEach(e => { e.hidden = false; }); show(0); };
+  $("tourBtn").onclick = () => { from = document.body.dataset.page; sysWas = $("sysDet").open; sideWas = sideOff(); sideOff(false); hideTip(); [hole, card, block].forEach(e => { e.hidden = false; }); show(0); };
   $("tourNext").onclick = () => k === TOUR.length - 1 ? end() : show(k + 1);
   $("tourPrev").onclick = () => k > 0 && show(k - 1);
   $("tourEnd").onclick = end;
@@ -1581,7 +1716,7 @@ const crashAlpha = (depth, lo, hi) => { if (crashMax == null) crashMax = Math.ma
 // 軌道上的色塊：0050 從高點跌到低點；sel 以外的變淡（sel 沒給就全部一樣深）
 function crashMarks(trackId, eps, sel, label) {
   $(trackId).querySelectorAll(".pcrash").forEach(el => el.remove());
-  $(trackId).insertAdjacentHTML("beforeend", eps.map((ep, i) => `<div class="pcrash${sel != null && i !== sel ? " dim" : ""}" style="opacity:${crashAlpha(ep.depth, .4, 1) * (sel != null && i !== sel ? .55 : 1)};left:${pPos(ep.pk)}%;width:${pPos(ep.tr) - pPos(ep.pk)}%" title="${label}：${ym(D.dates[ep.pk])}→${ym(D.dates[ep.tr])}，跌 ${pct(ep.depth)}"></div>`).join(""));
+  $(trackId).insertAdjacentHTML("beforeend", eps.map((ep, i) => `<div class="pcrash${sel != null && i !== sel ? " dim" : ""}" style="opacity:${crashAlpha(ep.depth, .4, 1) * (sel != null && i !== sel ? .55 : 1)};left:${pPos(ep.pk)}%;width:${pPos(ep.tr) - pPos(ep.pk)}%"></div>`).join(""));
 }
 // 回看期間：按 1／3／5 年或改日期，把手跟著動；拖把手就切到自訂
 function buildPeriod() {
@@ -1603,6 +1738,7 @@ function buildEpPeriod() {
 }
 // 說明頁、觀察頁裡會隨資料變的字：載入後從資料算，不寫死
 function fillLive() {
+  document.querySelectorAll(".crashTh").forEach(el => { el.textContent = f1(CRASH()) + "%"; });
   const last = D.dates.length - 1, CE = crashEps(), dd = D.defaults;
   $("crashYears").textContent = CE.map(ep => iso(D.dates[ep.pk]).slice(0, 4)).join("、") + ` 這 ${CE.length} 次`;
   $("periodNotes").innerHTML = [1, 3, 5].map(y => {
@@ -1717,14 +1853,16 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   D = d;
   document.documentElement.classList.remove("loading");
   $("footEnd").textContent = d.end;
+  { const age = Math.floor((Date.now() - Date.parse(d.end)) / 864e5);   // 資料多久沒更新：只寫在說明頁
+    $("dataAge").innerHTML = `資料截至 ${d.end} 收盤（${age} 天前）。每週六自動更新一次。` + (age > 10 ? `<br><strong>已經超過 10 天沒有更新，自動更新可能出了問題；</strong>數字是那天以前的，期間短的（例如 1 年）影響比較大。` : ""); }
   $("sub").textContent = `資料截至 ${d.end} 收盤・標竿 0050（含息）・大盤判讀用加權指數（不含息）`;
-  const ring = `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4" fill="var(--muted)"/><circle cx="10" cy="10" r="8" fill="none" stroke="var(--fg)" stroke-width="1.5"/></svg>`;
-  $("legend").innerHTML = `<span><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="var(--fg)"/><circle cx="9" cy="9" r="5.5" fill="var(--panel)"/><circle cx="9" cy="9" r="3" fill="var(--fg)"/></svg>0050（標竿）</span>` + CATS.map(([c, v]) => `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--c-steady)" stroke-width="2"/></svg>空心＝未經空頭驗證的穩強／猛強</span><span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span><span><svg width="34" height="16" viewBox="0 0 34 16"><rect x="0" y="0" width="34" height="16" fill="var(--fg)"/><text x="17" y="12" text-anchor="middle" style="fill:var(--panel);font-weight:700;font-size:10px">代號</text></svg>深色方框＝標註的</span>`;
+  const ring = `<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4" fill="var(--muted)"/><circle cx="10" cy="10" r="8" fill="none" stroke="var(--fg)" stroke-width="1.5"/></svg>`;
+  $("legend").innerHTML = `<span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="var(--fg)"/><circle cx="9" cy="9" r="5.5" fill="var(--panel)"/><circle cx="9" cy="9" r="3" fill="var(--fg)"/></svg>0050（標竿）</span>` + CATS.map(([c, v]) => `<span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--c-steady)" stroke-width="2"/></svg>空心＝未經空頭驗證的穩強／猛強</span><span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span><span><svg aria-hidden="true" width="34" height="16" viewBox="0 0 34 16"><rect x="0" y="0" width="34" height="16" fill="var(--fg)"/><text x="17" y="12" text-anchor="middle" style="fill:var(--panel);font-weight:700;font-size:10px">代號</text></svg>深色方框＝標註的</span>`;
   $("foot").innerHTML = `資料來源：證交所 ISIN 名單與開放資料、Yahoo 含息還原價（台股 ETF）、加權指數 ^TWII。<br>備註：各檔對齊到 0050 的交易日，上櫃 ETF 的數字可能有些微誤差。<br>Yahoo 對少數 ETF 有上市前的孤立價格（例：00637L 上市前 3 個月有一筆 9.13），資料整理時已去掉；多數新 ETF 上市頭幾天固定在發行價附近，沒有漲跌，不影響報酬。`;
   $("dStart").min = $("dEnd").min = iso(d.dates[0]); $("dStart").max = $("dEnd").max = d.end;
   $("epFrom").min = $("epTo").min = iso(d.dates[0]); $("epFrom").max = $("epTo").max = d.end;
   $("dEnd").value = d.end; $("dStart").value = iso(presetStart(d, d.dates.length - 1, 5));
-  buildControls(); resetSliders(); buildPeriod(); buildEpPeriod(); fillLive(); bindSearch(); bindTour(); bindShare();
+  buildControls(); resetSliders(); buildPeriod(); buildEpPeriod(); fillLive(); bindSearch(); bindTour(); bindShare(); showIntro();
   const rticks = (id, vals, fmt) => { const a = +$(id).min, b = +$(id).max; $("tk-" + id).innerHTML = vals.map(v => `<span style="left:${(v - a) / (b - a) * 100}%">${fmt(v)}</span>`).join(""); };
   rticks("vmax", [0.5, 1, 1.5, 2, 2.5, 3], v => v === 3 ? "不限" : v); rticks("hv", [1, 5, 10, 15, 20, 25], v => v + "%");
   rticks("tie", [0, 1, 2, 3, 4, 5], v => v + "%"); rticks("epth", [10, 15, 20, 25, 30], v => v + "%");
@@ -1798,17 +1936,40 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
     const go = () => { location.href = a.href; };
     if (reduce) return go();
     document.querySelectorAll(".mkt").forEach(m => { m.classList.toggle("at-us"); m.querySelectorAll("a").forEach(x => x.classList.toggle("on")); });
-    const el = document.querySelector(".eb-name");
-    if (el) { el.classList.add("roll-out"); setTimeout(() => { el.textContent = NAME[a.dataset.go]; el.classList.replace("roll-out", "roll-in"); el.offsetWidth; el.classList.remove("roll-in"); }, 200); }
+    document.querySelectorAll(".eb-name").forEach(el => { el.classList.add("roll-out"); setTimeout(() => { el.textContent = NAME[a.dataset.go]; el.classList.replace("roll-out", "roll-in"); el.offsetWidth; el.classList.remove("roll-in"); }, 200); });
     document.documentElement.classList.add("leaving");
     setTimeout(go, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fade")) * 1000 || 600);
   }));
   // 用瀏覽器「上一頁」從快取回來時，頁面停在離開前的樣子：還原滑塊、眉標、淡出，不重新載入（設定才不會丟）
   const mk0 = [...document.querySelectorAll(".mkt")].map(m => [m, m.className, [...m.querySelectorAll("a")].map(x => x.className)]);
-  const eb = document.querySelector(".eb-name"), eb0 = eb && eb.textContent;
+  const ebs = [...document.querySelectorAll(".eb-name")], eb0 = ebs.map(x => x.textContent);
   addEventListener("pageshow", e => { if (!e.persisted) return;
     mk0.forEach(([m, c, as]) => { m.className = c; m.querySelectorAll("a").forEach((x, i) => { x.className = as[i]; }); });
-    if (eb) { eb.textContent = eb0; eb.className = "eb-name"; }
+    ebs.forEach((x, i) => { x.textContent = eb0[i]; x.className = "eb-name"; });
     document.documentElement.classList.remove("leaving"); });
 })();
+</script>
+<div class="tbtry" role="group" aria-label="置頂欄試做"><span>置頂欄試做</span><button type="button" data-tbv="0">現行</button><button type="button" data-tbv="A">A</button><button type="button" data-tbv="B">B</button><button type="button" data-tbv="C">C</button><button type="button" data-tbv="C1">C1</button><button type="button" data-tbv="C2">C2</button><button type="button" data-tbv="C3">C3</button></div>
+<script>
+// 置頂欄試做切換（定案後拿掉）：記在 localStorage etf-tb-try，台股、美股共用
+(() => { const R = document.documentElement, bs = document.querySelectorAll("[data-tbv]"), tbR = document.getElementById("tbR"), tbL = document.getElementById("tbL");
+  // C1／C2 把側欄的按鈕列、分享訊息（C2 再加顯示設定）搬進置頂欄；其他版本搬回原位
+  const els = [document.querySelector(".viewset .toprow"), document.getElementById("shareMsg"), document.getElementById("sysDet")];
+  const home = els.map(el => [el, el.parentNode, el.nextSibling]);
+  let sysWas = els[2].open;
+  const sb = document.getElementById("shareBtn"), sbHTML = sb.innerHTML;   // 置頂欄裡縮成「分享」，滑過看全名
+  const place = v => {
+    sb.innerHTML = sbHTML; sb.removeAttribute("title");
+    if (v === "C1" || v === "C2") { sb.innerHTML = sbHTML.replace("分享目前頁面設定", "分享"); sb.title = "分享目前頁面設定"; }
+    if (els[2].parentNode === tbR) els[2].open = sysWas;
+    home.slice().reverse().forEach(([el, p, nx]) => p.insertBefore(el, nx));
+    if (v === "C1" || v === "C2") tbR.append(els[0], els[1]);
+    if (v === "C3") tbL.append(els[0], els[1]);
+    if (v === "C2" || v === "C3") { sysWas = els[2].open; els[2].open = false; tbR.append(els[2]); }
+  };
+  const mark = () => bs.forEach(b => b.setAttribute("aria-pressed", b.dataset.tbv === R.dataset.tb));
+  bs.forEach(b => b.onclick = () => { const v = b.dataset.tbv; R.dataset.tb = v; R.toggleAttribute("data-tbc", v[0] === "C"); try { localStorage.setItem("etf-tb-try", v); } catch (e) {} place(v); mark(); });
+  // 下拉的顯示設定：點外面就收起
+  document.addEventListener("click", e => { if (els[2].parentNode === tbR && els[2].open && !els[2].contains(e.target)) els[2].open = false; });
+  place(R.dataset.tb); mark(); })();
 </script>
