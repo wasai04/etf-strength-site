@@ -8,7 +8,7 @@
 - `us_etf_strength.py`：美股。名單、題材、中文簡稱在 `lists/`；分類的計算沿用台股版的函式。
 - `fetchlib.py`：兩支共用的下載函式（逾時、重試、Yahoo 日線）。
 - `check_data.py`：發布前檢查，和上一版比，有大問題就不發布。
-- `lists/`：美股名單（stockanalysis.com 規模 10 億美元以上）、題材、中文簡稱與屬性。
+- `lists/`：美股名單（`us-etf.csv`：代號、名稱、成立日和算好的分區；名單取自 stockanalysis.com 規模 10 億美元以上，原始匯出不放進 repo）、題材、中文簡稱與屬性。
 
 ## 每週自動更新
 
@@ -30,7 +30,7 @@
 ```
 pip install -r requirements.txt
 python -X utf8 tw_etf_strength.py --asof 2026-11-13 --out ../out/tw --export ../new/data.json
-python -X utf8 us_etf_strength.py --asof 2026-11-13 --list lists/us-etf-1b.csv --tags lists/us-etf-tags.csv --names lists/us-etf-names.csv --out ../out/us --export ../new/us-data.json
+python -X utf8 us_etf_strength.py --asof 2026-11-13 --list lists/us-etf.csv --tags lists/us-etf-tags.csv --names lists/us-etf-names.csv --out ../out/us --export ../new/us-data.json
 python -X utf8 check_data.py --new ../new --prev 上一版目錄 --report ../report.md
 ```
 

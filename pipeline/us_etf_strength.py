@@ -5,7 +5,9 @@
     python us_etf_strength.py --list 名單.csv --tags 題材.csv --out 輸出目錄 [--export data.json] [--only SPY,QQQ,...]
 
 輸入：
-    --list  stockanalysis.com 篩選頁匯出的名單（欄位 s,n,assetClass,aum,etfCategory,issuer,inceptionDate,etfRegion），
+    --list  名單（lists/us-etf.csv：s,n,inceptionDate,zone,fill_type；分區和補的類型已算好）。
+            也接受 stockanalysis.com 篩選頁的原始匯出（s,n,assetClass,aum,etfCategory,issuer,inceptionDate,etfRegion），
+            這時用 zone_of() 和晨星分類現算；原始匯出不放進公開的 repo（網站條款不允許轉載），
             規模門檻在匯出時已套用（10 億美元）
     --tags  標的題材（s,主題材,次題材,區域,國家,信心,依據），只有股票區有
 輸出（UTF-8）：
@@ -227,16 +229,21 @@ def main():
     cache_dir = os.path.join(a.out, "cache")
     os.makedirs(cache_dir, exist_ok=True)
 
-    lst = pd.read_csv(a.list, encoding="utf-8-sig", dtype=str)
-    zx = lst.apply(zone_of, axis=1, result_type="expand")
-    lst["zone"], lst["excluded"] = zx[0], zx[1]
+    lst = pd.read_csv(a.list, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    raw_export = "etfCategory" in lst.columns   # stockanalysis 的原始匯出（只在本機用）；公開的名單只有代號、名稱、成立日和算好的分區
+    if raw_export:
+        zx = lst.apply(zone_of, axis=1, result_type="expand")
+        lst["zone"], lst["excluded"] = zx[0], zx[1]
+    else:
+        lst["excluded"] = ""
     tags = pd.read_csv(a.tags, encoding="utf-8-sig", dtype=str).set_index("s")
     for c_src, c_dst in (("主題材", "theme"), ("次題材", "theme2"), ("區域", "region"), ("國家", "country"), ("信心", "tag_conf")):
         lst[c_dst] = lst["s"].map(tags[c_src]).fillna("")
     # 股票區沒有題材標籤的（緩衝型、目標收益、資產配置），用晨星分類補一個類型
     alt_type = {"Defined Outcome": "緩衝型", "Derivative Income": "選擇權收益", "Equity Hedged": "避險型"}
     fill = (lst["zone"] == "股票") & (lst["theme"] == "")
-    lst.loc[fill, "theme"] = [alt_type.get(c, "股債配置") for c in lst.loc[fill, "etfCategory"]]
+    lst.loc[fill, "theme"] = ([alt_type.get(c, "股債配置") for c in lst.loc[fill, "etfCategory"]] if raw_export
+                              else lst.loc[fill, "fill_type"].replace("", "股債配置").tolist())
     # 中文簡稱、細題材、重標的區域（lists/us-etf-names.csv）：
     # 細題材有填就取代次題材；區域只用在股票區（其他區不分地區），國際拆成「國際已開發」「國際含新興」
     names = pd.read_csv(a.names, encoding="utf-8-sig", dtype=str, keep_default_na=False).set_index("s") if a.names else None
