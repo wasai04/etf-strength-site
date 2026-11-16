@@ -91,7 +91,8 @@ REGION_OVERRIDE = {
 def isin_etfs():
     rows = []
     for m, sfx in ((2, ".TW"), (4, ".TWO")):
-        raw = http(ISIN_URL.format(m=m), WEB_UA).decode("cp950", errors="replace")
+        # 上市那頁約 10 MB，從 GitHub Actions（美國）下載常超過 90 秒（2026-11-16 排程失敗），放寬到 300 秒
+        raw = http(ISIN_URL.format(m=m), WEB_UA, total=300).decode("cp950", errors="replace")
         t = pd.read_html(io.StringIO(raw))[0]
         t.columns = t.iloc[0]
         t = t[1:]
@@ -485,6 +486,7 @@ def export_page_data(a, keep, px, b, mkt, end, out):
                          "hv": a.hv, "epth": a.epth},
             "dates": [int((d - pd.Timestamp("1970-01-01")).days) for d in dates],
             "bench_p": aligned(b), "market_p": aligned(mkt), "skipped": skipped, "etfs": etfs}
+    os.makedirs(os.path.dirname(os.path.abspath(a.export)), exist_ok=True)
     with open(a.export, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
 

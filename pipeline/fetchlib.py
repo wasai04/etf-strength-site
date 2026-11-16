@@ -44,8 +44,8 @@ def _fetch(open_fn, req, tries=3, total=90):
     raise last
 
 
-def http(url, headers):
-    return _fetch(urllib.request.urlopen, urllib.request.Request(url, headers=headers))
+def http(url, headers, total=90):
+    return _fetch(urllib.request.urlopen, urllib.request.Request(url, headers=headers), total=total)
 
 
 def yahoo(ticker, rng="20y"):

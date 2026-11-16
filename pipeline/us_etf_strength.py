@@ -456,6 +456,7 @@ def export(a, keep, raw, end):
                          "crash_bond": a.crash_bond, "verify_tie": a.verify_tie, "hv": a.hv, "epth": a.epth, "tax": a.tax},
             "dates": [int((d - pd.Timestamp("1970-01-01")).days) for d in dates],
             "ref": ref, "skipped": skipped, "etfs": etfs, "lev_extra": lev_extra}
+    os.makedirs(os.path.dirname(os.path.abspath(a.export)), exist_ok=True)
     with open(a.export, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
     print(f"export：{len(etfs)} 檔，{os.path.getsize(a.export) / 1e6:.1f} MB", flush=True)
