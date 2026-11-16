@@ -45,7 +45,7 @@
 
 ## 本機執行
 
-整個網站只有 `index.html` 和 `data.json`，計算都在瀏覽器裡完成。
+網站是台股 `index.html`、美股 `us/index.html`、兩頁共用的 `assets/`（樣式）和各自的 `data.json`，計算都在瀏覽器裡完成。
 
 ```bash
 python -m http.server 8765
