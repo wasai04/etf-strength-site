@@ -356,6 +356,7 @@ details.fold .controls { gap: 14px 28px; }
 .tb-in .eyebrow { margin: 0; }
 .tb-in .mkt { flex: none; }
 .tb-in .mkt a { padding: 4px 18px; }
+:root .insbar { top: 52px; }   /* 情境列黏在置頂欄下面；:root 提高權重，蓋過 .insbar 的 top: 0 */
 :root .side { top: 64px; max-height: calc(100vh - 76px); }   /* :root 提高權重，蓋過手機版抽屜的 inset／max-height（和試做時相同） */
 .tb-in > .mkt { position: absolute; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); border: 0; border-radius: 0; background: none; }
 .tb-in > .mkt::before { top: auto; height: 3px; border-radius: 2px 2px 0 0; }
@@ -429,6 +430,14 @@ details.fold .controls { gap: 14px 28px; }
 .ins > .row, .ins > .btn { margin-top: auto; }   /* 按鈕置底，內文長短不同也對齊 */
 .ins > .btn { align-self: flex-start; }
 .ins > .row { gap: 6px; }   /* 兩顆塞不下時換行，上下疊 */
+/* 情境列（從觀察卡點過去才出現，和美股版相同）：卡片標題、那張卡的所有情境（目前這個標亮）、回觀察頁、× */
+.insbar { position: sticky; top: 0; z-index: 8; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 12px; padding: 8px 12px; border: 3px solid var(--hl); border-radius: 6px; background: var(--panel); box-shadow: 0 3px 10px color-mix(in srgb, var(--fg) 14%, transparent); }
+body:has(#insBar:not([hidden])) .panel { scroll-margin-top: 64px; }   /* 捲到圖或表時不被情境列蓋住 */
+.insbar .ib-t { font-weight: 700; font-size: .92rem; }
+.insbar .ib-t small { display: inline-block; background: var(--hl); color: var(--bg); font-weight: 700; font-size: .95rem; padding: 2px 11px; border-radius: 999px; margin-right: 8px; }
+.insbar .ib-go { display: flex; flex-wrap: wrap; gap: 6px; }
+.insbar .btn[aria-pressed="true"] { background: var(--hl); border-color: var(--hl); color: var(--bg); }
+.insbar .ib-end { margin-left: auto; display: flex; gap: 6px; }
 @media (pointer: coarse) { .mouse-only { display: none; } }
 .pstat { margin: 0; font-size: .86rem; color: var(--muted); }
 .loading .side { pointer-events: none; opacity: .5; }
@@ -508,6 +517,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     <div><div class="hdt"><h1>台股 ETF 強度檔</h1></div>
     <p class="sub" id="sub">讀取資料中…</p></div>
   </header>
+  <div class="insbar" id="insBar" hidden></div>
 
   <!-- ── 總覽 -->
   <section class="page" id="page-overview" role="tabpanel" aria-label="總覽">
@@ -603,15 +613,15 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <p class="hint">用預設門檻看到的現象，換期間或門檻可能就不成立。<br>有不同看法歡迎到 <a href="https://github.com/wasai04/etf-strength-site/issues" rel="noopener">GitHub</a> 回報。</p>
       <div class="row"><button type="button" class="btn" data-ins="">回到預設畫面</button></div>
       <div class="insights">
-        <article class="ins"><h3>0050 本身就很難贏</h3><p>5 年期間，年化贏 0050 超過「接近 0050 的區間」的只有少數幾檔，排在最前面的多半是正 2。<br>0050 偏重台積電和科技股，本身就比大盤積極。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-cagr" data-to="tblPanel">依年化排序看</button></article>
-        <article class="ins"><h3>「報酬更高、跌得更少」幾乎不存在</h3><p>散布圖右上角是大家都想找的那一格。<br>5 年期間落在裡面的只有零星幾檔，其中還有追蹤同一個指數、幾乎和 0050 一樣的。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;mk=@q1" data-to="chartPanel">在散布圖標出右上角</button></article>
-        <article class="ins"><h3>穩強很少，而且只小幅領先</h3><p>穩強要報酬比 0050 高、多跌的部分也換得到報酬。<br>5 年期間符合的不多，報酬／回撤也只比 0050 高一點。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;cat=0&amp;so=-rr" data-to="tblPanel">只看穩強</button></article>
-        <article class="ins"><h3>正 2 的領先，集中在少數幾週</h3><p>正 2 年化最高，但把幾段急漲拿掉、0050 也拿掉同幾週，平時反而落後。<br>一直持有才拿得到；進出時剛好錯過那幾週，就可能輸 0050。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=l&amp;so=lead&amp;cols=%2Blead,%2Bnb" data-to="tblPanel">只看槓桿型、看平時領先</button></article>
-        <article class="ins"><h3>空頭時，排名會反過來</h3><p>2022 年 0050 跌掉三成多，高股息多半跌得比較少，正 2 跌了一半。<br>多頭時跑在前面的，空頭時常常跌得最深。</p><button type="button" class="btn btn-fill" data-ins="p=bear&amp;eso=-vs" data-to="epChartPanel">看 2022 那次大跌</button></article>
-        <article class="ins"><h3>多扛的波動，不一定換得到等比例的報酬</h3><p>報酬／回撤（每承受 1% 回撤換到多少年化）排下來，報酬比較高的正 2，算下來反而不比 0050 划算，所以是猛強。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-rr&amp;mk=00631L,00894" data-to="chartPanel">依報酬／回撤排序</button></article>
-        <article class="ins"><h3>定期定額和一次投入，結果可以差很多</h3><p>期間中間有一次大跌時，定期定額會在低點買到比較多，年化常比一次投入高。<br>換一個起點可能就相反。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-dca&amp;cols=%2Bdca" data-to="tblPanel">看定投年化</button></article>
-        <article class="ins"><h3>海外 ETF 走的是另一條路</h3><p>海外 ETF 和台股的連動低，這幾年台股特別強，所以大多落在「弱」；有些回撤比 0050 淺，但少賺的補不回來。</p><button type="button" class="btn btn-fill" data-ins="w=5&amp;rg=o" data-to="chartPanel">只看海外</button></article>
-        <article class="ins"><h3>只看 1 年挑出來的「強」，常常撐不久</h3><p>1 年期間右上角的檔，大多是高股息、金融、生技這類低波動的。<br>拉長到上市以來，它們多半輸 0050。</p><button type="button" class="btn btn-fill" data-ins="w=1&amp;mk=@q1&amp;so=life" data-to="tblPanel">看 1 年的右上角</button></article>
+        <article class="ins"><h3>0050 本身就很難贏</h3><p>5 年期間，年化贏 0050 超過「接近 0050 的區間」的只有少數幾檔，排在最前面的多半是正 2。<br>0050 偏重台積電和科技股，本身就比大盤積極。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-cagr" data-to="tblPanel">依年化排序看</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;so=-cagr" data-to="tblPanel">看 3 年</button><button type="button" class="btn btn-fill" data-ins="w=1&amp;so=-cagr" data-to="tblPanel">看 1 年</button></div></article>
+        <article class="ins"><h3>「報酬更高、跌得更少」幾乎不存在</h3><p>散布圖右上角是大家都想找的那一格。<br>5 年期間落在裡面的只有零星幾檔，其中還有追蹤同一個指數、幾乎和 0050 一樣的。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;mk=@q1" data-to="chartPanel">在散布圖標出右上角</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;mk=@q1" data-to="chartPanel">看 3 年</button><button type="button" class="btn btn-fill" data-ins="w=1&amp;mk=@q1" data-to="chartPanel">看 1 年</button></div></article>
+        <article class="ins"><h3>穩強很少，而且只小幅領先</h3><p>穩強要報酬比 0050 高、多跌的部分也換得到報酬。<br>5 年期間符合的不多，報酬／回撤也只比 0050 高一點。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;cat=0&amp;so=-rr" data-to="tblPanel">只看穩強</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;cat=0&amp;so=-rr" data-to="tblPanel">看 3 年</button></div></article>
+        <article class="ins"><h3>正 2 的領先，集中在少數幾週</h3><p>正 2 年化最高，但把幾段急漲拿掉、0050 也拿掉同幾週，平時反而落後。<br>一直持有才拿得到；進出時剛好錯過那幾週，就可能輸 0050。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;ty=l&amp;so=lead&amp;cols=%2Blead,%2Bnb" data-to="tblPanel">只看槓桿型、看平時領先</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;ty=l&amp;so=lead&amp;cols=%2Blead,%2Bnb" data-to="tblPanel">看 3 年</button></div></article>
+        <article class="ins"><h3>空頭時，排名會反過來</h3><p>2022 年 0050 跌掉三成多，高股息多半跌得比較少，正 2 跌了一半。<br>多頭時跑在前面的，空頭時常常跌得最深。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="p=bear&amp;ep=2022-01-17&amp;eso=-vs" data-to="epChartPanel">看 2022 那次大跌</button><button type="button" class="btn btn-fill" data-ins="p=bear&amp;ep=2020-01-14&amp;eso=-vs" data-to="epChartPanel">2020 疫情</button><button type="button" class="btn btn-fill" data-ins="p=bear&amp;ep=2025-01-07&amp;eso=-vs" data-to="epChartPanel">2025 關稅</button></div></article>
+        <article class="ins"><h3>多扛的波動，不一定換得到等比例的報酬</h3><p>報酬／回撤（每承受 1% 回撤換到多少年化）排下來，報酬比較高的正 2，算下來反而不比 0050 划算，所以是猛強。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-rr&amp;mk=00631L,00894" data-to="chartPanel">依報酬／回撤排序</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;so=-rr&amp;mk=00631L,00894" data-to="chartPanel">看 3 年</button></div></article>
+        <article class="ins"><h3>定期定額和一次投入，結果可以差很多</h3><p>期間中間有一次大跌時，定期定額會在低點買到比較多，年化常比一次投入高。<br>換一個起點可能就相反。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;so=-dca&amp;cols=%2Bdca" data-to="tblPanel">看定投年化</button><button type="button" class="btn btn-fill" data-ins="w=1&amp;so=-dca&amp;cols=%2Bdca" data-to="tblPanel">看 1 年</button></div></article>
+        <article class="ins"><h3>海外 ETF 走的是另一條路</h3><p>海外 ETF 和台股的連動低，這幾年台股特別強，所以大多落在「弱」；有些回撤比 0050 淺，但少賺的補不回來。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=5&amp;rg=o" data-to="chartPanel">只看海外</button><button type="button" class="btn btn-fill" data-ins="w=5&amp;rg=d" data-to="chartPanel">只看國內</button></div></article>
+        <article class="ins"><h3>只看 1 年挑出來的「強」，常常撐不久</h3><p>1 年期間右上角的檔，大多是高股息、金融、生技這類低波動的。<br>拉長到上市以來，它們多半輸 0050。</p><div class="row"><button type="button" class="btn btn-fill" data-ins="w=1&amp;mk=@q1&amp;so=life" data-to="tblPanel">看 1 年的右上角</button><button type="button" class="btn btn-fill" data-ins="w=3&amp;mk=@q1&amp;so=life" data-to="tblPanel">看 3 年的右上角</button></div></article>
       </div>
     </section>
   </section>
@@ -917,6 +927,7 @@ function showPage(p, push) {
   $("openSet").hidden = !(p === "overview" || p === "bear");
   document.body.classList.remove("drawer");
   document.body.dataset.page = p;
+  if (p === "notes" || p === "about") hideBar();
   if (push) { try { history.replaceState(null, "", "#" + p); } catch (e) {} }
   hideTip();
 }
@@ -1810,11 +1821,25 @@ function bindShare() {
   // 觀察頁：套用那一則的設定，切到對應分頁並捲到圖或表
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-ins]"); if (!b) return;
+    const inBar = !!b.closest("#insBar"), card = b.closest(".ins");
     const q = new URLSearchParams(b.dataset.ins); applyState(q);
     showPage(q.get("p") || "overview", true);
+    if (card) insBar(card, b.dataset.ins); else if (inBar) markBar(b.dataset.ins); else hideBar();
+    if (inBar && (q.get("p") || "overview") === document.body.dataset.page) return;   // 情境列裡切換：留在原位，方便對照
     const to = b.dataset.to && $(b.dataset.to); if (to) to.scrollIntoView({ block: "start" }); else scrollTo({ top: 0 });
   });
 }
+// 情境列：把那張卡的標題和按鈕複製過來，點了哪個就標亮
+function insBar(card, cur) {
+  const bar = $("insBar"), btns = [...card.querySelectorAll("[data-ins]")];
+  bar.innerHTML = `<span class="ib-t"><small>觀察</small>${card.querySelector("h3").textContent}</span>`
+    + (btns.length > 1 ? `<span class="ib-go">${btns.map(x => `<button type="button" class="btn" data-ins="${x.dataset.ins.replace(/&/g, "&amp;")}" data-to="${x.dataset.to || ""}">${x.textContent}</button>`).join("")}</span>` : "")
+    + `<span class="ib-end"><button type="button" class="btn" data-insback>回觀察頁</button><button type="button" class="btn" id="insX" aria-label="關閉情境列">×</button></span>`;
+  bar.hidden = false; markBar(cur);
+}
+function markBar(cur) { $("insBar").querySelectorAll(".ib-go [data-ins]").forEach(x => x.setAttribute("aria-pressed", x.dataset.ins === cur)); }
+function hideBar() { $("insBar").hidden = true; }
+document.addEventListener("click", e => { if (e.target.closest("#insX")) hideBar(); if (e.target.closest("[data-insback]")) { showPage("notes", true); scrollTo({ top: 0 }); } });
 function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("burst").value = d.burst * 100; $("tie").value = d.tie * 100; $("vmax").value = 3; $("hv").value = (d.hv ?? 0.05) * 100; $("hvx").checked = false; $("epth").value = (d.epth ?? 0.15) * 100; epCache = null; }
 
 showPage((location.hash || "").slice(1), false);
