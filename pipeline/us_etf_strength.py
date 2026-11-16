@@ -55,6 +55,11 @@ EXPORT_START = "1999-01-01"  # 涵蓋 2000 年網路泡沫（類股 SPDR 1998-12
 tw.EXPORT_START = EXPORT_START  # crashes()、verify() 讀的是台股模組的這個值
 WINDOWS = tw.WINDOWS
 ZONE_BENCH = {"股票": "SPY", "債券": "AGG", "原物料": "GLD", "加密貨幣": "IBIT", "槓桿": "SPY"}
+# 各分區的門檻預設（2026-11-16）：依基準的年化波動和 SPY（約 16%）的比例縮放後取整。沒列的分區用命令列的預設。
+# 腳本分類照分區套用，並寫進資料檔 zone_defaults，頁面的拉桿預設讀這裡（頁面和腳本的分類才會一致）。
+# hv（高波動門檻）、epth（大跌門檻）只有頁面用。
+ZONE_DEFAULTS = {"債券": {"tie": 0.005, "near_dd": 0.01, "burst": 0.025, "hv": 0.02, "epth": 0.10},
+                 "加密貨幣": {"tie": 0.05, "near_dd": 0.10, "burst": 0.25, "hv": 0.15, "epth": 0.20}}
 EQUITY_ALT = {"Defined Outcome", "Derivative Income", "Equity Hedged"}
 # 槓桿 ETF：(倍數, 1 倍原型)。原型是同一指數的 ETF 或個股；指數不完全相同的標「近似」。
 LEVERAGE = {
@@ -360,26 +365,28 @@ def main():
                 continue
             b = px[bt]
             eps = tw.crashes(b, a.crash_bond if zone == "債券" else a.crash)
+            zd = ZONE_DEFAULTS.get(zone, {})
+            z_burst, z_tie, z_near = zd.get("burst", a.burst), zd.get("tie", a.tie), zd.get("near_dd", a.near_dd)
             zk = keep[keep["zone"] == zone]
             for _, r in zk.iterrows():
                 if r["s"] in px:
                     ver[(r["s"], rate)] = tw.verify(px[r["s"]], b, end, eps, a.verify_tie)
             for n in WINDOWS:
-                bm = tw.window_metrics(b, starts[n], end, a.burst)
+                bm = tw.window_metrics(b, starts[n], end, z_burst)
                 if bm is None:  # 基準在這個期間還沒上市（例：IBIT 2024-01，加密貨幣區沒有 3、5 年）
                     continue
                 for _, r in zk.iterrows():
                     t = r["s"]
                     if t not in px:
                         continue
-                    m = tw.window_metrics(px[t], starts[n], end, a.burst, bench=b, mkt=px["SPY"])
+                    m = tw.window_metrics(px[t], starts[n], end, z_burst, bench=b, mkt=px["SPY"])
                     if m is None:
                         continue
-                    lab = tw.label(m, bm, a.tie, a.near_dd)
+                    lab = tw.label(m, bm, z_tie, z_near)
                     m.update({"ticker": t, "name": r["n"], "zone": zone, "bench": bt, "theme": r["theme"],
                               "region": r["region"], "window": n, "tax": rate,
                               "bench_cagr": bm["cagr"], "bench_mdd": bm["mdd"], "label": LABEL_NAME.get(lab, lab),
-                              "burst": tw.burst(m, bm, a.tie), "verified": ver[(t, rate)][0],
+                              "burst": tw.burst(m, bm, z_tie), "verified": ver[(t, rate)][0],
                               "life_cagr_diff": ver[(t, rate)][1]})
                     rows.append(m)
         if rate == 0.0:
@@ -485,6 +492,7 @@ def export(a, keep, raw, end):
             "defaults": {"weeks": 1, "burst": a.burst, "tie": a.tie, "near_dd": a.near_dd, "crash": a.crash,
                          "crash_bond": a.crash_bond, "verify_tie": a.verify_tie, "hv": a.hv, "epth": a.epth, "tax": a.tax},
             "dates": [int((d - pd.Timestamp("1970-01-01")).days) for d in dates],
+            "zone_defaults": ZONE_DEFAULTS,
             "ref": ref, "skipped": skipped, "etfs": etfs, "lev_extra": lev_extra,
             "list_asof": a.list_asof, "list_gone": a.list_gone, "list_note": a.list_note}
     os.makedirs(os.path.dirname(os.path.abspath(a.export)), exist_ok=True)

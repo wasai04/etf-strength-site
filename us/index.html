@@ -737,8 +737,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       <ul class="plainlist">
         <li>這是歷史資料，不代表往後會一樣。<br>結果很看期間：2021～2026 年是美國大型科技與 AI 的大多頭；換成 2000～2002 網路泡沫、2022 年升息這種期間，結果可能完全相反。</li>
         <li>ETF 分成五區，各跟自己的基準比：股票 SPY（標普 500）、債券 AGG（美國綜合債券）、原物料 GLD（黃金）、加密貨幣 IBIT（比特幣現貨）、槓桿 SPY。<br>不同區的類別不能直接比：債券區的「穩強」是贏 AGG，不是贏股市。</li>
-        <li>「股息扣 30% 預扣稅」是台灣居民的稅率：打開後每次配息只把 70% 再投入，基準也一樣扣。<br>這裡每一筆配息都扣；實際上利息類配息、資本利得分配、資本返還對非美國居民原則上不預扣，所以債券、原物料策略型（例如 PDBC、COMT）、選擇權收益型扣稅後偏低，SPY 這類一年約差 0.4 個百分點。實際以券商的扣繳憑單（1042-S）為準。<br>
-          另外，Yahoo 對部分月配息 ETF（例如 AGG、JEPI）2026 年 10、11 月的配息還沒有紀錄（2026-11-06 資料），最近一段的含息報酬會略低。</li>
+        <li>「股息扣 30% 預扣稅」是台灣居民的稅率：打開後每次配息只把 70% 再投入，基準也一樣扣。<br>這裡每一筆配息都扣；實際上利息類配息、資本利得分配、資本返還對非美國居民原則上不預扣，所以債券、原物料策略型（例如 PDBC、COMT）、選擇權收益型扣稅後偏低，SPY 這類一年約差 0.4 個百分點。實際以券商的扣繳憑單（1042-S）為準。</li>
         <li>所有數字都假設買了就一直持有（一次投入或定期定額，中途不賣）。<br>進進出出的實際報酬可能差很多，例如標「靠爆發」的，錯過那幾段急漲就不會贏基準。</li>
         <li>期間愈短，分類愈只代表那一段行情。<br><span id="periodNotes"></span></li>
         <li>名單只有目前掛牌、規模 10 億美元以上的 ETF（存活者偏差）；反向、箱型價差（BOXX）、管理期貨、多空型不收。<br>愈早的年份愈明顯：2000 年網路泡沫時就存在、又活到現在的只有二十幾檔，當年倒掉的網路主題基金都不在名單上。</li>
@@ -2122,6 +2121,8 @@ let RAW = null, ZONE = "股票", TAX = false, BN = "SPY", BYC = {}, winBefore = 
 const ZONES = ["股票", "債券", "原物料", "加密貨幣", "槓桿"];
 // 各分區的門檻預設（JC 2026-11-16）：依基準的年化波動和 SPY（約 16%）的比例縮放後取整。債券 AGG 約 6%、加密貨幣 IBIT 約 50%；
 // 原物料 GLD 約 19%、槓桿區的基準也是 SPY，照股票區。沒列的用 data.json 的 defaults。換分區時拉桿回到該區的預設
+// 各分區門檻預設：資料檔的 zone_defaults（資料腳本 ZONE_DEFAULTS，2026-11-16 起）優先；ZDEF 是舊版資料檔沒有這欄時的備援，
+// 2026-11-21 那版資料上線後可以拿掉。
 const ZDEF = { "債券": { tie: 0.005, near_dd: 0.01, burst: 0.025, hv: 0.02, epth: 0.10 }, "加密貨幣": { tie: 0.05, near_dd: 0.10, burst: 0.25, hv: 0.15, epth: 0.20 } };
 const ZONE_PICKS = { "股票": ["QQQ", "XLK", "SMH", "SCHD"], "債券": ["TLT", "BND", "SHY", "LQD"], "原物料": ["SLV", "USO", "DBC"],
   "加密貨幣": ["FBTC", "ETHA", "BITO"], "槓桿": ["TQQQ", "SSO", "SOXL", "TMF"] };
@@ -2152,7 +2153,7 @@ function zoneD(Z, rate) {
   const list = RAW.etfs.filter(x => x.z === Z).map(x => ({ ...x, p: cut(full(x.c)) })).filter(x => x.p.some(v => v != null));
   if (!list.some(x => x.c === bn)) list.unshift({ c: bn, n: (BYC[bn] && BYC[bn].n) || bn, z: Z, t: "基準", r: "美國", p: cut(bp) });
   return { ...RAW, dates: cut(RAW.dates), bench_p: cut(bp), market_p: cut(full("SPY")), etfs: list,
-    defaults: { ...RAW.defaults, crash: Z === "債券" ? RAW.defaults.crash_bond : RAW.defaults.crash, ...(ZDEF[Z] || {}) } };
+    defaults: { ...RAW.defaults, crash: Z === "債券" ? RAW.defaults.crash_bond : RAW.defaults.crash, ...((RAW.zone_defaults || ZDEF)[Z] || {}) } };
 }
 function buildView(keepSel) {
   const rate = TAX ? (RAW.defaults.tax ?? 0.3) : 0;
@@ -2405,7 +2406,7 @@ fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error
   rticks("vmax", [0.5, 1, 1.5, 2, 2.5, 3], v => v === 3 ? "不限" : v); rticks("hv", [1, 5, 10, 15, 20, 25], v => v + "%");
   rticks("epth", [10, 15, 20, 25, 30], v => v + "%");
   rticks("weeks", [1, 2, 3, 4], v => v + " 週");
-  // 側欄「預設 …」的數字：data.json 的 defaults，再套分區的 ZDEF（zoneSliders）
+  // 側欄「預設 …」的數字：data.json 的 defaults，再套分區的門檻（zone_defaults，舊資料用 ZDEF；zoneSliders）
   zoneSliders(); $("epthN").textContent = episodes(D, D.defaults.epth ?? 0.15).length;
   ["weeks", "burst", "tie", "vmax", "hv", "hvx"].forEach(id => $(id).addEventListener("input", render));
   $("epth").addEventListener("input", () => { epCache = null; epSel = null; epView = null; render(); });
