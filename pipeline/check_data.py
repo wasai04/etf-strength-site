@@ -8,7 +8,7 @@
 擋下（任一項）：
     - 資料截止日沒有比上一版新，或晚於今天
     - 檔數比上一版少超過 5%
-    - 檔案大小和上一版差超過 30%
+    - 檔案大小和上一版差超過 30%（資料格式不同時不比）
     - 和上一版截止日相比漲跌異常的檔數超過 2%（一般 ETF 超過 ±40%，槓桿、加密貨幣超過 ±80%）
 只列出：
     - 抓不到、被跳過的代號（skipped）
@@ -29,7 +29,25 @@ def load(d, name):
     if not os.path.exists(p):
         return None, 0
     with open(p, encoding="utf-8") as f:
-        return json.load(f), os.path.getsize(p)
+        data = json.load(f)
+    for x in data.get("etfs", []) + data.get("lev_extra", []) + list(data.get("ref", {}).values()):
+        decode(x)
+    return data, os.path.getsize(p)
+
+
+def decode(x):
+    """價格存成整數差值（enc="d1"，有 pk）的還原成原本的價格；舊格式（沒有 pk）不動。"""
+    if x.get("pk") is None:
+        return
+    sc, acc, out = 10 ** x["pk"], 0, []
+    for dl in x["p"]:
+        if dl is None:
+            out.append(None)
+            continue
+        acc += dl
+        out.append(acc / sc)
+    x["p"] = out
+    del x["pk"]
 
 
 def price_at(x, dates, day):
@@ -75,7 +93,9 @@ def check(market, new, nsize, prev, psize, hard, soft):
     n_prev = len(prev["etfs"])
     if n_new < n_prev * 0.95:
         hard.append(f"{tag}：檔數 {n_new} 比上一版 {n_prev} 少超過 5%")
-    if psize and abs(nsize / psize - 1) > 0.30:
+    if new.get("enc") != prev.get("enc"):   # 資料格式改了（例如 2026-11-17 價格改存整數差值，檔案小約三成），這次不比大小
+        soft.append(f"{tag}：資料格式和上一版不同（{prev.get('enc') or '舊格式'} → {new.get('enc') or '舊格式'}），這次不比檔案大小")
+    elif psize and abs(nsize / psize - 1) > 0.30:
         hard.append(f"{tag}：檔案大小 {nsize / 1e6:.1f} MB，上一版 {psize / 1e6:.1f} MB，差超過 30%")
     pc, nc = {x["c"] for x in prev["etfs"]}, {x["c"] for x in new["etfs"]}
     if pc - nc:

@@ -7,6 +7,7 @@
 <meta property="og:title" content="台股 ETF 強度檔">
 <meta property="og:description" content="台股 ETF 和 0050 比報酬與回撤：五種類別、空頭時各檔跌多少，門檻都可以自己調。">
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preload" href="data.json" as="fetch" crossorigin>   <!-- 資料檔和頁面同時開始下載（2026-11-17）；下面 fetch 要用預設快取模式，才會接到這個預先下載 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
@@ -166,12 +167,13 @@ svg.chart text.q, svg.chart text.q4 { font-family: var(--f-body); font-size: 12p
 .topscroll::-webkit-scrollbar-thumb, .tblwrap::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted) 70%, transparent); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
 .topscroll::-webkit-scrollbar-thumb:hover, .tblwrap::-webkit-scrollbar-thumb:hover { background-color: var(--muted); }
 #chart { cursor: grab; touch-action: pan-y; }
+#chart:active { cursor: grabbing; }   /* 拖曳時換成抓住的手（2026-11-17） */
 .tblwrap { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: 4px; }
 table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: .86rem; }
 th, td { border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 td { padding: 6px 10px; font-family: var(--f-num); font-variant-numeric: tabular-nums; background: var(--panel); }
 th { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 0; }
-th button { font: inherit; font-weight: 500; color: var(--muted); background: none; border: 0; cursor: pointer; width: 100%; padding: 8px 10px; text-align: inherit; white-space: nowrap; }
+th button { font: inherit; font-weight: 500; color: var(--muted); background: none; border: 0; cursor: pointer; width: 100%; padding: 8px 10px; text-align: center; white-space: nowrap; }   /* 表頭一律置中（JC 2026-11-17）；格子照舊數字靠右、文字靠左 */
 th button:hover { color: var(--fg); background: var(--bg); }
 .left { text-align: left; }
 .up { color: var(--up); }
@@ -1079,10 +1081,10 @@ function drawChart(rows, B) {
   g += `<g clip-path="url(#scClip)"><rect x="${sx(B.mdd)}" y="${sy(y1 + 10)}" width="${Math.max(0, sx(x1 + 10) - sx(B.mdd))}" height="${Math.max(0, sy(B.cagr) - sy(y1 + 10))}" fill="var(--quad)"/>`;
   const negB = !(B.rr > 0);   // 0050 年化 ≤ 0：划算線改成 0050 回撤這條直線，畫成綠色
   $("negnote").hidden = !negB;
-  g += `<line x1="${sx(B.mdd)}" x2="${sx(B.mdd)}" y1="${m.t}" y2="${H - m.b}" stroke="${negB ? "var(--calmar)" : "var(--fg)"}" stroke-dasharray="${negB ? "6 5" : "4 4"}" stroke-width="${negB ? 1.6 : 1}" opacity="${negB ? 1 : .55}"/><line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(B.cagr)}" y2="${sy(B.cagr)}" stroke="var(--fg)" stroke-dasharray="4 4" opacity=".55"/>`;
+  let refL = `<line x1="${sx(B.mdd)}" x2="${sx(B.mdd)}" y1="${m.t}" y2="${H - m.b}" stroke="${negB ? "var(--calmar)" : "var(--fg)"}" stroke-dasharray="${negB ? "6 5" : "4 4"}" stroke-width="${negB ? 1.6 : 1}" opacity="${negB ? 1 : .55}"/><line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(B.cagr)}" y2="${sy(B.cagr)}" stroke="var(--fg)" stroke-dasharray="4 4" opacity=".55"/>`;
   // 和 0050 一樣划算的線：年化 = 0050 的報酬／回撤 × 回撤幅度；線上方比 0050 划算
   if (B.rr > 0) {
-    g += `<line x1="${sx(-2)}" y1="${sy(B.rr * 2)}" x2="${sx(0)}" y2="${sy(0)}" stroke="var(--calmar)" stroke-dasharray="6 5" stroke-width="1.4"/>`;
+    refL += `<line x1="${sx(-2)}" y1="${sy(B.rr * 2)}" x2="${sx(0)}" y2="${sy(0)}" stroke="var(--calmar)" stroke-dasharray="6 5" stroke-width="1.4"/>`;
     // 線名標在線進入畫面的那一端（左邊或上緣）
     let xl = Math.max(x0, -y1 / B.rr) + (x1 - x0) * 0.06;
     // 有象限說明時（沒縮放），字至少放在上緣往下 40px 的位置，避開左上角「報酬更高、跌得更深」
@@ -1112,6 +1114,8 @@ function drawChart(rows, B) {
       : `<circle cx="${cx}" cy="${cy}" r="5" fill="${colorOf(r.cat)}" fill-opacity=".85" data-c="${r.x.c}" data-tip="${tipText}"></circle>`;
   });
   g += `</g>`;
+  // 參考線（基準的十字虛線、划算線）畫在點的上面，底下墊同寬的背景色線（DESIGN「圖表規格」，2026-11-17）；不接滑鼠
+  g += `<g clip-path="url(#scClip)" pointer-events="none">${refL.replace(/ stroke-dasharray="[^"]*"| opacity="[^"]*"/g, "").replace(/stroke="[^"]*"/g, 'stroke="var(--panel)"')}${refL}</g>`;
   // 0050 不另畫方框標籤（靶心本身就是基準；JC 不要圖中間出現 0050 字樣，和美股版一致）
   const boxes = [];
   g += markLabels(rows.filter(r => marks.has(r.x.c) && r.x.c !== "0050").map(r => ({ c: r.x.c, x: sx(r.m.mdd), y: sy(r.m.cagr) })), boxes, { x0: m.l, y0: m.t, x1: Wd - m.r, y1: H - m.b });
@@ -1844,9 +1848,11 @@ function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("b
 
 showPage((location.hash || "").slice(1), false);
 addEventListener("hashchange", () => { if (D && location.hash.includes("?")) openShared(); else showPage(location.hash.slice(1), false); });
-fetch("data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
+// 價格存成整數差值（資料檔 enc="d1"，有 pk）：累加後除以 10^pk 還原；舊格式（沒有 pk）不動（2026-11-17，傳輸量約少 28%）
+function decP(o) { if (o.pk == null) return; const sc = 10 ** o.pk; let a = 0; o.p = o.p.map(v => v == null ? null : (a += v) / sc); delete o.pk; }
+fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
   // 上市前的 null 沒存，只存第一筆的位置 i0；這裡補回，後面的程式照「每檔和 dates 一樣長」使用
-  d.etfs.forEach(x => { if (x.i0 != null) { x.p = new Array(x.i0).fill(null).concat(x.p); delete x.i0; } });
+  d.etfs.forEach(x => { decP(x); if (x.i0 != null) { x.p = new Array(x.i0).fill(null).concat(x.p); delete x.i0; } });
   D = d;
   document.documentElement.classList.remove("loading");
   $("footEnd").textContent = d.end;

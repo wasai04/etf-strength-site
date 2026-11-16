@@ -61,6 +61,7 @@ import socket
 import sys
 import threading
 import time
+from decimal import Decimal
 
 import numpy as np
 import pandas as pd
@@ -457,6 +458,32 @@ def etype(code, name, kind):
     return "市值／主題"
 
 
+def delta_pack(p):
+    """價格改存整數差值（2026-11-17，資料檔 enc="d1"）：每檔乘上 10^k（k＝這檔價格最多的小數位數）變成整數，
+    存和前一筆的差（第一筆存本身）。頁面和 check_data.py 用同樣規則還原：累加後除以 10^k，值和原本的小數完全相同。
+    美股資料檔壓縮後約少 28%。回傳 (差值, k)。"""
+    vals = [v for v in p if v is not None]
+    k = max((max(0, -Decimal(repr(v)).as_tuple().exponent) for v in vals), default=0)
+    sc = 10 ** k
+    out, prev = [], 0
+    for v in p:
+        if v is None:
+            out.append(None)
+            continue
+        iv = round(v * sc)
+        out.append(iv - prev)
+        prev = iv
+    acc, back = 0, []   # 確認還原後和原值相同
+    for dl in out:
+        if dl is None:
+            back.append(None)
+            continue
+        acc += dl
+        back.append(acc / sc)
+    assert back == list(p), "價格差值還原不一致"
+    return out, k
+
+
 def export_page_data(a, keep, px, b, mkt, end, out):
     """拉桿頁面的資料：EXPORT_START 起每個 0050 交易日的含息還原價（各檔對齊到 0050 的交易日，上市前為 null、
     中間缺的日子沿用前一天），加上大盤指數。頁面用它算任意期間的報酬、回撤、定投、beta 和分類，
@@ -479,9 +506,10 @@ def export_page_data(a, keep, px, b, mkt, end, out):
         # 上市前的 null 不存（約占一半），改存第一筆價格的位置 i0；頁面載入時補回 null
         p = aligned(px[t])
         i0 = next(i for i, v in enumerate(p) if v is not None)
+        dp, pk = delta_pack(p[i0:])
         etfs.append({"c": r["code"], "n": r["name"], "r": r["region"], "t": etype(r["code"], r["name"], r["kind"]),
-                     "first": px[t].index[0].date().isoformat(), "i0": i0, "p": p[i0:]})
-    data = {"end": end.date().isoformat(), "bench": a.bench, "market": a.market, "export_start": EXPORT_START,
+                     "first": px[t].index[0].date().isoformat(), "i0": i0, "pk": pk, "p": dp})
+    data = {"end": end.date().isoformat(), "enc": "d1", "bench": a.bench, "market": a.market, "export_start": EXPORT_START,
             "defaults": {"weeks": 1, "burst": a.burst, "tie": a.tie, "near_dd": a.near_dd, "crash": a.crash, "verify_tie": a.verify_tie,
                          "hv": a.hv, "epth": a.epth},
             "dates": [int((d - pd.Timestamp("1970-01-01")).days) for d in dates],

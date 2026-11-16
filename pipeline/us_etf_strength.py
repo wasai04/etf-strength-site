@@ -58,8 +58,10 @@ ZONE_BENCH = {"股票": "SPY", "債券": "AGG", "原物料": "GLD", "加密貨�
 # 各分區的門檻預設（2026-11-16）：依基準的年化波動和 SPY（約 16%）的比例縮放後取整。沒列的分區用命令列的預設。
 # 腳本分類照分區套用，並寫進資料檔 zone_defaults，頁面的拉桿預設讀這裡（頁面和腳本的分類才會一致）。
 # hv（高波動門檻）、epth（大跌門檻）只有頁面用。
-ZONE_DEFAULTS = {"債券": {"tie": 0.005, "near_dd": 0.01, "burst": 0.025, "hv": 0.02, "epth": 0.10},
-                 "加密貨幣": {"tie": 0.05, "near_dd": 0.10, "burst": 0.25, "hv": 0.15, "epth": 0.20}}
+# 2026-11-17 依稽核 6（_local/audit-6-*）JC 定：債券大跌門檻 10% → 8%（10% 只抓到 2 次、只有 2008 回到高點；8% 多抓 2020-03），
+# 加密貨幣 tie／near_dd 5%／10% → 2%／4%（同資產基金的差距來自費用、轉倉成本，不隨波動放大；BITO 一年少 2.2% 不該算接近）
+ZONE_DEFAULTS = {"債券": {"tie": 0.005, "near_dd": 0.01, "burst": 0.025, "hv": 0.02, "epth": 0.08},
+                 "加密貨幣": {"tie": 0.02, "near_dd": 0.04, "burst": 0.25, "hv": 0.15, "epth": 0.20}}
 EQUITY_ALT = {"Defined Outcome", "Derivative Income", "Equity Hedged"}
 # 槓桿 ETF：(倍數, 1 倍原型)。原型是同一指數的 ETF 或個股；指數不完全相同的標「近似」。
 LEVERAGE = {
@@ -249,7 +251,7 @@ def main():
     ap.add_argument("--near-dd", type=float, default=0.03)
     ap.add_argument("--verify-tie", type=float, default=0.01)
     ap.add_argument("--crash", type=float, default=0.20, help="空頭驗證的大空頭門檻（股票、原物料、加密貨幣、槓桿區）；2026-11-08 從 25%% 改 20%%（熊市的慣用定義）")
-    ap.add_argument("--crash-bond", type=float, default=0.10, help="債券區的大空頭門檻（AGG 史上最大回撤約 18%，25% 會永遠沒有空頭）")
+    ap.add_argument("--crash-bond", type=float, default=0.08, help="債券區的大空頭門檻（AGG 史上最大回撤約 18%%，25%% 會永遠沒有空頭；2026-11-17 從 10%% 改 8%%，和大跌門檻一致）")
     ap.add_argument("--hv", type=float, default=0.05)
     ap.add_argument("--epth", type=float, default=0.15)
     ap.add_argument("--sleep", type=float, default=0.3)
@@ -383,10 +385,18 @@ def main():
                     if m is None:
                         continue
                     lab = tw.label(m, bm, z_tie, z_near)
+                    # 槓桿區的「靠爆發」看原型（2026-11-17，JC 同意）：槓桿本身幾乎都會被標，看原型才分得出是原型本來就靠急漲、
+                    # 還是被倍數放大；原型同樣和 SPY 比、同一組門檻。原型在這段期間沒資料就不標。頁面 levFlags() 同一規則。
+                    u = r.get("lev_under")
+                    if zone == "槓桿" and isinstance(u, str) and u in px:
+                        mu = tw.window_metrics(px[u], starts[n], end, z_burst, bench=b, mkt=px["SPY"])
+                        burst = bool(tw.burst(mu, bm, z_tie)) if mu is not None else False
+                    else:
+                        burst = tw.burst(m, bm, z_tie)
                     m.update({"ticker": t, "name": r["n"], "zone": zone, "bench": bt, "theme": r["theme"],
                               "region": r["region"], "window": n, "tax": rate,
                               "bench_cagr": bm["cagr"], "bench_mdd": bm["mdd"], "label": LABEL_NAME.get(lab, lab),
-                              "burst": tw.burst(m, bm, z_tie), "verified": ver[(t, rate)][0],
+                              "burst": burst, "verified": ver[(t, rate)][0],
                               "life_cagr_diff": ver[(t, rate)][1]})
                     rows.append(m)
         if rate == 0.0:
@@ -456,7 +466,8 @@ def export(a, keep, raw, end):
             if i < len(dates):
                 agg[int(i - i0)] = agg.get(int(i - i0), 0.0) + float(v)
         dv = [[i, round(v, 6)] for i, v in sorted(agg.items())]
-        return {"first": df.index[0].date().isoformat(), "i0": i0, "p": vals[i0:], "dv": dv}
+        dp, pk = tw.delta_pack(vals[i0:])   # 價格存整數差值（enc="d1"），見 tw_etf_strength.delta_pack
+        return {"first": df.index[0].date().isoformat(), "i0": i0, "pk": pk, "p": dp, "dv": dv}
 
     etfs, skipped = [], []
     for _, r in keep.iterrows():
@@ -488,7 +499,7 @@ def export(a, keep, raw, end):
                           **({"ls": LEV_SINCE[t][0]} if t in LEV_SINCE else {})})
     ref_t = set(ZONE_BENCH.values()) | {u for u in keep["lev_under"].dropna() if u} | {v[1] for v in LEV_EXTRA.values()}
     ref = {t: pack(raw[t]) for t in sorted(ref_t - in_list) if t in raw}
-    data = {"end": end.date().isoformat(), "zone_bench": ZONE_BENCH, "market": "SPY", "export_start": EXPORT_START,
+    data = {"end": end.date().isoformat(), "enc": "d1", "zone_bench": ZONE_BENCH, "market": "SPY", "export_start": EXPORT_START,
             "defaults": {"weeks": 1, "burst": a.burst, "tie": a.tie, "near_dd": a.near_dd, "crash": a.crash,
                          "crash_bond": a.crash_bond, "verify_tie": a.verify_tie, "hv": a.hv, "epth": a.epth, "tax": a.tax},
             "dates": [int((d - pd.Timestamp("1970-01-01")).days) for d in dates],
