@@ -61,6 +61,13 @@ def check(market, new, nsize, prev, psize, hard, soft):
         hard.append(f"{tag}：資料截止日 {new['end']} 晚於今天 {today}")
     if new.get("skipped"):
         soft.append(f"{tag}：抓不到或跳過的代號：{'、'.join(new['skipped'])}")
+    if new.get("list_asof"):
+        soft.append(f"{tag}：名單更新日 {new['list_asof']}（新上市的要手動加入）")
+    if new.get("list_gone"):
+        soft.append(f"{tag}：名單裡的代號已經不在交易所代號檔，這次剔除（可能下市、合併或改代號；改代號的要手動加回新代號）："
+                    f"{'、'.join(new['list_gone'])}")
+    if new.get("list_note"):
+        soft.append(f"{tag}：{new['list_note']}")
     if prev is None:
         return
     if new["end"] <= prev["end"]:

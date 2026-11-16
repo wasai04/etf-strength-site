@@ -115,6 +115,29 @@ SIZE_WORDS = {"小型股", "中型股", "大型股", "小型價值股", "小型�
 START_OVERRIDE = {"ETHE": "2024-07-23"}
 
 
+# 名單保護（2026-11-16）：名單固定、新增靠手動。每次更新比對 Nasdaq Trader 的公開代號檔（美國所有上市代號，每天更新），
+# 代號整個不見的（下市、合併、改代號）就從名單剔除，寫進資料檔，發布前檢查會列出。
+# 不用「ETF 欄是 N」來判斷：BAR 這類黃金信託在代號檔標成非 ETF，但價格正常。
+# 基金改名但代號不變不受影響（網站用代號和自己的中文簡稱）。
+NASDAQ_SYMBOLS = "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqtraded.txt"
+
+
+def check_listed(codes):
+    """回傳 (要剔除的代號, 說明)。抓不到代號檔、代號檔太小、或不見的超過 5 檔且超過 5%（多半是來源出問題）時不剔除，只回說明。"""
+    try:
+        raw = sr.http(NASDAQ_SYMBOLS, sr.WEB_UA).decode("utf-8", errors="replace")
+        lines = raw.splitlines()
+        i = lines[0].split("|").index("Symbol")
+        syms = {ln.split("|")[i] for ln in lines[1:] if ln.count("|") > i}
+    except Exception as e:  # noqa: BLE001
+        return [], f"抓不到 Nasdaq 代號檔（{type(e).__name__}），這次沒檢查名單"
+    codes = list(codes)
+    gone = sorted(c for c in codes if c not in syms)
+    if len(syms) < 5000 or len(gone) > max(5, 0.05 * len(codes)):
+        return [], f"Nasdaq 代號檔看起來不完整（{len(syms)} 個代號，名單有 {len(gone)} 檔不在），這次沒剔除"
+    return gone, ""
+
+
 def zone_of(r):
     """回傳 (分區, 排除原因)。"""
     cat, ac, s = r["etfCategory"], r["assetClass"], r["s"]
@@ -236,6 +259,13 @@ def main():
         lst["zone"], lst["excluded"] = zx[0], zx[1]
     else:
         lst["excluded"] = ""
+    a.list_gone, a.list_note = gone, list_note = check_listed(lst["s"])
+    if gone:
+        lst = lst[~lst["s"].isin(gone)].reset_index(drop=True)
+    print("名單檢查：剔除", gone or "無", list_note, flush=True)
+    # 名單本身的更新日（和價格分開）：lists/us-etf-asof.txt，手動更新名單時一起改
+    asof_file = os.path.splitext(a.list)[0] + "-asof.txt"
+    a.list_asof = open(asof_file, encoding="utf-8").read().strip() if os.path.exists(asof_file) else None
     tags = pd.read_csv(a.tags, encoding="utf-8-sig", dtype=str).set_index("s")
     for c_src, c_dst in (("主題材", "theme"), ("次題材", "theme2"), ("區域", "region"), ("國家", "country"), ("信心", "tag_conf")):
         lst[c_dst] = lst["s"].map(tags[c_src]).fillna("")
@@ -455,7 +485,8 @@ def export(a, keep, raw, end):
             "defaults": {"weeks": 1, "burst": a.burst, "tie": a.tie, "near_dd": a.near_dd, "crash": a.crash,
                          "crash_bond": a.crash_bond, "verify_tie": a.verify_tie, "hv": a.hv, "epth": a.epth, "tax": a.tax},
             "dates": [int((d - pd.Timestamp("1970-01-01")).days) for d in dates],
-            "ref": ref, "skipped": skipped, "etfs": etfs, "lev_extra": lev_extra}
+            "ref": ref, "skipped": skipped, "etfs": etfs, "lev_extra": lev_extra,
+            "list_asof": a.list_asof, "list_gone": a.list_gone, "list_note": a.list_note}
     os.makedirs(os.path.dirname(os.path.abspath(a.export)), exist_ok=True)
     with open(a.export, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"), allow_nan=False)

@@ -8,7 +8,7 @@
 - `us_etf_strength.py`：美股。名單、題材、中文簡稱在 `lists/`；分類的計算沿用台股版的函式。
 - `fetchlib.py`：兩支共用的下載函式（逾時、重試、Yahoo 日線）。
 - `check_data.py`：發布前檢查，和上一版比，有大問題就不發布。
-- `lists/`：美股名單（`us-etf.csv`：代號、名稱、成立日和算好的分區；名單取自 stockanalysis.com 規模 10 億美元以上，原始匯出不放進 repo）、題材、中文簡稱與屬性。
+- `lists/`：美股名單（`us-etf.csv`：代號、名稱、成立日和算好的分區；名單取自 stockanalysis.com 規模 10 億美元以上，原始匯出不放進 repo）、題材、中文簡稱與屬性。名單不會自動長：新上市的要手動加，`us-etf-asof.txt` 記名單更新日（網站說明頁會顯示）。每次更新會比對 Nasdaq Trader 的公開代號檔，代號已經不在交易所的（下市、合併、改代號）自動剔除，寫進 Release 的檢查紀錄。
 
 ## 每週自動更新
 
