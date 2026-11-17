@@ -1,7 +1,8 @@
 // 兩頁共用的圖表程式（2026-11-17 起，共用元件重構第三階段；DESIGN.md「共用檔」「圖表規格」）。
 // 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons。
 // 兩頁同結構的：總覽散布圖 drawChart／markLabels／toggleMark、空頭走勢圖 drawEpChart／epHover／epFocus／epLeave／epZoom／bindEpZoom。
-//   這些直接用頁面的全域變數與元素（D、BN、marks、picks、scState、scView、epState、epView、epDrag、tip、#chart、#epchart…），兩頁名字一致才放這裡。
+//   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、epDrag、tip、hideTip、LINE_COLORS、CAT_NAME、colorOf、
+//   drawTable、syncRange、crashAlpha、$ 等）和元素（#chart、#epchart…），兩頁名字一致才放這裡；頁面改這些名字前先搜這個檔。
 // 只宣告函式、不在載入時執行，所以可以在頁面主程式之前載入。改了這個檔：把兩頁 <script src> 的 ?v= 換成當天日期。
 
 // ── 縮放與拖曳（DESIGN「圖表規格」）：Ctrl（Mac 用 ⌘）＋滾輪以游標為中心縮放、按住拖曳移動；按鈕給觸控用
@@ -58,7 +59,7 @@ function zoomButtons(h) {
 // ── 總覽散布圖
 function drawChart(rows, B) {
   const svg = $("chart"), Wd = 900, H = 420, m = { l: 56, r: 16, t: 14, b: 40 };
-  if (!rows.length) { svg.innerHTML = `<text x="450" y="210" text-anchor="middle">沒有符合篩選的 ETF</text>`; return; }
+  if (!rows.length) { scState = null; svg.innerHTML = `<text x="450" y="210" text-anchor="middle">沒有符合篩選的 ETF</text>`; return; }   // scState 清掉：縮放、拖曳才不會拿上一輪的點重畫
   const xs = rows.map(r => r.m.mdd), ys = rows.map(r => r.m.cagr);
   // 預設範圍包住所有點；縮放／拖曳後用 scView 的範圍（換期間或篩選不重設，按「重設」才回預設）
   const base0 = { x0: Math.min(-0.1, Math.floor(Math.min(...xs, B.mdd) * 10) / 10), x1: 0,
@@ -216,6 +217,8 @@ function epHover(e) {
 }
 // 走勢圖的懸浮框：放在游標右邊（放不下就放左邊），上下置中、不超出視窗。內容先寫進 tip.innerHTML（空頭、槓桿頁走勢圖共用）
 function tipAt(e) {
+  clearTimeout(hideTip.t);   // 剛離開某個說明元素時 hideSoon 排了收起，不清掉懸浮框會被收走（稽核 2026-11-17）
+  tip.style.maxWidth = Math.min(300, innerWidth - 24) + "px";   // 和 showTip 同一個上限，寬度才不看先前開過什麼
   tip.hidden = false;
   const w = tip.getBoundingClientRect().width, h = tip.getBoundingClientRect().height;
   tip.style.left = (e.clientX + 16 + w > innerWidth - 8 ? e.clientX - w - 16 : e.clientX + 16) + "px";
