@@ -10,7 +10,7 @@
 <link rel="preload" href="data.json" as="fetch" crossorigin>   <!-- 資料檔和頁面同時開始下載（2026-11-17）；下面 fetch 要用預設快取模式，才會接到這個預先下載 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=20261117b">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
+<link rel="stylesheet" href="../assets/site.css?v=20261117c">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
 <style>
 /* 只有美股頁用到的樣式；共用的在 ../assets/site.css */
 #levtbl tr.thin td { color: var(--muted); }   /* 樣本少的列變淡：只調字色、底色維持不透明（原本整格 opacity，凍結欄往右捲時後面的字會透出來疊在一起，2026-11-17） */
@@ -1416,7 +1416,10 @@ function lvDraw() {
   const area = (a, col) => `<path d="M${sx(0)},${sd(0)}L${a.map((v, k) => sx(k).toFixed(1) + "," + sd(v).toFixed(1)).join("L")}L${sx(a.length - 1)},${sd(0)}Z" fill="${col}" opacity=".5"/>`;
   g += `<g class="lvs" data-s="L">${area(dl, "var(--l1)")}${line(nl, sy, "var(--l1)", 2.2)}</g>`;
   g += `<g class="lvs" data-s="U">${area(du, "var(--muted)")}${line(du, sd, "var(--fg)", 1.2)}${line(nu, sy, "var(--muted)", 2)}</g>`;
-  g += `<g id="lvCur" pointer-events="none" hidden><line class="vl" y1="${m.t}" y2="${y2 + H2}" stroke="var(--fg)" stroke-dasharray="3 3"/><circle class="cL" r="4" fill="var(--l1)"/><circle class="cU" r="4" fill="var(--muted)" stroke="var(--fg)"/><circle class="dL" r="3.5" fill="var(--l1)"/><circle class="dU" r="3.5" fill="var(--muted)" stroke="var(--fg)"/></g>`;
+  // 游標（豎線、點、底部日期）和空頭走勢圖同一套樣式（2026-11-17，JC：原本是虛線，和空頭頁不一樣）
+  g += `<g id="lvCur" pointer-events="none" hidden><line class="vl" y1="${m.t}" y2="${y2 + H2}" stroke="var(--fg)" stroke-width="1" opacity=".6"/>`
+    + `<circle class="cL" fill="var(--l1)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/><circle class="cU" fill="var(--muted)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/><circle class="dL" fill="var(--l1)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/><circle class="dU" fill="var(--muted)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/>`
+    + `<rect class="db" y="${y2 + H2 + 4}" width="80" height="18" rx="3" fill="var(--panel)" stroke="var(--line)"/><text class="hd" y="${y2 + H2 + 17}" text-anchor="middle"></text></g>`;
   $("lvNav").innerHTML = g;
   // 游標：在淨值區比淨值、在回撤區比回撤，離哪條近就突顯哪條；懸浮框照空頭頁走勢圖（2026-11-17，原本是圖右上角一行字）
   const svg = $("lvNav"), cur = $("lvCur");
@@ -1426,7 +1429,10 @@ function lvDraw() {
     const dLy = inDD ? sd(dl[k]) : sy(nl[k]), dUy = inDD ? sd(du[k]) : sy(nu[k]), eL = Math.abs(y - dLy), eU = Math.abs(y - dUy), near = Math.min(eL, eU) > 18 ? null : eL <= eU ? "L" : "U";   // 要靠近線才突顯
     svg.querySelectorAll(".lvs").forEach(el => el.classList.toggle("dim", near !== null && el.dataset.s !== near));
     cur.removeAttribute("hidden"); cur.querySelector(".vl").setAttribute("x1", sx(k)); cur.querySelector(".vl").setAttribute("x2", sx(k));
-    [["cL", sy(nl[k])], ["cU", sy(nu[k])], ["dL", sd(dl[k])], ["dU", sd(du[k])]].forEach(([c, yy]) => { const el = cur.querySelector("." + c); el.setAttribute("cx", sx(k)); el.setAttribute("cy", yy); });
+    [["cL", sy(nl[k])], ["cU", sy(nu[k])], ["dL", sd(dl[k])], ["dU", sd(du[k])]].forEach(([c, yy]) => { const el = cur.querySelector("." + c), on = near === null || near === c[1];   // 靠近的那條點放大、另一條淡化（同空頭頁）
+      el.setAttribute("cx", sx(k)); el.setAttribute("cy", yy); el.setAttribute("r", near === c[1] ? 5 : 3.5); el.setAttribute("opacity", on ? 1 : .25); });
+    const dx = Math.min(Math.max(sx(k), m.l + 40), W - m.r - 40), dt = cur.querySelector("text.hd");   // 底部日期，靠邊時不超出圖
+    dt.textContent = iso(RAW.dates[idx[k]]); dt.setAttribute("x", dx); cur.querySelector("rect.db").setAttribute("x", dx - 40);
     // 槓桿那列的顏色看「槓桿 − 原型」：正數＝這時候比原型好（全站上色原則）；數字照舊是各自的累計報酬、回撤
     const row = (s, c, col, n, d, cls) => tipRow(near == null ? "" : near === s ? "ep-on" : "ep-dim", col, c, [[cls[0], pct(n / 100 - 1)], [cls[1], pct(d), "回撤 "]]);
     const rL = row("L", `${x.c}（${x.x} 倍）`, "var(--l1)", nl[k], dl[k], [ud((nl[k] - nu[k]) / 100), ud(dl[k] - du[k])]), rU = row("U", `原型 ${x.u}`, "var(--muted)", nu[k], du[k], ["", ""]);
