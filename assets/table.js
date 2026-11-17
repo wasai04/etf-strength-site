@@ -1,7 +1,7 @@
 // 兩頁共用的表格程式（2026-11-17 起，共用元件重構第四階段；DESIGN.md「共用檔」）。
 // 通用的：sortRows、headCells（表頭排序＋▾篩選）、表頭篩選選單（passHead、hfClose、bindHeadFilter、hfPlace）、syncTopScroll（表格上方捲軸）、colMenu（顯示欄位選單）。
 // 兩頁同結構的：總覽明細表 cellVal／drawTable、空頭表 drawEpTable。
-//   這些直接用頁面的全域變數與元素（D、BN、COLS、TIPS、visible、TEXT_COLS、hfCat、HF_TYPE、enName、nbMark、flagTip、flagName、#tbl、#eptbl、#hfbox…），兩頁名字一致才放這裡。
+//   這些直接用頁面的全域變數與元素（D、BN、COLS、TIPS、visible、TEXT_COLS、hfCat、HF_TYPE、enName、nbMark、flagTip、flagName、clearSideFilters、syncWhere、#tbl、#eptbl、#hfbox…），兩頁名字一致才放這裡。
 // 只宣告函式與不執行頁面程式的常數，所以可以在頁面主程式之前載入；監聽器由頁面呼叫 bindHeadFilter() 才掛上（保持和其他監聽器的先後）。
 // 改了這個檔：把兩頁 <script src> 的 ?v= 換成當天日期。
 
@@ -62,6 +62,18 @@ function bindHeadFilter() {
   addEventListener("scroll", hfPlace, { passive: true }); document.addEventListener("scroll", hfPlace, { capture: true, passive: true });
 }
 
+// 篩到沒有列時的空狀態（稽核 2 H2）：說是哪個篩選擋掉的，給一個回復的按鈕。headHit＝表頭的類別篩選擋掉了全部（側欄篩選後還有）
+function emptyRow(n, scope, headHit) {
+  return `<tr class="empty"><td colspan="${n}">` + (headHit
+    ? `這張表的類別篩選擋掉了全部。<button type="button" class="linkbtn" data-hfall="${scope}">顯示全部類別</button>`
+    : `目前的篩選下沒有 ETF。<button type="button" class="linkbtn" data-sfclear>清除<span class="side-where">左側欄</span>的篩選</button>`) + "</td></tr>";
+}
+function bindEmpty(tbl) {
+  tbl.querySelectorAll("[data-hfall]").forEach(b => b.onclick = () => { const s = b.dataset.hfall; CATS.forEach(c => hfCat[s].add(c[0])); if (s === "ep") renderEps(); else render(); });
+  tbl.querySelectorAll("[data-sfclear]").forEach(b => b.onclick = () => { clearSideFilters(); render(); });
+  syncWhere();
+}
+
 // ── 表格上方的左右捲軸：和表格本身的捲軸同步；表格不夠寬就藏起來
 function syncTopScroll() {
   document.querySelectorAll(".tblwrap").forEach(w => {
@@ -102,7 +114,7 @@ function cellVal(r, k) {
 }
 function drawTable(rows) {
   const cols = COLS.filter(c => visible.has(c[0]));
-  rows = rows.filter(r => passHead("ov", r.x, r.cat));
+  const n0 = rows.length; rows = rows.filter(r => passHead("ov", r.x, r.cat));
   $("tbl").querySelector("thead").innerHTML = "<tr>" + headCells(cols, sortKey, sortDir, TIPS, "ov") + "</tr>";
   const cell = (r, k) => {
     const x = r.x, m = r.m;
@@ -123,6 +135,7 @@ function drawTable(rows) {
     }
   };
   $("tbl").querySelector("tbody").innerHTML = sortRows(rows, sortKey, sortDir, cellVal).map(r => `<tr data-row="${r.x.c}" data-cat style="--c:${colorOf(r.cat)}" class="${r.cat !== r.def ? "changed" : ""} ${r.x.c === BN ? "bench" : ""} ${marks.has(r.x.c) ? "marked" : ""}">${cols.map(([k]) => cell(r, k)).join("")}</tr>`).join("");
+  if (!rows.length) { $("tbl").querySelector("tbody").innerHTML = emptyRow(cols.length, "ov", n0 > 0); bindEmpty($("tbl")); }
   $("tbl").querySelectorAll("input[data-mk]").forEach(cb => cb.onchange = () => toggleMark(cb.dataset.mk));
   $("mkClear").hidden = !marks.size;
   $("tbl").querySelectorAll("th button[data-k]").forEach(b => b.onclick = () => {
@@ -133,7 +146,8 @@ function drawTable(rows) {
 
 // ── 空頭表
 function drawEpTable(E, ep) {
-  const rows = D.etfs.filter(x => E.per[x.c].s[epSel] && passFilters(x, (base && base.list.find(r => r.x === x) || {}).m) && passHead("ep", x)).map(x => {
+  const pre = D.etfs.filter(x => E.per[x.c].s[epSel] && passFilters(x, (base && base.list.find(r => r.x === x) || {}).m));
+  const rows = pre.filter(x => passHead("ep", x)).map(x => {
     const P = E.per[x.c], s = P.s[epSel];
     const ov = ovMap.get(x.c);
     const cr = x.c === BN ? null : epCross(x.p, ep, D);
@@ -172,6 +186,7 @@ function drawEpTable(E, ep) {
   const cols = EPCOLS.filter(c => epVisible.has(c[0]));
   $("eptbl").querySelector("thead").innerHTML = "<tr>" + headCells(cols, epSort, epDir, EPTIPS, "ep") + "</tr>";
   $("eptbl").querySelector("tbody").innerHTML = sortRows(rows, epSort, epDir, get).map(r => `<tr data-row="${r.x.c}" ${r.ov ? `data-cat style="--c:${colorOf(r.ov.cat)}"` : ""} class="${r.x.c === BN ? "bench" : ""}">${cols.map(([k]) => cell(r, k)).join("")}</tr>`).join("");
+  if (!rows.length) { $("eptbl").querySelector("tbody").innerHTML = emptyRow(cols.length, "ep", pre.length > 0); bindEmpty($("eptbl")); }
   $("eptbl").querySelectorAll("th button[data-k]").forEach(b => b.onclick = () => { const k = b.dataset.k; if (epSort === k) epDir = -epDir; else { epSort = k; epDir = ["c", "n", "t", "sel", "rec", "slow"].includes(k) ? 1 : -1; } renderEps(); });
   $("eptbl").querySelectorAll("tbody input").forEach(cb => cb.onchange = () => {
     const c = cb.dataset.c, drawn = [...picks].filter(k => { const x = D.etfs.find(y => y.c === k); return x && x.p[ep.pk] != null; }).length;

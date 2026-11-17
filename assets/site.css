@@ -378,6 +378,21 @@ details.fold .controls { gap: 14px 28px; }
 .tb-l #shareMsg { position: absolute; left: 0; top: calc(100% + 10px); z-index: 30; margin: 0; padding: 6px 10px; white-space: nowrap; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
 @media (min-width: 1001px) { .tb-in > .mkt { position: absolute; left: 50%; transform: translateX(-50%); } }   /* C3 一律置中，放不下（≤ 1000px）才接在按鈕後面 */
 @media (max-width: 1000px) { .tb-in > .mkt { position: relative; left: auto; transform: none; } }
+/* 手機：置頂欄要放得進 375px（稽核 2 H1：原本把整頁撐到約 608px，底部分頁列被擠出畫面）。分享鈕只留圖示（按鈕有 aria-label），市場分頁縮內距 */
+@media (max-width: 600px) {
+  .tb-in { gap: 8px; padding: 0 10px; }
+  .tb-in > .mkt a { font-size: 1rem; padding: 0 12px; }
+  #shareBtn .tb-lbl { display: none; }
+  #shareBtn svg { margin-right: 0 !important; }
+}
+@media (max-width: 360px) {   /* 最窄的手機（320px）再收一點 */
+  .tb-in { gap: 6px; padding: 0 8px; }
+  .tb-in > .mkt a { padding: 0 6px; }
+  .tb-l .btn, .tb-r .sysdet > summary { padding: 4px 6px; }
+}
+/* 表格篩到沒有列（稽核 2 H2） */
+tr.empty td { padding: 16px 12px; color: var(--muted); text-align: left; white-space: normal; }
+tr.empty .linkbtn { margin-left: 8px; }
 /* 側欄收合（電腦版）：標題左邊的按鈕切換，收起時側欄寬度變 0 */
 .hdt { display: flex; align-items: center; gap: 10px; }
 .sidetog { flex: none; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--adj-line); border-radius: 6px; background: var(--adj-bg); color: var(--fg); cursor: pointer; }

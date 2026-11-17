@@ -10,7 +10,7 @@
 <link rel="preload" href="data.json" as="fetch" crossorigin>   <!-- 資料檔和頁面同時開始下載（2026-11-17）；下面 fetch 要用預設快取模式，才會接到這個預先下載 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="assets/site.css?v=20261117">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
+<link rel="stylesheet" href="assets/site.css?v=20261117b">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
 
 <script>
 // 主題（跟系統／亮／暗）與全頁字級，存在這個瀏覽器；先套用再畫面，避免閃爍
@@ -26,7 +26,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
 </script>
 <div class="topbar" id="topbar"><div class="tb-in">
   <button type="button" class="sidetog" aria-controls="side" aria-expanded="true" aria-label="收起側欄" title="收起側欄"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
-  <div class="tb-l" id="tbL"><div class="btnpair toprow"><button type="button" class="btn tourbtn" id="tourBtn">新手導覽</button><button type="button" class="btn" id="shareBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>分享目前頁面設定</button></div><p class="hint" id="shareMsg" hidden></p></div>
+  <div class="tb-l" id="tbL"><div class="btnpair toprow"><button type="button" class="btn tourbtn" id="tourBtn">新手導覽</button><button type="button" class="btn" id="shareBtn" aria-label="分享目前頁面設定"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span class="tb-lbl">分享目前頁面設定</span></button></div><p class="hint" id="shareMsg" hidden></p></div>
   <span class="tb-sp"></span>
   <nav class="mkt tb-mkt" aria-label="切換市場（置頂欄）"><a href="./" data-go="台股" class="on" aria-current="page">台股</a><a href="us/" data-go="美股">美股</a></nav>
   <div class="tb-r" id="tbR"><details class="sysdet fold" id="sysDet"><summary>顯示設定<span class="sd-sub">主題、漲跌色、字級</span></summary>
@@ -260,7 +260,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
 
 <script src="assets/core.js?v=20261117"></script>   <!-- 兩頁共用的計算核心（2026-11-17）；改了 core.js 就把 ?v= 換成當天日期 -->
 <script src="assets/chart.js?v=20261117"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
-<script src="assets/table.js?v=20261117"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
+<script src="assets/table.js?v=20261117b"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
 
 <script>
 const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["約等於0050","--c-tie"],["穩但不強","--c-safe"],["弱","--c-weak"]];
@@ -427,6 +427,8 @@ function computeEps() {
 }
 const isHV = c => { const E = computeEps().per[c]; return E && E.av != null && E.av >= +$("hv").value / 100; };
 let FORCE = new Set();     // 搜尋選到、但被篩選擋掉的那一檔：暫時照樣列出，標「篩選外」（照美股版）
+// 清除側欄的篩選（地區、類型全選、波動倍數不限、不排除高波動）：搜尋的「清除篩選」和表格空狀態共用
+function clearSideFilters() { document.querySelectorAll("#f-region input, #f-type input").forEach(i => { i.checked = true; }); $("vmax").value = 3; $("hvx").checked = false; FORCE = new Set(); }
 function passFilters(x, m, raw) {
   if (!raw && FORCE.has(x.c)) return true;
   const rg = REGIONS.filter(r => $("r-" + r).checked), tp = TYPES.filter(t => $("t-" + t).checked);
@@ -481,13 +483,15 @@ function render(light) {   // light：拖時間軸途中只更新檔數和散布
     const d = cnt[c] - cnt0[c], win = c === "穩強" || c === "猛強";
     return `<div class="cnt" style="--c:var(${v})" tabindex="0" data-tip="${RULE(P)[c]}"><div class="ctop"><span class="name">${CAT_NAME(c)}</span><span class="cnum"><span class="num">${cnt[c]}</span><span class="bstat"><span class="delta">${d === 0 ? "同預設" : (d > 0 ? "+" : "−") + Math.abs(d) + " 檔"}</span>${win && cnt[c] ? `<span class="okn term" tabindex="0" data-tip="通過空頭驗證：上市以來經歷過一次大空頭再回到高點，而且上市以來的年化沒有輸 0050 超過 1%。">通過驗證 ${cntOk[c]} 檔</span>` : ""}</span></span></div><span class="plain">${PLAIN[c]}</span></div>`;
   }).join("");
-  const q1 = rows.filter(r => r.x.c !== "0050" && r.m.cagr > B.cagr && r.m.mdd > B.mdd), q1ok = q1.filter(r => r.ok);
+  // 右上角除了接近基準的都是穩強；「通過空頭驗證」只看穩強，和類別卡片一致（稽核 2 H3：原本把接近基準的也算進通過驗證，和卡片對不起來）
+  const q1 = rows.filter(r => r.x.c !== BN && r.m.cagr > B.cagr && r.m.mdd > B.mdd), q1n = q1.filter(r => r.cat === "約等於0050").length, q1ok = q1.filter(r => r.cat === "穩強" && r.ok);
   // 卡片下方：只講卡片（檔數、換類別）；散布圖的說明放在圖裡
   const adj = [...getState().keys()].some(k => ["weeks", "burst", "tie", "vmax", "hv", "epth", "hvx"].includes(k));
   $("pstat").innerHTML = `期間：${st.win === "c" ? "自訂" : st.win + " 年"}（${iso(D.dates[bs.s])} ～ ${iso(D.dates[bs.e])}）・門檻：${adj ? "已調整" : "預設"}　<button type="button" class="linkbtn" data-open-set>改門檻</button>`;
-  { const sw = rows.filter(r => r.cat !== r.def).length; $("countnote").innerHTML = `共 ${rows.length} 檔` + (sw ? `，其中 ${sw} 檔的類別和預設門檻不同` : "") + "。"; }
+  { const sw = rows.filter(r => r.cat !== r.def).length; const hid = Math.max(0, all.length - rows.length);   // 側欄篩選擋掉的（稽核 2 H2：原本只寫「共 0 檔」，上面又寫列入 N 檔，看起來像壞掉）
+    $("countnote").innerHTML = (rows.length ? `共 ${rows.length} 檔` : "目前的篩選下沒有 ETF") + (hid ? `（<span class="side-where">左側欄</span>的篩選擋掉 ${hid} 檔）` : "") + (sw ? `，其中 ${sw} 檔的類別和預設門檻不同` : "") + "。"; syncWhere(); }
   $("countnote").innerHTML += ((D.dates[bs.e] - D.dates[bs.s]) / 365.25 < 0.95 ? `<br><strong>期間不到 1 年</strong>：年化是把這段的報酬換算成一年，漲跌都會被放大，分類參考就好。` : "");
-  $("scnote").innerHTML = `0050（靶心）：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。<br>右上角（報酬更高、跌得更少）${q1.length} 檔${q1.length ? `，通過空頭驗證的${!q1ok.length ? "：沒有" : q1ok.length <= 6 ? "：" + q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : ` <span class="term" tabindex="0" data-tip="${q1ok.map(r => r.x.c).join("、")}">${q1ok.length} 檔</span>`}` : ""}。`;
+  $("scnote").innerHTML = `0050（靶心）：年化 ${pct(B.cagr)}、最大回撤 ${pct(B.mdd)}。<br>右上角（報酬更高、跌得更少）${q1.length} 檔${!q1.length ? "" : !q1n ? "，都是穩強" : q1n === q1.length ? `，都是${CAT_NAME("約等於0050")}` : `（${q1.length - q1n} 檔穩強、${q1n} 檔${CAT_NAME("約等於0050")}）`}${q1.length - q1n ? `${q1n ? "，其中穩強" : "，"}通過空頭驗證的${!q1ok.length ? "：沒有" : q1ok.length <= 6 ? "：" + q1ok.map(r => `${r.x.c} ${r.x.n}`).join("、") : ` <span class="term" tabindex="0" data-tip="${q1ok.map(r => r.x.c).join("、")}">${q1ok.length} 檔</span>`}` : ""}。`;
   drawChart(rows, B);
   if (light === true) return;   // 事件處理直接傳 render 時，參數是 Event，不算 light
   drawTable(rows); syncTopScroll();
@@ -554,7 +558,7 @@ function bindSearch() {
     if (page === "overview" && !ovMap.has(x.c)) { const f = x.p.findIndex(v => v != null); if (D.dates.length - 1 - f < 63) { why.push(`上市不到 3 個月（${iso(D.dates[f])} 上市），期間太短，還不能比`); } else { why.push(`上市日（${iso(D.dates[f])}）晚於這段期間的起點`); fix.push(["從它上市那天起算", () => { st.win = "c"; setSeg("c"); $("dStart").value = iso(D.dates[f]); $("dEnd").value = D.end; }]); } }
     if (page === "bear" && !computeEps().per[x.c].s[epSel]) why.push("這次大跌時還沒上市，換一次大跌看看");
     // 被左側篩選擋掉的：不動使用者的篩選，先把這一檔暫時列出來（標「篩選外」），另給「清除篩選」
-    const clearAll = () => { document.querySelectorAll("#f-region input, #f-type input").forEach(i => { i.checked = true; }); $("vmax").value = 3; $("hvx").checked = false; FORCE = new Set(); };
+    const clearAll = clearSideFilters;
     let o = ovMap.get(x.c);
     FORCE = new Set();
     const outF = !passFilters(x, o && o.m, true);
