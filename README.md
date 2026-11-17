@@ -45,7 +45,7 @@
 
 ## 本機執行
 
-網站是台股 `index.html`、美股 `us/index.html`、兩頁共用的 `assets/`（樣式、計算核心）和各自的 `data.json`，計算都在瀏覽器裡完成。
+網站是台股 `index.html`、美股 `us/index.html`、兩頁共用的 `assets/`（樣式、計算核心、圖表）和各自的 `data.json`，計算都在瀏覽器裡完成。
 
 ```bash
 python -m http.server 8765

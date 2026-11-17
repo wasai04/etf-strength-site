@@ -1572,18 +1572,21 @@ function lvDraw() {
   g += `<g class="lvs" data-s="L">${area(dl, "var(--l1)")}${line(nl, sy, "var(--l1)", 2.2)}</g>`;
   g += `<g class="lvs" data-s="U">${area(du, "var(--muted)")}${line(du, sd, "var(--fg)", 1.2)}${line(nu, sy, "var(--muted)", 2)}</g>`;
   g += `<g id="lvCur" pointer-events="none" hidden><line class="vl" y1="${m.t}" y2="${y2 + H2}" stroke="var(--fg)" stroke-dasharray="3 3"/><circle class="cL" r="4" fill="var(--l1)"/><circle class="cU" r="4" fill="var(--muted)" stroke="var(--fg)"/><circle class="dL" r="3.5" fill="var(--l1)"/><circle class="dU" r="3.5" fill="var(--muted)" stroke="var(--fg)"/></g>`;
-  g += `<text id="lvRead" x="${W - m.r}" y="${m.t + 12}" text-anchor="end" style="font-weight:600"></text>`;
   $("lvNav").innerHTML = g;
-  // 游標：在淨值區比淨值、在回撤區比回撤，離哪條近就突顯哪條（同空頭頁走勢圖）
-  const svg = $("lvNav"), cur = $("lvCur"), rd = $("lvRead");
+  // 游標：在淨值區比淨值、在回撤區比回撤，離哪條近就突顯哪條；懸浮框照空頭頁走勢圖（2026-11-17，原本是圖右上角一行字）
+  const svg = $("lvNav"), cur = $("lvCur");
   const atPt = e => { const p = svgPt(svg, e); return { k: Math.max(0, Math.min(idx.length - 1, Math.round((p.x - m.l) / (W - m.l - m.r) * (idx.length - 1)))), y: p.y }; };
   svg.onpointermove = e => { const { k, y } = atPt(e), inDD = y > y2 - G / 2;
     const dLy = inDD ? sd(dl[k]) : sy(nl[k]), dUy = inDD ? sd(du[k]) : sy(nu[k]), eL = Math.abs(y - dLy), eU = Math.abs(y - dUy), near = Math.min(eL, eU) > 18 ? null : eL <= eU ? "L" : "U";   // 要靠近線才突顯
     svg.querySelectorAll(".lvs").forEach(el => el.classList.toggle("dim", near !== null && el.dataset.s !== near));
     cur.hidden = false; cur.querySelector(".vl").setAttribute("x1", sx(k)); cur.querySelector(".vl").setAttribute("x2", sx(k));
     [["cL", sy(nl[k])], ["cU", sy(nu[k])], ["dL", sd(dl[k])], ["dU", sd(du[k])]].forEach(([c, yy]) => { const el = cur.querySelector("." + c); el.setAttribute("cx", sx(k)); el.setAttribute("cy", yy); });
-    rd.textContent = `${iso(RAW.dates[idx[k]])}　${x.c} ${pct(nl[k] / 100 - 1, 0)}（回撤 ${pct(dl[k], 0)}）　${x.u} ${pct(nu[k] / 100 - 1, 0)}（回撤 ${pct(du[k], 0)}）`; };
-  svg.onpointerleave = () => { svg.querySelectorAll(".lvs").forEach(el => el.classList.remove("dim")); cur.hidden = true; rd.textContent = ""; };
+    // 槓桿那列的顏色看「槓桿 − 原型」：正數＝這時候比原型好（全站上色原則）；數字照舊是各自的累計報酬、回撤
+    const row = (s, c, col, n, d, cls) => `<span class="${near == null ? "" : near === s ? "ep-on" : "ep-dim"}"><span class="swatch" style="--c:${col}"></span> ${c}　<span class="${cls[0]}" style="font-family:var(--f-num)">${pct(n / 100 - 1)}</span>　回撤 <span class="${cls[1]}" style="font-family:var(--f-num)">${pct(d)}</span></span>`;
+    const rL = row("L", `${x.c}（${x.x} 倍）`, "var(--l1)", nl[k], dl[k], [ud((nl[k] - nu[k]) / 100), ud(dl[k] - du[k])]), rU = row("U", `原型 ${x.u}`, "var(--muted)", nu[k], du[k], ["", ""]);
+    tip.innerHTML = `<strong>${iso(RAW.dates[idx[k]])}</strong>（從 ${iso(RAW.dates[idx[0]])} 起）<br>` + (nl[k] >= nu[k] ? [rL, rU] : [rU, rL]).join("<br>");   // 高的在上（同空頭頁）
+    tipAt(e); };
+  svg.onpointerleave = () => { svg.querySelectorAll(".lvs").forEach(el => el.classList.remove("dim")); cur.hidden = true; hideTip(); };
   const tl = nl[nl.length - 1] / 100 - 1, tu = nu[nu.length - 1] / 100 - 1, yrs = (idx.length - 1) / 252;
   const cg = v => (Math.pow(1 + v, 1 / yrs) - 1);
   $("lvHead1").innerHTML = `${iso(RAW.dates[idx[0]])} 起 ${yrs.toFixed(1)} 年：<span style="color:var(--l1)">${x.c}</span> 年化 ${pct(cg(tl))}、最深跌 ${pct(Math.min(...dl), 0)}；原型 ${x.u} 年化 ${pct(cg(tu))}、最深跌 ${pct(Math.min(...du), 0)}。`;

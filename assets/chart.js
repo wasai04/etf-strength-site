@@ -212,6 +212,10 @@ function epHover(e) {
   lines.sort((a, b) => b.v - a.v);
   const bv = (lines.find(l => l.c === BN) || {}).v;   // 顏色看「這檔 − 基準」：正數＝這時候比基準好（全站上色原則）；數字照舊是這檔自己的漲跌
   tip.innerHTML = `<strong>${label}</strong>（相對 ${iso(D.dates[S.ep.pk])} 高點）<br>` + lines.map(l => `<span class="${near == null ? "" : l.on ? "ep-on" : "ep-dim"}"><span class="swatch" style="--c:${l.col}"></span> ${l.c} ${l.n}　<span class="${bv == null || l.c === BN ? "" : ud((l.v - bv) / 100)}" style="font-family:var(--f-num)">${pct(l.v / 100 - 1)}</span></span>`).join("<br>");
+  tipAt(e);
+}
+// 走勢圖的懸浮框：放在游標右邊（放不下就放左邊），上下置中、不超出視窗。內容先寫進 tip.innerHTML（空頭、槓桿頁走勢圖共用）
+function tipAt(e) {
   tip.hidden = false;
   const w = tip.getBoundingClientRect().width, h = tip.getBoundingClientRect().height;
   tip.style.left = (e.clientX + 16 + w > innerWidth - 8 ? e.clientX - w - 16 : e.clientX + 16) + "px";
