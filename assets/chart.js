@@ -1,7 +1,7 @@
 // 兩頁共用的圖表程式（2026-11-17 起，共用元件重構第三階段；DESIGN.md「共用檔」「圖表規格」）。
 // 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons。
 // 兩頁同結構的：總覽散布圖 drawChart／markLabels／toggleMark、空頭走勢圖 drawEpChart／epHover／epFocus／epLeave／epZoom／bindEpZoom。
-//   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、epDrag、tip、hideTip、LINE_COLORS、CAT_NAME、colorOf、
+//   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、epDrag、tip、tipFor、hideTip、LINE_COLORS、CAT_NAME、colorOf、
 //   drawTable、syncRange、crashAlpha、$ 等）和元素（#chart、#epchart…），兩頁名字一致才放這裡；頁面改這些名字前先搜這個檔。
 // 只宣告函式、不在載入時執行，所以可以在頁面主程式之前載入。改了這個檔：把兩頁 <script src> 的 ?v= 換成當天日期。
 
@@ -17,7 +17,7 @@ function clampSc(v, b) {
   return { x0, x1, y0, y1 };
 }
 // 散布圖的縮放與拖曳。o.state()：目前畫面（資料範圍 x0／x1／y0／y1、邊界 m、寬 Wd、高 H），還沒畫就是 null；
-// o.view(v)：設新範圍並重畫（null＝回到預設範圍）；o.late：點本身有說明的圖，拖動超過 3px 才鎖定指標（點一下照常開說明）；
+// o.view(v)：設新範圍並重畫（null＝回到預設範圍；圖空著時 state 是 null，view 只記範圍、不畫）；o.late：點本身有說明的圖，拖動超過 3px 才鎖定指標（點一下照常開說明）；
 // o.click(e)：沒拖動就放開＝點一下。回傳 { zoom(f), reset() } 給縮放按鈕用（f < 1 放大）
 function panZoom(svg, o) {
   let drag = null;
@@ -46,7 +46,7 @@ function panZoom(svg, o) {
   });
   svg.addEventListener("pointerup", e => { if (drag && !drag.moved && o.click) o.click(e); drag = null; });
   svg.addEventListener("pointercancel", () => { drag = null; });
-  return { zoom: f => zoom(f), reset: () => { if (o.state()) o.view(null); } };
+  return { zoom: f => zoom(f), reset: () => o.view(null) };   // 重設不看 state：圖空著時也要清掉縮放範圍
 }
 // 縮放按鈕：data-zc="圖:in／out／reset"，圖的代號對應 h 裡的 { zoom, reset }
 function zoomButtons(h) {
@@ -212,12 +212,27 @@ function epHover(e) {
   $("ephdots").innerHTML = dots;
   lines.sort((a, b) => b.v - a.v);
   const bv = (lines.find(l => l.c === BN) || {}).v;   // 顏色看「這檔 − 基準」：正數＝這時候比基準好（全站上色原則）；數字照舊是這檔自己的漲跌
-  tip.innerHTML = `<strong>${label}</strong>（相對 ${iso(D.dates[S.ep.pk])} 高點）<br>` + lines.map(l => `<span class="${near == null ? "" : l.on ? "ep-on" : "ep-dim"}"><span class="swatch" style="--c:${l.col}"></span> ${l.c} ${l.n}　<span class="${bv == null || l.c === BN ? "" : ud((l.v - bv) / 100)}" style="font-family:var(--f-num)">${pct(l.v / 100 - 1)}</span></span>`).join("<br>");
-  tipAt(e);
+  tip.innerHTML = `<strong>${label}</strong>（相對 ${iso(D.dates[S.ep.pk])} 高點）<br>` + lines.map(l => tipRow(near == null ? "" : l.on ? "ep-on" : "ep-dim", l.col, `${l.c} ${l.n}`, [[bv == null || l.c === BN ? "" : ud((l.v - bv) / 100), pct(l.v / 100 - 1)]])).join("<br>");
+  tipAt(e); hoverOpen(svg, epLeave);
+}
+// 懸浮框的一列：色票＋名稱＋數字格；state 是 ep-on（突顯）／ep-dim（淡化）／空字串；cells 每格 [上色 class, 文字, 前綴]（空頭、槓桿頁走勢圖共用）
+function tipRow(state, col, label, cells) {
+  return `<span class="${state}"><span class="swatch" style="--c:${col}"></span> ${label}` + cells.map(([cls, txt, pre]) => `　${pre || ""}<span class="${cls}" style="font-family:var(--f-num)">${txt}</span>`).join("") + "</span>";
+}
+// 目前開著懸浮框的走勢圖（el）和收起它的方法（leave）。觸控時「點圖外面收起」、捲動時連十字線一起收，都靠這個，新的走勢圖照用 hoverOpen／hoverClose 就好
+let hoverOwner = null;
+function hoverOpen(el, leave) { if (hoverOwner && hoverOwner.el !== el) hoverOwner.leave(); hoverOwner = { el, leave }; }
+function hoverClose(el) { if (hoverOwner && hoverOwner.el === el) hoverOwner = null; }
+const inHover = t => !!(hoverOwner && t && hoverOwner.el.contains(t));   // 點在開著懸浮框的圖上：頁面的 click 監聽不收說明框
+// 頁面載入後呼叫一次：觸控點到別處收起；捲動收起（全站的 scroll 只收說明框，十字線、淡化會留著）
+function bindHoverDismiss() {
+  document.addEventListener("pointerdown", e => { if (e.pointerType === "touch" && hoverOwner && !hoverOwner.el.contains(e.target)) hoverOwner.leave(); });
+  document.addEventListener("scroll", () => { if (hoverOwner) hoverOwner.leave(); }, { passive: true, capture: true });
 }
 // 走勢圖的懸浮框：放在游標右邊（放不下就放左邊），上下置中、不超出視窗。內容先寫進 tip.innerHTML（空頭、槓桿頁走勢圖共用）
 function tipAt(e) {
   clearTimeout(hideTip.t);   // 剛離開某個說明元素時 hideSoon 排了收起，不清掉懸浮框會被收走（稽核 2026-11-17）
+  if (tipFor) { tipFor.removeAttribute("aria-describedby"); tipFor = null; }   // 說明框改給走勢圖用，原本的元素不再指向它
   tip.style.maxWidth = Math.min(300, innerWidth - 24) + "px";   // 和 showTip 同一個上限，寬度才不看先前開過什麼
   tip.hidden = false;
   const w = tip.getBoundingClientRect().width, h = tip.getBoundingClientRect().height;
@@ -229,7 +244,7 @@ function epFocus(k) {
   document.querySelectorAll("#epchart .epl, #eplegend [data-s]").forEach(el => { el.classList.toggle("on", on(el)); el.classList.toggle("dim", dim(el)); });
   const f = k != null && document.querySelector(`#epchart .epl[data-s="${k}"]`); if (f) $("epchart").insertBefore(f, $("ephover"));   // 移到其他線上面
 }
-function epLeave() { const g = $("ephover"); if (g) g.setAttribute("visibility", "hidden"); epFocus(null); hideTip(); }
+function epLeave() { const g = $("ephover"); if (g) g.setAttribute("visibility", "hidden"); epFocus(null); hideTip(); hoverClose($("epchart")); }
 function epZoom(f, ci) {
   const S = epState; if (!S) return;
   const last = D.dates.length - 1; if (ci == null) ci = (S.i0 + S.i1) / 2;

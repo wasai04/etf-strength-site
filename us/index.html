@@ -477,7 +477,7 @@ document.addEventListener("focusout", hideTip);
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-tip]"), ctl = e.target.closest("button, a, input, select, summary");
   if (t && (t.matches(".term") || !ctl || !t.contains(ctl))) { if (t.matches(".term") && !t.closest("label")) e.preventDefault(); showTip(t, t.dataset.tip); }
-  else if (!e.target.closest("#tip, [data-tip]")) hideTip();
+  else if (!e.target.closest("#tip, [data-tip]") && !inHover(e.target)) hideTip();   // 點在開著懸浮框的走勢圖上不收（觸控點一下後瀏覽器會補一個 click）
 });
 document.addEventListener("scroll", hideTip, { passive: true, capture: true });   // capture：手機設定抽屜裡捲動也會收起
 
@@ -762,11 +762,11 @@ function renderEps() {
 function bindZoom() {
   zoomButtons({
     // 總覽散布圖：沒拖動就放開＝點一下，點在某個點上就切換標註
-    sc: panZoom($("chart"), { state: () => scState, view: v => { scView = v; drawChart(scState.rows, scState.B); },
+    sc: panZoom($("chart"), { state: () => scState, view: v => { scView = v; if (scState) drawChart(scState.rows, scState.B); },
       click: e => { const t = document.elementFromPoint(e.clientX, e.clientY), c = t && t.closest && t.closest("#chart circle[data-c]"); if (c) toggleMark(c.dataset.c); } }),
     ep: bindEpZoom(),
     // 槓桿頁散布圖（2026-11-17）：點一下要能看點的說明，所以真的拖動了才鎖定指標
-    lv: panZoom($("lvSc"), { state: () => lvState, view: v => { lvView = v; lvScatter(...lvState.args); }, late: true }),
+    lv: panZoom($("lvSc"), { state: () => lvState, view: v => { lvView = v; if (lvState) lvScatter(...lvState.args); }, late: true }),
   });
 }
 
@@ -1368,8 +1368,6 @@ function lvRender() {
   if (!lvReady) {
     lvPicker();
     $("lvSpan").querySelectorAll("button").forEach(b => b.onclick = () => { lvSpanY = +b.dataset.y; $("lvSpan").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); lvDraw(); });
-    // 槓桿走勢圖用觸控看懸浮框時，點圖外面才收起（同空頭走勢圖）；只掛一次
-    document.addEventListener("pointerdown", e => { const s = $("lvNav"), c = $("lvCur"); if (e.pointerType === "touch" && c && !c.hidden && !e.target.closest("#lvNav")) s.onpointerleave(); });
     lvReady = true;
   }
   lvDraw();
@@ -1418,20 +1416,20 @@ function lvDraw() {
   $("lvNav").innerHTML = g;
   // 游標：在淨值區比淨值、在回撤區比回撤，離哪條近就突顯哪條；懸浮框照空頭頁走勢圖（2026-11-17，原本是圖右上角一行字）
   const svg = $("lvNav"), cur = $("lvCur");
-  const atPt = e => { const p = svgPt(svg, e); return { k: Math.max(0, Math.min(idx.length - 1, Math.round((p.x - m.l) / (W - m.l - m.r) * (idx.length - 1)))), y: p.y }; };
-  svg.onpointermove = e => { const px = svgPt(svg, e).x; if (px < m.l || px > W - m.r) { svg.onpointerleave(); return; }   // 繪圖區外（刻度區）收起，同空頭走勢圖
-    const { k, y } = atPt(e), inDD = y > y2 - G / 2;
+  const lvLeave = () => { svg.querySelectorAll(".lvs").forEach(el => el.classList.remove("dim")); cur.hidden = true; hideTip(); hoverClose(svg); };
+  svg.onpointermove = e => { const p = svgPt(svg, e); if (p.x < m.l || p.x > W - m.r) { lvLeave(); return; }   // 繪圖區外（刻度區）收起，同空頭走勢圖
+    const k = Math.max(0, Math.min(idx.length - 1, Math.round((p.x - m.l) / (W - m.l - m.r) * (idx.length - 1)))), y = p.y, inDD = y > y2 - G / 2;
     const dLy = inDD ? sd(dl[k]) : sy(nl[k]), dUy = inDD ? sd(du[k]) : sy(nu[k]), eL = Math.abs(y - dLy), eU = Math.abs(y - dUy), near = Math.min(eL, eU) > 18 ? null : eL <= eU ? "L" : "U";   // 要靠近線才突顯
     svg.querySelectorAll(".lvs").forEach(el => el.classList.toggle("dim", near !== null && el.dataset.s !== near));
     cur.hidden = false; cur.querySelector(".vl").setAttribute("x1", sx(k)); cur.querySelector(".vl").setAttribute("x2", sx(k));
     [["cL", sy(nl[k])], ["cU", sy(nu[k])], ["dL", sd(dl[k])], ["dU", sd(du[k])]].forEach(([c, yy]) => { const el = cur.querySelector("." + c); el.setAttribute("cx", sx(k)); el.setAttribute("cy", yy); });
     // 槓桿那列的顏色看「槓桿 − 原型」：正數＝這時候比原型好（全站上色原則）；數字照舊是各自的累計報酬、回撤
-    const row = (s, c, col, n, d, cls) => `<span class="${near == null ? "" : near === s ? "ep-on" : "ep-dim"}"><span class="swatch" style="--c:${col}"></span> ${c}　<span class="${cls[0]}" style="font-family:var(--f-num)">${pct(n / 100 - 1)}</span>　回撤 <span class="${cls[1]}" style="font-family:var(--f-num)">${pct(d)}</span></span>`;
+    const row = (s, c, col, n, d, cls) => tipRow(near == null ? "" : near === s ? "ep-on" : "ep-dim", col, c, [[cls[0], pct(n / 100 - 1)], [cls[1], pct(d), "回撤 "]]);
     const rL = row("L", `${x.c}（${x.x} 倍）`, "var(--l1)", nl[k], dl[k], [ud((nl[k] - nu[k]) / 100), ud(dl[k] - du[k])]), rU = row("U", `原型 ${x.u}`, "var(--muted)", nu[k], du[k], ["", ""]);
     tip.innerHTML = `<strong>${iso(RAW.dates[idx[k]])}</strong>（從 ${iso(RAW.dates[idx[0]])} 起）<br>` + (nl[k] >= nu[k] ? [rL, rU] : [rU, rL]).join("<br>");   // 高的在上（同空頭頁）
-    tipAt(e); };
-  svg.onpointerleave = e => { if (e && e.pointerType === "touch") return; svg.querySelectorAll(".lvs").forEach(el => el.classList.remove("dim")); cur.hidden = true; hideTip(); };
-  svg.onpointerdown = e => { if (e.pointerType === "touch") svg.onpointermove(e); };   // 觸控點一下就顯示（點圖外面收起：lvRender 掛的 document 監聽）
+    tipAt(e); hoverOpen(svg, lvLeave); };
+  svg.onpointerleave = e => { if (e.pointerType !== "touch") lvLeave(); };   // 觸控：手指抬起不收，點圖外面或捲動才收（bindHoverDismiss）
+  svg.onpointerdown = e => { if (e.pointerType === "touch") svg.onpointermove(e); };   // 觸控點一下就顯示
   const tl = nl[nl.length - 1] / 100 - 1, tu = nu[nu.length - 1] / 100 - 1, yrs = (idx.length - 1) / 252;
   const cg = v => (Math.pow(1 + v, 1 / yrs) - 1);
   $("lvHead1").innerHTML = `${iso(RAW.dates[idx[0]])} 起 ${yrs.toFixed(1)} 年：<span style="color:var(--l1)">${x.c}</span> 年化 ${pct(cg(tl))}、最深跌 ${pct(Math.min(...dl), 0)}；原型 ${x.u} 年化 ${pct(cg(tu))}、最深跌 ${pct(Math.min(...du), 0)}。`;
@@ -1519,7 +1517,7 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   $("epchart").addEventListener("pointermove", epHover);
   $("epchart").addEventListener("pointerleave", e => { if (e.pointerType !== "touch") epLeave(); });
   $("epchart").addEventListener("pointerdown", e => { if (e.pointerType === "touch") epHover(e); });
-  document.addEventListener("pointerdown", e => { if (e.pointerType === "touch" && !e.target.closest("#epchart, #lvNav")) epLeave(); });   // 槓桿走勢圖也用同一個懸浮框，點它不收
+  bindHoverDismiss();   // 觸控點圖外面、捲動時收起走勢圖懸浮框（空頭、槓桿頁共用；assets/chart.js）
   bindZoom();
   ["epFrom", "epTo"].forEach(id => $(id).addEventListener("change", () => { if ($("epTo").value > $("epFrom").value) { epView = { from: $("epFrom").value, to: $("epTo").value }; renderEps(); } }));
   $("epReset").onclick = () => { epView = null; renderEps(); };

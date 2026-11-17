@@ -349,7 +349,7 @@ document.addEventListener("focusout", hideTip);
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-tip]"), ctl = e.target.closest("button, a, input, select, summary");
   if (t && (t.matches(".term") || !ctl || !t.contains(ctl))) { if (t.matches(".term") && !t.closest("label")) e.preventDefault(); showTip(t, t.dataset.tip); }
-  else if (!e.target.closest("#tip, [data-tip]")) hideTip();
+  else if (!e.target.closest("#tip, [data-tip]") && !inHover(e.target)) hideTip();   // 點在開著懸浮框的走勢圖上不收（觸控點一下後瀏覽器會補一個 click）
 });
 document.addEventListener("scroll", hideTip, { passive: true, capture: true });   // capture：手機設定抽屜裡捲動也會收起
 
@@ -602,7 +602,7 @@ function renderEps() {
 function bindZoom() {
   zoomButtons({
     // 總覽散布圖：沒拖動就放開＝點一下，點在某個點上就切換標註
-    sc: panZoom($("chart"), { state: () => scState, view: v => { scView = v; drawChart(scState.rows, scState.B); },
+    sc: panZoom($("chart"), { state: () => scState, view: v => { scView = v; if (scState) drawChart(scState.rows, scState.B); },
       click: e => { const t = document.elementFromPoint(e.clientX, e.clientY), c = t && t.closest && t.closest("#chart circle[data-c]"); if (c) toggleMark(c.dataset.c); } }),
     ep: bindEpZoom(),
   });
@@ -860,7 +860,7 @@ function applyState(q) {
   const ev = (q.get("ev") || "").split("_"); if (d8(ev[0]) && d8(ev[1]) && ev[1] > ev[0]) epView = { from: ev[0], to: ev[1] };
   render();
   // mk=@q1：標出散布圖右上角（報酬更高、跌得更少）的那幾檔，按下去當下算，資料更新也對
-  if (mk.includes("@q1") && scState) { scState.rows.filter(r => r.x.c !== "0050" && r.m.cagr > scState.B.cagr && r.m.mdd > scState.B.mdd).forEach(r => marks.add(r.x.c)); render(); }
+  if (mk.includes("@q1") && scState) { scState.rows.filter(r => r.x.c !== BN && r.m.cagr > scState.B.cagr && r.m.mdd > scState.B.mdd).forEach(r => marks.add(r.x.c)); render(); }
 }
 // 分享：把目前畫面做成連結、複製起來；網址列不跟著變
 function shareLink() {
@@ -951,7 +951,7 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   $("epchart").addEventListener("pointermove", epHover);
   $("epchart").addEventListener("pointerleave", e => { if (e.pointerType !== "touch") epLeave(); });
   $("epchart").addEventListener("pointerdown", e => { if (e.pointerType === "touch") epHover(e); });
-  document.addEventListener("pointerdown", e => { if (e.pointerType === "touch" && !e.target.closest("#epchart")) epLeave(); });
+  bindHoverDismiss();   // 觸控點圖外面、捲動時收起走勢圖懸浮框（assets/chart.js）
   bindZoom();
   ["epFrom", "epTo"].forEach(id => $(id).addEventListener("change", () => { if ($("epTo").value > $("epFrom").value) { epView = { from: $("epFrom").value, to: $("epTo").value }; renderEps(); } }));
   $("epReset").onclick = () => { epView = null; renderEps(); };
