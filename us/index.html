@@ -1420,12 +1420,12 @@ function lvDraw() {
   $("lvNav").innerHTML = g;
   // 游標：在淨值區比淨值、在回撤區比回撤，離哪條近就突顯哪條；懸浮框照空頭頁走勢圖（2026-11-17，原本是圖右上角一行字）
   const svg = $("lvNav"), cur = $("lvCur");
-  const lvLeave = () => { svg.querySelectorAll(".lvs").forEach(el => el.classList.remove("dim")); cur.hidden = true; hideTip(); hoverClose(svg); };
+  const lvLeave = () => { svg.querySelectorAll(".lvs").forEach(el => el.classList.remove("dim")); cur.setAttribute("hidden", ""); hideTip(); hoverClose(svg); };   // SVG 元素沒有 .hidden 屬性，要直接增刪 hidden（2026-11-17 JC 回報豎線一直沒出現）
   svg.onpointermove = e => { const p = svgPt(svg, e); if (p.x < m.l || p.x > W - m.r) { lvLeave(); return; }   // 繪圖區外（刻度區）收起，同空頭走勢圖
     const k = Math.max(0, Math.min(idx.length - 1, Math.round((p.x - m.l) / (W - m.l - m.r) * (idx.length - 1)))), y = p.y, inDD = y > y2 - G / 2;
     const dLy = inDD ? sd(dl[k]) : sy(nl[k]), dUy = inDD ? sd(du[k]) : sy(nu[k]), eL = Math.abs(y - dLy), eU = Math.abs(y - dUy), near = Math.min(eL, eU) > 18 ? null : eL <= eU ? "L" : "U";   // 要靠近線才突顯
     svg.querySelectorAll(".lvs").forEach(el => el.classList.toggle("dim", near !== null && el.dataset.s !== near));
-    cur.hidden = false; cur.querySelector(".vl").setAttribute("x1", sx(k)); cur.querySelector(".vl").setAttribute("x2", sx(k));
+    cur.removeAttribute("hidden"); cur.querySelector(".vl").setAttribute("x1", sx(k)); cur.querySelector(".vl").setAttribute("x2", sx(k));
     [["cL", sy(nl[k])], ["cU", sy(nu[k])], ["dL", sd(dl[k])], ["dU", sd(du[k])]].forEach(([c, yy]) => { const el = cur.querySelector("." + c); el.setAttribute("cx", sx(k)); el.setAttribute("cy", yy); });
     // 槓桿那列的顏色看「槓桿 − 原型」：正數＝這時候比原型好（全站上色原則）；數字照舊是各自的累計報酬、回撤
     const row = (s, c, col, n, d, cls) => tipRow(near == null ? "" : near === s ? "ep-on" : "ep-dim", col, c, [[cls[0], pct(n / 100 - 1)], [cls[1], pct(d), "回撤 "]]);
