@@ -261,6 +261,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
 <script src="assets/core.js?v=20261120"></script>   <!-- 兩頁共用的計算核心（2026-11-17）；改了 core.js 就把 ?v= 換成當天日期 -->
 <script src="assets/chart.js?v=20261120i"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
 <script src="assets/table.js?v=20261120"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
+<script src="assets/ui.js?v=20261120"></script>   <!-- 兩頁共用的介面元件：說明框、導覽、分享、側欄、時間軸、情境列（2026-11-20）；改了 ui.js 就把 ?v= 換成當天日期 -->
 
 <script>
 const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["約等於0050","--c-tie"],["穩但不強","--c-safe"],["弱","--c-weak"]];
@@ -329,32 +330,7 @@ let visible = defaultCols();
 const COLS_KEY = "etf-cols-v5", EPCOLS_KEY = "etf-epcols-v2";   // 欄位顯示的儲存 key：加欄位要升版號，讀寫都用這兩個常數
 try { const v = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (Array.isArray(v)) visible = new Set([...v, ...LOCKED]); } catch (e) {}
 
-// ── 說明框（游標、鍵盤焦點、點一下都會開）
-const tip = $("tip");
-let tipFor = null;   // 目前提示屬於哪個元素：它帶 aria-describedby，螢幕閱讀器才念得到提示
-function showTip(el, text) {
-  clearTimeout(hideTip.t);
-  if (tipFor && tipFor !== el) tipFor.removeAttribute("aria-describedby");
-  tipFor = el; el.setAttribute("aria-describedby", "tip");
-  tip.textContent = text; tip.hidden = false;
-  const r = el.getBoundingClientRect(), w = Math.min(300, innerWidth - 24);
-  tip.style.maxWidth = w + "px";
-  tip.style.left = Math.min(Math.max(8, r.left), innerWidth - w - 12) + "px"; tip.style.top = (r.bottom + 8) + "px";
-  const th = tip.getBoundingClientRect().height; if (r.bottom + 8 + th > innerHeight - 8) tip.style.top = Math.max(8, r.top - th - 8) + "px";
-}
-function hideTip() { clearTimeout(hideTip.t); tip.hidden = true; if (tipFor) { tipFor.removeAttribute("aria-describedby"); tipFor = null; } }
-const hideSoon = () => { clearTimeout(hideTip.t); hideTip.t = setTimeout(hideTip, 150); };   // 留 0.15 秒，游標可以移到提示框上
-document.addEventListener("mouseover", e => { const t = e.target.closest("[data-tip]"); if (t) showTip(t, t.dataset.tip); else if (e.target.closest("#tip")) clearTimeout(hideTip.t); });
-document.addEventListener("mouseout", e => { if (e.target.closest("[data-tip], #tip")) hideSoon(); });
-document.addEventListener("focusin", e => { const t = e.target.closest("[data-tip]"); if (t) showTip(t, t.dataset.tip); });
-document.addEventListener("focusout", hideTip);
-// 點一下：.term 和卡片、格子這類本身不是按鈕的都會開；按鈕、連結、輸入框照原本的動作，不攔
-document.addEventListener("click", e => {
-  const t = e.target.closest("[data-tip]"), ctl = e.target.closest("button, a, input, select, summary");
-  if (t && (t.matches(".term") || !ctl || !t.contains(ctl))) { if (t.matches(".term") && !t.closest("label")) e.preventDefault(); showTip(t, t.dataset.tip); }
-  else if (!e.target.closest("#tip, [data-tip]") && !inHover(e.target)) hideTip();   // 點在開著懸浮框的走勢圖上不收（觸控點一下後瀏覽器會補一個 click）
-});
-document.addEventListener("scroll", hideTip, { passive: true, capture: true });   // capture：手機設定抽屜裡捲動也會收起
+bindTips();   // 說明框：游標、鍵盤焦點、點一下都會開（assets/ui.js）
 
 // ── 分頁
 function showPage(p, push) {
@@ -448,9 +424,6 @@ function passFilters(x, m, raw) {
   return true;
 }
 
-// 拉桿的朗讀文字（aria-valuetext）：念出單位，不只念數字；rticks 登記格式，render 每次更新
-const RT = {};
-const rangeText = () => Object.entries(RT).forEach(([id, f]) => { const v = +$(id).value; $(id).setAttribute("aria-valuetext", id === "vmax" && v < 3 ? v + " 倍" : String(f(v))); });
 function render(light) {   // light：拖時間軸途中只更新檔數和散布圖，放開才重建表格
   rangeText();
   const P = params();
@@ -680,109 +653,7 @@ const TOUR = [
   { sel: "#sysDet > .cbox", open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。\n「分享目前頁面設定」會複製連結，打開就是現在這個畫面。\n電腦版可以按左上角的按鈕收起側欄。" },
   { page: "about", sel: "#page-about .panel", t: "還有疑問就看「說明」", x: "名詞、類別的規則、使用前要知道的限制都在說明頁。\n導覽到這裡結束。" }
 ];
-// 進站提醒：localStorage etf-intro-off＝勾了不再顯示；sessionStorage etf-intro-seen＝這次瀏覽已經看過
-function showIntro() {
-  const dlg = $("intro"), get = (st, k) => { try { return window[st + "Storage"].getItem(k); } catch (e) { return null; } };
-  if (get("local", "etf-intro-off") || get("session", "etf-intro-seen") || !dlg.showModal) return;
-  const close = tour => { try { sessionStorage.setItem("etf-intro-seen", "1"); if ($("introNo").checked) localStorage.setItem("etf-intro-off", "1"); } catch (e) {}
-    dlg.close(); if (tour) $("tourBtn").click(); };
-  $("introSkip").onclick = () => close(false); $("introTour").onclick = () => close(true);
-  dlg.addEventListener("cancel", () => close(false));
-  dlg.showModal();
-}
-// 側欄收合：sideOff() 讀狀態，sideOff(true/false) 設定（不寫 localStorage；按鈕才寫）
-function sideOff(v) {
-  const sh = document.querySelector(".shell");
-  if (v === undefined) return sh.classList.contains("sideoff");
-  sh.classList.toggle("sideoff", v);
-  document.querySelectorAll(".sidetog").forEach(b => { b.setAttribute("aria-expanded", !v); b.title = v ? "展開側欄" : "收起側欄"; b.setAttribute("aria-label", b.title); });
-}
-document.querySelectorAll(".sidetog").forEach(b => b.onclick = () => { const v = !sideOff(); sideOff(v); try { localStorage.setItem("etf-side-off", v ? "1" : "0"); } catch (e) {} });
-sideOff(sideOff());
-function bindTour() {
-  const hole = $("tourHole"), card = $("tourCard"), block = $("tourBlock");
-  const bg = on => [...document.body.children].forEach(e => { if (![hole, card, block].includes(e) && e.tagName !== "SCRIPT") e.inert = on; });   // 導覽時背景加 inert：Tab、朗讀都進不去（挖洞那塊也只是看）
-  let k = 0, from = null, sysWas = false, sideWas = false;   // sysWas：導覽前顯示設定有沒有打開，結束時還原
-  const place = () => {
-    const S = TOUR[k], el = S.sel && document.querySelector(S.sel), pad = 6;
-    if (!el) { hole.style.cssText = `top:50%;left:50%;width:0;height:0`; card.style.left = (innerWidth - card.offsetWidth) / 2 + "px"; card.style.top = (innerHeight - card.offsetHeight) / 2 + "px"; return; }
-    const r = el.getBoundingClientRect(), top = Math.max(4, r.top - pad), bot = Math.min(innerHeight - 4, r.bottom + pad);
-    hole.style.cssText = `top:${top}px;left:${r.left - pad}px;width:${r.width + pad * 2}px;height:${Math.max(0, bot - top)}px`;
-    const ch = card.offsetHeight, cw = card.offsetWidth, below = innerHeight - bot, right = innerWidth - r.right;
-    let x, y;
-    if (below >= ch + 12) { y = bot + 10; x = r.left; } else if (r.top >= ch + 12) { y = top - ch - 10; x = r.left; }
-    else if (right >= cw + 16) { x = r.right + pad + 10; y = Math.max(8, Math.min(r.top, innerHeight - ch - 8)); }
-    else { x = (innerWidth - cw) / 2; y = innerHeight - ch - 12; }   // 都放不下（手機或區塊很大）：貼在畫面下方
-    card.style.left = Math.max(8, Math.min(x, innerWidth - cw - 8)) + "px"; card.style.top = Math.max(8, y) + "px";
-  };
-  const show = i => {
-    k = i; const S = TOUR[k];
-    if (S.page && document.body.dataset.page !== S.page) showPage(S.page, true);
-    document.body.classList.toggle("drawer", !!S.side && mq.matches);
-    $("tourN").textContent = `${k + 1}／${TOUR.length}`; $("tourT").textContent = S.t; $("tourX").innerHTML = S.x.replace(/\n/g, "<br>");
-    $("tourPrev").disabled = k === 0; $("tourNext").textContent = k === TOUR.length - 1 ? "完成" : "下一步";
-    if (S.open) document.querySelector(S.open).open = true;
-    const el = S.sel && document.querySelector(S.sel);
-    if (el) el.scrollIntoView({ block: el.offsetHeight > innerHeight * 0.6 ? "start" : "center" });
-    requestAnimationFrame(() => requestAnimationFrame(place));
-    $("tourNext").focus();
-  };
-  const end = () => { bg(false); $("sysDet").open = sysWas; sideOff(sideWas); [hole, card, block].forEach(e => { e.hidden = true; }); document.body.classList.remove("drawer"); if (from) showPage(from, true); scrollTo({ top: 0 }); $("tourBtn").focus(); };
-  document.addEventListener("click", e => { const d = $("sysDet"); if (d.open && !d.contains(e.target) && $("tourCard").hidden) d.open = false; });   // 置頂欄的顯示設定：點外面就收起
-  $("tourBtn").onclick = () => { from = document.body.dataset.page; sysWas = $("sysDet").open; sideWas = sideOff(); sideOff(false); hideTip(); [hole, card, block].forEach(e => { e.hidden = false; }); bg(true); show(0); };
-  $("tourNext").onclick = () => k === TOUR.length - 1 ? end() : show(k + 1);
-  $("tourPrev").onclick = () => k > 0 && show(k - 1);
-  $("tourEnd").onclick = end;
-  document.addEventListener("keydown", e => {
-    if (card.hidden) return;
-    if (e.key === "Tab") { const f = [...card.querySelectorAll("button:not([disabled])")], i = f.indexOf(document.activeElement); e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus(); return; }
-    if (e.key === "Escape") { e.stopPropagation(); end(); } else if (e.key === "ArrowRight") $("tourNext").click(); else if (e.key === "ArrowLeft") $("tourPrev").click();
-  }, true);
-  addEventListener("resize", () => { if (!card.hidden) place(); });
-  addEventListener("scroll", () => { if (!card.hidden) place(); }, { passive: true });
-}
-// 時間軸（總覽的回看期間、空頭的走勢圖區間共用）：兩個重疊的拉桿共用一條軌道，把手位置＝交易日序號
-const pPos = i => i / (D.dates.length - 1) * 100;
-// 中間的色段（fillId）可以整段拖：長度不變、整段往前或往後移，用來看「固定 1 年」這種窗口一路滑過去的變化
-function buildRange(sId, eId, ticksId, gap, onMove, fillId) {
-  const N = D.dates.length - 1, y0 = +iso(D.dates[0]).slice(0, 4), y1 = +iso(D.dates[N]).slice(0, 4);
-  [sId, eId].forEach(id => { $(id).min = 0; $(id).max = N; });
-  let t = ""; for (let y = y0 + 1; y <= y1; y++) if (y % 2 === 0) t += `<span style="left:${pPos(lastIdxLE(D.dates, toDay(y + "-01-01")))}%">${y}</span>`;
-  $(ticksId).innerHTML = t;
-  let raf = 0;
-  const frame = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; onMove.draw(); }); };
-  [sId, eId].forEach(id => $(id).addEventListener("input", () => {
-    let s = +$(sId).value, e = +$(eId).value;
-    if (e - s < gap) { if (id === sId) s = e - gap; else e = s + gap; if (s < 0) { s = 0; e = gap; } if (e > N) { e = N; s = N - gap; } $(sId).value = s; $(eId).value = e; }
-    onMove(s, e); frame();
-  }));
-  const fill = $(fillId); let drag = null;
-  fill.addEventListener("pointerdown", e => { e.preventDefault(); drag = { x: e.clientX, s: +$(sId).value, e: +$(eId).value, w: fill.parentElement.getBoundingClientRect().width }; try { fill.setPointerCapture(e.pointerId); } catch (err) {} });
-  fill.addEventListener("pointermove", ev => {
-    if (!drag) return;
-    const di = Math.max(-drag.s, Math.min(N - drag.e, Math.round((ev.clientX - drag.x) / drag.w * N)));
-    onMove(drag.s + di, drag.e + di); frame();
-  });
-  fill.addEventListener("pointerup", () => { if (drag && onMove.end) onMove.end(); drag = null; });
-  fill.addEventListener("pointercancel", () => { drag = null; });
-  // 往前／往後一格（約 1 個月＝21 個交易日），長度不變
-  onMove.step = di => { let s = +$(sId).value, e = +$(eId).value; di = Math.max(-s, Math.min(N - e, di)); if (!di) return; onMove(s + di, e + di); onMove.draw(); if (onMove.end) onMove.end(); };
-}
-function syncRange(sId, eId, fillId, s, e) {
-  $(sId).value = s; $(eId).value = e;
-  $(sId).setAttribute("aria-valuetext", iso(D.dates[s])); $(eId).setAttribute("aria-valuetext", iso(D.dates[e]));   // 朗讀念日期，不念交易日序號
-  $(sId).style.zIndex = s > (D.dates.length - 1) / 2 ? 4 : "";   // 兩個把手疊在右半邊時，起日要在上面才拉得回來
-  $(fillId).style.left = pPos(s) + "%"; $(fillId).style.width = (pPos(e) - pPos(s)) + "%";
-}
-// 跌幅越深顏色越深：跌 15% 用最淺，資料裡最深的那次用最深（台股 0050 最深約 34%、美股 SPY 約 55%）
-// 2026-11-20 稽核 3 第 8 條：跌幅剛好等於門檻（th）最淺、這一區基準最深的那次最深（原本固定從 15% 起算、上限至少 30%，債券區兩次大跌一樣淡）
-let crashMax = null;
-const crashAlpha = (depth, lo, hi, th) => { if (crashMax == null) crashMax = Math.max(0.01, ...episodes(D, 0.05).map(e => Math.abs(e.depth))); return lo + (hi - lo) * Math.min(1, Math.max(0, (Math.abs(depth) - th) / (crashMax - th || 1))); };
-// 軌道上的色塊：0050 從高點跌到低點；sel 以外的變淡（sel 沒給就全部一樣深）
-function crashMarks(trackId, eps, sel, label, th) {   // th：這些大跌用的門檻（色塊深淺從它算起）
-  $(trackId).querySelectorAll(".pcrash").forEach(el => el.remove());
-  $(trackId).insertAdjacentHTML("beforeend", eps.map((ep, i) => `<div class="pcrash${sel != null && i !== sel ? " dim" : ""}" style="opacity:${crashAlpha(ep.depth, .4, 1, th) * (sel != null && i !== sel ? .55 : 1)};left:${pPos(ep.pk)}%;width:${pPos(ep.tr) - pPos(ep.pk)}%"></div>`).join(""));
-}
+bindSide();   // 側欄收合按鈕（assets/ui.js）
 // 回看期間：按 1／3／5 年或改日期，把手跟著動；拖把手就切到自訂
 function buildPeriod() {
   const move = (s, e) => { $("dStart").value = iso(D.dates[s]); $("dEnd").value = iso(D.dates[e]); st.win = "c"; setSeg("c"); syncPeriod(); };
@@ -792,15 +663,7 @@ function buildPeriod() {
   crashMarks("ptrack", crashEps(), null, "0050 大空頭", CRASH());
   document.querySelectorAll("[data-pstep]").forEach(b => b.onclick = () => move.step(+b.dataset.pstep));
 }
-function syncPeriod() { const { s, e } = currentWindow(); syncRange("pS", "pE", "pfill", s, e); }
-// 空頭走勢圖的區間：拖把手＝改 epView（和起迄日期、縮放、拖曳是同一個狀態）
-function buildEpPeriod() {
-  const move = (s, e) => { epView = { from: iso(D.dates[s]), to: iso(D.dates[e]) }; syncRange("eS", "eE", "epfill", s, e); };
-  move.draw = () => { if (epState) drawEpChart(epState.ep); };
-  move.end = () => {};
-  buildRange("eS", "eE", "epticks", 10, move, "epfill");
-  document.querySelectorAll("[data-estep]").forEach(b => b.onclick = () => move.step(+b.dataset.estep));
-}
+
 // 說明頁、觀察頁裡會隨資料變的字：載入後從資料算，不寫死
 function fillLive() {
   document.querySelectorAll(".crashTh").forEach(el => { el.textContent = f1(CRASH()) + "%"; });
@@ -886,49 +749,7 @@ function applyState(q) {
   // mk=@q1：標出散布圖右上角（報酬更高、跌得更少）的那幾檔，按下去當下算，資料更新也對
   if (mk.includes("@q1") && scState) { scState.rows.filter(r => r.x.c !== BN && r.m.cagr > scState.B.cagr && r.m.mdd > scState.B.mdd).forEach(r => marks.add(r.x.c)); render(); }
 }
-// 分享：把目前畫面做成連結、複製起來；網址列不跟著變
-function shareLink() {
-  const q = getState().toString().replace(/%2C/g, ",");
-  return location.origin + location.pathname + "#" + (document.body.dataset.page || "overview") + (q ? "?" + q : "");
-}
-// 開別人分享的連結：套用設定，再把網址列清回只有分頁
-function openShared() {
-  const [p, qs] = location.hash.slice(1).split("?");
-  applyState(new URLSearchParams(qs || "")); showPage(p, false);
-  try { history.replaceState(null, "", "#" + (PAGES.includes(p) ? p : "overview")); } catch (e) {}
-}
-function bindShare() {
-  $("shareBtn").onclick = async () => {
-    const url = shareLink(), msg = $("shareMsg");
-    msg.hidden = false;
-    try { await navigator.clipboard.writeText(url); msg.textContent = "已複製連結。貼給別人，打開就是同樣的期間、門檻、篩選和標註（主題、漲跌顏色、文字大小照對方自己的）。"; }
-    catch (e) { msg.innerHTML = `複製不了，請手動複製：<input type="text" readonly value="${url.replace(/"/g, "&quot;")}" style="width:100%" onfocus="this.select()">`; msg.querySelector("input").focus(); }
-    clearTimeout(msg._t); msg._t = setTimeout(() => { msg.hidden = true; }, 8000);
-  };
-  // 觀察頁：套用那一則的設定，切到對應分頁並捲到圖或表
-  document.addEventListener("click", e => {
-    const b = e.target.closest("[data-ins]"); if (!b) return;
-    const inBar = !!b.closest("#insBar"), card = b.closest(".ins");
-    if (card) insPrev = getState();   // 從觀察卡進來：記住原本的設定，情境列的「還原設定」用（稽核 2 M1）
-    const q = new URLSearchParams(b.dataset.ins); applyState(q);
-    showPage(q.get("p") || "overview", true);
-    if (card) insBar(card, b.dataset.ins); else if (inBar) markBar(b.dataset.ins); else hideBar();
-    if (inBar && (q.get("p") || "overview") === document.body.dataset.page) return;   // 情境列裡切換：留在原位，方便對照
-    const to = b.dataset.to && $(b.dataset.to); if (to) to.scrollIntoView({ block: "start" }); else scrollTo({ top: 0 });
-  });
-}
-// 情境列：把那張卡的標題和按鈕複製過來，點了哪個就標亮
-function insBar(card, cur) {
-  const bar = $("insBar"), btns = [...card.querySelectorAll("[data-ins]")];
-  bar.innerHTML = `<span class="ib-t"><small>觀察</small>${card.querySelector("h3").textContent}</span>`
-    + (btns.length > 1 ? `<span class="ib-go">${btns.map(x => `<button type="button" class="btn" data-ins="${x.dataset.ins.replace(/&/g, "&amp;")}" data-to="${x.dataset.to || ""}">${x.textContent}</button>`).join("")}</span>` : "")
-    + `<span class="ib-end"><button type="button" class="btn" data-insback>回觀察頁</button>${insPrev ? `<button type="button" class="btn" data-insundo aria-label="關閉情境列，設定還原成點觀察卡之前的樣子">還原設定</button>` : ""}<button type="button" class="btn" id="insX" aria-label="關閉情境列（設定留著）">×</button></span>`;
-  bar.hidden = false; markBar(cur);
-}
-function markBar(cur) { $("insBar").querySelectorAll(".ib-go [data-ins]").forEach(x => x.setAttribute("aria-pressed", x.dataset.ins === cur)); }
-function hideBar() { $("insBar").hidden = true; }
-let insPrev = null;
-document.addEventListener("click", e => { if (e.target.closest("#insX")) hideBar(); if (e.target.closest("[data-insundo]") && insPrev) { const q = insPrev; insPrev = null; hideBar(); applyState(q); } if (e.target.closest("[data-clrside]")) { clearSideFilters(); render(); } if (e.target.closest("[data-insback]")) { showPage("notes", true); scrollTo({ top: 0 }); } });
+bindInsBar();   // 情境列的 ×、還原設定、清除篩選（assets/ui.js）
 function resetSliders() { const d = D.defaults; $("weeks").value = d.weeks; $("burst").value = d.burst * 100; $("tie").value = d.tie * 100; $("vmax").value = 3; $("hv").value = (d.hv ?? 0.05) * 100; $("hvx").checked = false; $("epth").value = (d.epth ?? 0.15) * 100; epCache = null; }
 
 showPage((location.hash || "").slice(1), false);

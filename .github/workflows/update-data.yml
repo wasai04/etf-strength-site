@@ -175,7 +175,7 @@ jobs:
           mkdir -p _site/us
           cp index.html _site/
           cp us/index.html _site/us/
-          cp -r assets _site/   # 兩頁共用的樣式與程式（2026-11-17 起：site.css、core.js、chart.js、table.js）
+          cp -r assets _site/   # 兩頁共用的樣式與程式（2026-11-17 起：site.css、core.js、chart.js、table.js；2026-11-20 加 ui.js）
           cp rel/data.json _site/data.json
           cp rel/us-data.json _site/us/data.json
 
