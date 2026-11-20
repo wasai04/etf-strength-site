@@ -10,7 +10,7 @@
 <link rel="preload" href="data.json" as="fetch" crossorigin>   <!-- 資料檔和頁面同時開始下載（2026-11-17）；下面 fetch 要用預設快取模式，才會接到這個預先下載 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=20261120b">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
+<link rel="stylesheet" href="../assets/site.css?v=20261120c">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
 <style>
 /* 只有美股頁用到的樣式；共用的在 ../assets/site.css */
 #levtbl tr.thin td { color: var(--muted); }   /* 樣本少的列變淡：只調字色、底色維持不透明（原本整格 opacity，凍結欄往右捲時後面的字會透出來疊在一起，2026-11-17） */
@@ -270,7 +270,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       </div>
     </section>
     <section class="panel stack" id="lvPrev">
-      <h2>槓桿和原型，走起來差多少</h2>
+      <div class="head"><h2>槓桿和原型，走起來差多少</h2><span class="zoom"><button type="button" data-zc="lvn:in" aria-label="放大圖表">＋</button><button type="button" data-zc="lvn:out" aria-label="縮小圖表">−</button><button type="button" data-zc="lvn:reset">重設</button></span></div>
       <div class="adj"><div class="row" style="gap:8px 14px"><span class="lbl">期間</span><div class="seg" id="lvSpan" role="group" aria-label="期間"><button type="button" data-y="3" aria-pressed="false">3 年</button><button type="button" data-y="5" aria-pressed="false">5 年</button><button type="button" data-y="10" aria-pressed="false">10 年</button><button type="button" data-y="0" aria-pressed="true">全部</button></div></div></div>
       <p class="lvhead" id="lvHead1"></p>
       <svg id="lvNav" class="chart" viewBox="0 0 900 460" role="img" aria-label="槓桿和原型的淨值與回撤"></svg>
@@ -389,7 +389,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <div class="row" style="gap:8px"><button type="button" class="btn" id="tourEnd">結束</button><span style="margin-left:auto"></span><button type="button" class="btn" id="tourPrev">上一步</button><button type="button" class="btn btn-fill" id="tourNext">下一步</button></div></div>
 
 <script src="../assets/core.js?v=20261120"></script>   <!-- 兩頁共用的計算核心（2026-11-17）；改了 core.js 就把 ?v= 換成當天日期 -->
-<script src="../assets/chart.js?v=20261120c"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
+<script src="../assets/chart.js?v=20261120d"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
 <script src="../assets/table.js?v=20261120"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
 
 <script>
@@ -765,7 +765,7 @@ function renderEps() {
   const E = computeEps(), eps = E.eps;
   $("eps").innerHTML = eps.map((ep, i) => `<button type="button" data-i="${i}" aria-pressed="${i === epSel}">${ym(D.dates[ep.pk]) === ym(D.dates[ep.tr]) ? iso(D.dates[ep.pk]) + "→" + iso(D.dates[ep.tr]).slice(5) : ym(D.dates[ep.pk]) + "→" + ym(D.dates[ep.tr])}　${pct(ep.depth, 1)}</button>`).join("") || `<span class="hint" style="padding:6px 10px">這個門檻下沒有大跌</span>`;
   $("eps").querySelectorAll("button").forEach(b => b.onclick = () => { epSel = +b.dataset.i; epView = null; renderEps(); });
-  crashMarks("eptrack", eps, epSel, "基準大跌");
+  crashMarks("eptrack", eps, epSel, "基準大跌", computeEps().th);
   if (epSel == null) { $("epchart").innerHTML = ""; $("eptbl").querySelector("tbody").innerHTML = ""; $("epnote").textContent = ""; return; }
   const ep = eps[epSel], Bst = E.B[epSel];
   const exp = D.etfs.filter(x => E.per[x.c].s[epSel]).length;
@@ -774,7 +774,7 @@ function renderEps() {
   drawEpTable(E, ep); syncTopScroll();
 }
 
-// 圖表縮放與拖曳的接線（做法在 assets/chart.js 的 panZoom、bindEpZoom）
+// 圖表縮放與拖曳的接線（做法在 assets/chart.js 的 panZoom、xZoom）
 function bindZoom() {
   zoomButtons({
     // 總覽散布圖：沒拖動就放開＝點一下，點在某個點上就切換標註
@@ -783,6 +783,9 @@ function bindZoom() {
     ep: bindEpZoom(),
     // 槓桿頁散布圖（2026-11-17）：點一下要能看點的說明，所以真的拖動了才鎖定指標
     lv: panZoom($("lvSc"), { state: () => lvState, view: v => { lvView = v; if (lvState) lvScatter(...lvState.args); }, late: true }),
+    // 槓桿走勢圖（2026-11-20，JC 決定 4）：只橫向，和空頭走勢圖同一套；1／3／5 年按鈕照留
+    lvn: xZoom($("lvNav"), { state: () => lvNavState && { a: lvNavState.all.indexOf(lvNavState.idx[0]), b: lvNavState.all.indexOf(lvNavState.idx[lvNavState.idx.length - 1]), max: lvNavState.all.length - 1, m: lvNavState.m, W: lvNavState.W },
+      view: (a, b) => { lvNavView = a == null ? null : { a, b }; lvDraw(true); } }),
   });
 }
 
@@ -985,12 +988,13 @@ function syncRange(sId, eId, fillId, s, e) {
   $(fillId).style.left = pPos(s) + "%"; $(fillId).style.width = (pPos(e) - pPos(s)) + "%";
 }
 // 跌幅越深顏色越深：跌 15% 用最淺，這一區基準最深的那次用最深（SPY 約 55%、AGG 約 18%）；換分區時重算
+// 2026-11-20 稽核 3 第 8 條：跌幅剛好等於門檻（th）最淺、這一區基準最深的那次最深（原本固定從 15% 起算、上限至少 30%，債券區兩次大跌一樣淡）
 let crashMax = null;
-const crashAlpha = (depth, lo, hi) => { if (crashMax == null) crashMax = Math.max(0.3, ...episodes(D, 0.15).map(e => Math.abs(e.depth))); return lo + (hi - lo) * Math.min(1, Math.max(0, (Math.abs(depth) - 0.15) / (crashMax - 0.15))); };
+const crashAlpha = (depth, lo, hi, th) => { if (crashMax == null) crashMax = Math.max(0.01, ...episodes(D, 0.05).map(e => Math.abs(e.depth))); return lo + (hi - lo) * Math.min(1, Math.max(0, (Math.abs(depth) - th) / (crashMax - th || 1))); };
 // 軌道上的跌色段：基準從高點跌到低點；sel 以外的變淡（sel 沒給就全部一樣深）
-function crashMarks(trackId, eps, sel, label) {
+function crashMarks(trackId, eps, sel, label, th) {   // th：這些大跌用的門檻（色塊深淺從它算起）
   $(trackId).querySelectorAll(".pcrash").forEach(el => el.remove());
-  $(trackId).insertAdjacentHTML("beforeend", eps.map((ep, i) => `<div class="pcrash${sel != null && i !== sel ? " dim" : ""}" style="opacity:${crashAlpha(ep.depth, .4, 1) * (sel != null && i !== sel ? .55 : 1)};left:${pPos(ep.pk)}%;width:${pPos(ep.tr) - pPos(ep.pk)}%"></div>`).join(""));
+  $(trackId).insertAdjacentHTML("beforeend", eps.map((ep, i) => `<div class="pcrash${sel != null && i !== sel ? " dim" : ""}" style="opacity:${crashAlpha(ep.depth, .4, 1, th) * (sel != null && i !== sel ? .55 : 1)};left:${pPos(ep.pk)}%;width:${pPos(ep.tr) - pPos(ep.pk)}%"></div>`).join(""));
 }
 // 回看期間：按 1／3／5 年或改日期，把手跟著動；拖把手就切到自訂
 function buildPeriod() {
@@ -998,7 +1002,7 @@ function buildPeriod() {
   move.draw = () => render(true); move.end = () => render();
   ["pS", "pE"].forEach(id => $(id).addEventListener("change", () => render()));
   buildRange("pS", "pE", "pticks", 30, move, "pfill");
-  crashMarks("ptrack", crashEps(), null, "基準大空頭");
+  crashMarks("ptrack", crashEps(), null, "基準大空頭", CRASH());
   document.querySelectorAll("[data-pstep]").forEach(b => b.onclick = () => move.step(+b.dataset.pstep));
 }
 function syncPeriod() { const { s, e } = currentWindow(); syncRange("pS", "pE", "pfill", s, e); }
@@ -1300,7 +1304,7 @@ function zoneUi() {
   $("dStart").min = $("dEnd").min = $("epFrom").min = $("epTo").min = lo;
   if ($("dStart").value < lo) $("dStart").value = lo;
   $("epthN").textContent = episodes(D, D.defaults.epth ?? 0.15).length;
-  rangeScale("pS", "pE", "pticks"); rangeScale("eS", "eE", "epticks"); crashMarks("ptrack", crashEps(), null, "基準大空頭"); syncPeriod();
+  rangeScale("pS", "pE", "pticks"); rangeScale("eS", "eE", "epticks"); crashMarks("ptrack", crashEps(), null, "基準大空頭", CRASH()); syncPeriod();
   document.querySelectorAll(".crashTh").forEach(el => { el.textContent = f1(CRASH()) + "%"; });
   fillLive();
 }
@@ -1409,63 +1413,44 @@ function lvPicker() {
   $("lvU").querySelectorAll("[data-u]").forEach(b => b.onclick = () => { const first = by[b.dataset.u].slice().sort((a, c) => c.x.x - a.x.x)[0]; lvCur = first.x.c; lvPicker(); lvDraw(); renderLevRows(); });
   $("lvL").querySelectorAll("[data-l]").forEach(b => b.onclick = () => { lvCur = b.dataset.l; lvPicker(); lvDraw(); renderLevRows(); });
 }
-function lvDraw() {
+// 槓桿走勢圖：上格淨值（起點＝100，對數座標）、下格回撤，共用 X 軸（lineChart 的子圖）。navOnly：縮放、拖曳時只重畫這張，不重算散布圖
+let lvNavView = null, lvNavKey = "", lvNavState = null;   // lvNavView：橫向縮放後的範圍（all 裡的位置 a～b）；換標的或期間就回到預設
+function lvDraw(navOnly) {
   const r = levStats().find(z => z.x.c === lvCur); if (!r) return;
   const x = r.x, L = x.p, U = BYC[x.u].p, last = L.length - 1;
   let f = RAW.dates.findIndex(d => iso(d) >= r.since);
   if (lvSpanY) f = Math.max(f, last - Math.round(lvSpanY * 252));
-  // 上圖：淨值（起點＝100，對數座標）與回撤
-  const W = 900, m = { l: 64, r: 20, t: 14 }, H1 = 270, G = 26, H2 = 110, B = 34;
-  const idx = []; for (let i = f; i <= last; i++) if (L[i] != null && U[i] != null) idx.push(i);
+  const key = x.c + "|" + lvSpanY; if (key !== lvNavKey) { lvNavKey = key; lvNavView = null; }
+  const all = []; for (let i = f; i <= last; i++) if (L[i] != null && U[i] != null) all.push(i);
+  const idx = lvNavView ? all.slice(lvNavView.a, lvNavView.b + 1) : all;
   const nl = idx.map(i => 100 * L[i] / L[idx[0]]), nu = idx.map(i => 100 * U[i] / U[idx[0]]);
   const dd = a => { let pk = -Infinity; return a.map(v => { pk = Math.max(pk, v); return v / pk - 1; }); };
   const dl = dd(nl), du = dd(nu);
-  const sx = k => m.l + k / (idx.length - 1) * (W - m.l - m.r);
-  const lo = Math.log10(Math.min(...nl, ...nu)), hi = Math.log10(Math.max(...nl, ...nu));
-  const sy = v => m.t + (hi - Math.log10(v)) / (hi - lo || 1) * H1;
-  const y2 = m.t + H1 + G, ddLo = Math.min(...dl, ...du), sd = v => y2 + (v / (ddLo || -1)) * H2;
-  let g = "";
+  const lo = Math.min(...nl, ...nu), hi = Math.max(...nl, ...nu), ddLo = Math.min(...dl, ...du), ticks = [];
   // 對數刻度：1、2、5 × 10^n
-  for (let e = Math.floor(lo); e <= Math.ceil(hi); e++) for (const k of [1, 2, 5]) { const v = k * 10 ** e; if (Math.log10(v) < lo - 1e-9 || Math.log10(v) > hi + 1e-9) continue;
-    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="${v === 100 ? "var(--fg)" : "var(--line)"}" stroke-width="${v === 100 ? 1.2 : 1}"/><text x="${m.l - 8}" y="${sy(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000) + "k" : v}</text>`; }
-  for (const v of [0, -0.25, -0.5, -0.75]) { if (v < ddLo - 1e-9) continue;
-    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${sd(v)}" y2="${sd(v)}" stroke="${v === 0 ? "var(--fg)" : "var(--line)"}"/><text x="${m.l - 8}" y="${sd(v) + 4}" text-anchor="end">${pct(v, 0)}</text>`; }
-  g += `<text x="${m.l}" y="${y2 - 8}">回撤（離前高跌了多少）</text>`;
-  // 年份刻度
-  let py = null; idx.forEach((i, k) => { const yv = iso(RAW.dates[i]).slice(0, 4); if (yv !== py && py !== null) { const step = idx.length > 252 * 12 ? 2 : 1; if (+yv % step === 0) g += `<line x1="${sx(k)}" x2="${sx(k)}" y1="${m.t}" y2="${y2 + H2}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${sx(k)}" y="${y2 + H2 + B - 12}" text-anchor="middle">${yv}</text>`; } py = yv; });
-  const line = (a, fy, col, w) => `<path d="M${a.map((v, k) => sx(k).toFixed(1) + "," + fy(v).toFixed(1)).join("L")}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
-  const area = (a, col) => `<path d="M${sx(0)},${sd(0)}L${a.map((v, k) => sx(k).toFixed(1) + "," + sd(v).toFixed(1)).join("L")}L${sx(a.length - 1)},${sd(0)}Z" fill="${col}" opacity=".5"/>`;
-  g += `<g class="lvs" data-s="L">${area(dl, "var(--l1)")}${line(nl, sy, "var(--l1)", 2.2)}</g>`;
-  g += `<g class="lvs" data-s="U">${area(du, "var(--muted)")}${line(du, sd, "var(--fg)", 1.2)}${line(nu, sy, "var(--muted)", 2)}</g>`;
-  // 游標（豎線、點、底部日期）和空頭走勢圖同一套樣式（2026-11-17，JC：原本是虛線，和空頭頁不一樣）
-  g += `<g id="lvCur" pointer-events="none" hidden><line class="vl" y1="${m.t}" y2="${y2 + H2}" stroke="var(--fg)" stroke-width="1" opacity=".6"/>`
-    + `<circle class="cL" fill="var(--l1)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/><circle class="cU" fill="var(--muted)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/><circle class="dL" fill="var(--l1)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/><circle class="dU" fill="var(--muted)" r="3.5" stroke="var(--panel)" stroke-width="1.5"/>`
-    + `<rect class="db" y="${y2 + H2 + 4}" width="80" height="18" rx="3" fill="var(--panel)" stroke="var(--line)"/><text class="hd" y="${y2 + H2 + 17}" text-anchor="middle"></text></g>`;
-  $("lvNav").innerHTML = g;
-  // 游標：在淨值區比淨值、在回撤區比回撤，離哪條近就突顯哪條；懸浮框照空頭頁走勢圖（2026-11-17，原本是圖右上角一行字）
-  const svg = $("lvNav"), cur = $("lvCur");
-  const lvLeave = () => { svg.querySelectorAll(".lvs").forEach(el => el.classList.remove("dim")); cur.setAttribute("hidden", ""); hideTip(); hoverClose(svg); };   // SVG 元素沒有 .hidden 屬性，要直接增刪 hidden（2026-11-17 JC 回報豎線一直沒出現）
-  svg.onpointermove = e => { const p = svgPt(svg, e); if (p.x < m.l || p.x > W - m.r) { lvLeave(); return; }   // 繪圖區外（刻度區）收起，同空頭走勢圖
-    const k = Math.max(0, Math.min(idx.length - 1, Math.round((p.x - m.l) / (W - m.l - m.r) * (idx.length - 1)))), y = p.y, inDD = y > y2 - G / 2;
-    const dLy = inDD ? sd(dl[k]) : sy(nl[k]), dUy = inDD ? sd(du[k]) : sy(nu[k]), eL = Math.abs(y - dLy), eU = Math.abs(y - dUy), near = Math.min(eL, eU) > 18 ? null : eL <= eU ? "L" : "U";   // 要靠近線才突顯
-    svg.querySelectorAll(".lvs").forEach(el => el.classList.toggle("dim", near !== null && el.dataset.s !== near));
-    cur.removeAttribute("hidden"); cur.querySelector(".vl").setAttribute("x1", sx(k)); cur.querySelector(".vl").setAttribute("x2", sx(k));
-    [["cL", sy(nl[k])], ["cU", sy(nu[k])], ["dL", sd(dl[k])], ["dU", sd(du[k])]].forEach(([c, yy]) => { const el = cur.querySelector("." + c), on = near === null || near === c[1];   // 靠近的那條點放大、另一條淡化（同空頭頁）
-      el.setAttribute("cx", sx(k)); el.setAttribute("cy", yy); el.setAttribute("r", near === c[1] ? 5 : 3.5); el.setAttribute("opacity", on ? 1 : .25); });
-    const dx = Math.min(Math.max(sx(k), m.l + 40), W - m.r - 40), dt = cur.querySelector("text.hd");   // 底部日期，靠邊時不超出圖
-    dt.textContent = iso(RAW.dates[idx[k]]); dt.setAttribute("x", dx); cur.querySelector("rect.db").setAttribute("x", dx - 40);
-    // 槓桿那列的顏色看「槓桿 − 原型」：正數＝這時候比原型好（全站上色原則）；數字照舊是各自的累計報酬、回撤
-    const row = (s, c, col, n, d, cls) => tipRow(near == null ? "" : near === s ? "ep-on" : "ep-dim", col, c, [[cls[0], pct(n / 100 - 1)], [cls[1], pct(d), "回撤 "]]);
-    const rL = row("L", `${x.c}（${x.x} 倍）`, "var(--l1)", nl[k], dl[k], [ud((nl[k] - nu[k]) / 100), ud(dl[k] - du[k])]), rU = row("U", `原型 ${x.u}`, "var(--muted)", nu[k], du[k], ["", ""]);
-    tip.innerHTML = `<strong>${iso(RAW.dates[idx[k]])}</strong>（從 ${iso(RAW.dates[idx[0]])} 起）<br>` + (nl[k] >= nu[k] ? [rL, rU] : [rU, rL]).join("<br>");   // 高的在上（同空頭頁）
-    tipAt(e); hoverOpen(svg, lvLeave); };
-  svg.onpointerleave = e => { if (e.pointerType !== "touch") lvLeave(); };   // 觸控：手指抬起不收，點圖外面或捲動才收（bindHoverDismiss）
-  svg.onpointerdown = e => { if (e.pointerType === "touch") svg.onpointermove(e); };   // 觸控點一下就顯示
+  for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) for (const k of [1, 2, 5]) { const v = k * 10 ** e; if (Math.log10(v) >= Math.log10(lo) - 1e-9 && Math.log10(v) <= Math.log10(hi) + 1e-9) ticks.push(v); }
+  const S = lineChart($("lvNav"), { W: 900, m: { l: 64, r: 20, t: 14 }, bottom: 34, clip: "lvNavClip", n: idx.length, day: k => RAW.dates[idx[k]],
+    panels: [{ h: 270, y: { log: true, lo, hi, ticks, base: 100, fmt: v => v >= 1000 ? (v / 1000) + "k" : v } },
+      { h: 110, gap: 26, title: "回撤（離前高跌了多少）", y: { lo: ddLo || -1, hi: 0, ticks: [0, -0.25, -0.5, -0.75].filter(v => v >= ddLo - 1e-9), base: 0, fmt: v => pct(v, 0) } }],
+    // 目標標的固定 --l1、原型灰色（DESIGN-us「配色」）；回撤先畫槓桿、原型疊在上面加外框線
+    series: [{ key: "L", cls: "lvs", parts: [{ p: 1, v: dl, area: "var(--l1)" }, { p: 0, v: nl, col: "var(--l1)", w: 2.2 }] },
+      { key: "U", cls: "lvs", parts: [{ p: 1, v: du, area: "var(--muted)", col: "var(--fg)", w: 1.2 }, { p: 0, v: nu, col: "var(--muted)", w: 2 }] }] });
+  lvNavState = { ...S, x, idx, all, nl, nu, dl, du };
   const tl = nl[nl.length - 1] / 100 - 1, tu = nu[nu.length - 1] / 100 - 1, yrs = (RAW.dates[idx[idx.length - 1]] - RAW.dates[idx[0]]) / 365.25;
   const cg = v => (Math.pow(1 + v, 1 / yrs) - 1);
   $("lvHead1").innerHTML = `${iso(RAW.dates[idx[0]])} 起 ${yrs.toFixed(1)} 年：<span style="color:var(--l1)">${x.c}</span> 年化 ${pct(cg(tl))}、最深跌 ${pct(Math.min(...dl), 0)}；原型 ${x.u} 年化 ${pct(cg(tu))}、最深跌 ${pct(Math.min(...du), 0)}。`;
   $("lvLeg1").innerHTML = `<span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--l1)" stroke-width="3"/></svg>${x.c}（${x.x} 倍）</span><span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--muted)" stroke-width="3"/></svg>原型 ${x.u}</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--l1)" opacity=".5"/></svg>${x.c} 回撤</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--muted)" opacity=".5" stroke="var(--fg)"/></svg>${x.u} 回撤</span><span>淨值：起點＝100，對數座標（同樣高度＝同樣漲幅 %）</span>`;
-  lvScatter(r, x, L, U, last);
+  if (!navOnly) lvScatter(r, x, L, U, last);
+}
+
+// 槓桿走勢圖的游標：靠近哪條（槓桿 L／原型 U）就突顯哪條；懸浮框照空頭走勢圖
+const lvFocus = near => $("lvNav").querySelectorAll(".lvs").forEach(el => el.classList.toggle("dim", near != null && el.dataset.s !== near));
+function lvTip(k, near) {
+  const { x, idx, nl, nu, dl, du } = lvNavState;
+  // 槓桿那列的顏色看「槓桿 − 原型」：正數＝這時候比原型好（全站上色原則）；數字照舊是各自的累計報酬、回撤
+  const row = (s, c, col, n, d, cls) => tipRow(near == null ? "" : near === s ? "ep-on" : "ep-dim", col, c, [[cls[0], pct(n / 100 - 1)], [cls[1], pct(d), "回撤 "]]);
+  const rL = row("L", `${x.c}（${x.x} 倍）`, "var(--l1)", nl[k], dl[k], [ud((nl[k] - nu[k]) / 100), ud(dl[k] - du[k])]), rU = row("U", `原型 ${x.u}`, "var(--muted)", nu[k], du[k], ["", ""]);
+  return `<strong>${iso(RAW.dates[idx[k]])}</strong>（從 ${iso(RAW.dates[idx[0]])} 起）<br>` + (nl[k] >= nu[k] ? [rL, rU] : [rU, rL]).join("<br>");   // 高的在上（同空頭頁）
 }
 
 // 散布圖：每個起點一個點，橫＝原型持有這段的報酬，縱＝槓桿的報酬；虛線＝大家以為的「原型 × 倍數」
@@ -1540,9 +1525,8 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   document.querySelectorAll("#win button").forEach(b => b.onclick = () => { st.win = b.dataset.v; setSeg(st.win); render(); });
   $("reset").onclick = () => { resetSliders(); render(); };
   // 走勢圖：滑鼠移動就顯示；觸控是點一下顯示那一天，點圖外面收起
-  $("epchart").addEventListener("pointermove", epHover);
-  $("epchart").addEventListener("pointerleave", e => { if (e.pointerType !== "touch") epLeave(); });
-  $("epchart").addEventListener("pointerdown", e => { if (e.pointerType === "touch") epHover(e); });
+  bindEpCursor();   // 走勢圖的游標：滑鼠移動就顯示，觸控點一下顯示、點圖外面收起（assets/chart.js 的 lineCursor）
+  lineCursor($("lvNav"), { state: () => lvNavState, focus: lvFocus, tip: lvTip });   // 槓桿走勢圖同一套
   bindHoverDismiss();   // 觸控點圖外面、捲動時收起走勢圖懸浮框（空頭、槓桿頁共用；assets/chart.js）
   fitChartText();   // 圖上的字跟著圖實際寬度放大（assets/chart.js）
   bindZoom();

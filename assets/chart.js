@@ -1,7 +1,8 @@
 // 兩頁共用的圖表程式（2026-11-17 起，共用元件重構第三階段；DESIGN.md「共用檔」「圖表規格」）。
 // 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons；固定樣式 CHART 和零件 axes、refLines、emptyState、fitChartText（標準化 A 階段）。
-// 兩頁同結構的：總覽散布圖 drawChart／markLabels／toggleMark、空頭走勢圖 drawEpChart／epHover／epFocus／epLeave／epZoom／bindEpZoom。
-//   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、epDrag、tip、tipFor、hideTip、LINE_COLORS、CAT_NAME、colorOf、
+// 走勢圖的 lineChart、timeGrid、lineCursor、xZoom（標準化 B 階段）。
+// 兩頁同結構的：總覽散布圖 drawChart／markLabels／toggleMark、空頭走勢圖 drawEpChart／epTip／bindEpCursor／epFocus／epLeave／bindEpZoom。
+//   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、computeEps、tip、tipFor、hideTip、LINE_COLORS、CAT_NAME、colorOf、
 //   drawTable、syncRange、crashAlpha、$ 等）和元素（#chart、#epchart…），兩頁名字一致才放這裡；頁面改這些名字前先搜這個檔。
 // 只宣告函式、不在載入時執行，所以可以在頁面主程式之前載入。改了這個檔：把兩頁 <script src> 的 ?v= 換成當天日期。
 
@@ -63,6 +64,7 @@ const CHART = {
   base: { stroke: "var(--fg)", opacity: ".5" },             // 0（或 100）的基準線：細實線（JC 2026-11-20：實線＝座標的基準、虛線＝拿來比的參考）
   ref: { stroke: "var(--fg)", dash: "4 4", opacity: ".55" },   // 拿來比的參考線（基準十字）
   good: { stroke: "var(--calmar)", dash: "6 5" },          // 划算線
+  cursor: { stroke: "var(--fg)", opacity: ".6" },           // 走勢圖游標的豎線
   tickPad: 6, xTickDy: 16, titleDy: 6,                     // y 刻度字離繪圖區、x 刻度字在底線下、x 軸標題離圖底
   scatterM: { l: 56, r: 16, t: 26, b: 40 },                // 散布圖的邊界（上方留給左上角的 Y 軸標題）
 };
@@ -192,9 +194,129 @@ function toggleMark(c) {
   if (scState) { drawChart(scState.rows, scState.B); drawTable(scState.rows); }
 }
 
-// ── 空頭走勢圖
+// ── 走勢圖（標準化 B 階段，2026-11-20）：lineChart 畫格線、刻度、陰影、線；lineCursor 管游標；xZoom 管只橫向的縮放與拖曳。
+// 空頭走勢圖、槓桿頁走勢圖都用這一套；新的走勢圖照用，不要再自己畫格線、游標（DESIGN「圖表規格」）。
+// spec = {
+//   W, m: { l, r, t }, bottom（底部日期列的高）, clip（clipPath 的 id）,
+//   n（點數）, day: k => 第 k 點的日期（日數，同 D.dates）,
+//   panels: [{ h, gap（和上一格的距離）, title（左上角的小標）, y: { log, lo, hi, ticks: [值], fmt, base（基準線的值） } }],   多格時上下共用 X 軸
+//   series: [{ key, cls, parts: [{ p（第幾格）, v: [值或 null], col, w（線寬，沒給就不畫線）, area（往基準線填的顏色） }] }],
+//   shade: [{ p, k0, k1, fill, opacity }]（畫在線底下，例如大跌段）
+// }
+// 回傳 state：{ W, m, n, day, sx, panels（各格 y0、y1、sy）, series }，給 lineCursor、xZoom 用
+function lineChart(svg, s) {
+  const { W, m, n } = s, sx = k => m.l + k / (n - 1 || 1) * (W - m.l - m.r);
+  let y = m.t;
+  const P = s.panels.map((p, j) => {
+    if (j) y += p.gap || 0;
+    const y0 = y, y1 = y + p.h, lg = p.y.log ? Math.log10 : v => v, lo = lg(p.y.lo), hi = lg(p.y.hi);
+    y = y1;
+    return { ...p, y0, y1, sy: v => y0 + (hi - lg(v)) / (hi - lo || 1) * p.h };
+  });
+  const bot = P[P.length - 1].y1, f1 = v => v.toFixed(1);
+  let g = `<clipPath id="${s.clip}"><rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${bot - m.t}"/></clipPath>`;
+  // 陰影（大跌段）：超出畫面的部分夾在繪圖區內
+  (s.shade || []).forEach(d => { const p = P[d.p], a = Math.min(Math.max(sx(d.k0), m.l), W - m.r), b = Math.min(Math.max(sx(d.k1), m.l), W - m.r);
+    g += `<rect x="${a}" y="${p.y0}" width="${b - a}" height="${p.h}" fill="${d.fill}" fill-opacity="${d.opacity}"/>`; });
+  // 橫的格線、刻度字、各格的小標；基準線（0 或 100）用細實線，畫在格線上面
+  P.forEach(p => {
+    const fmt = p.y.fmt || (v => v);
+    p.y.ticks.forEach(v => { if (v !== p.y.base) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${p.sy(v)}" y2="${p.sy(v)}" stroke="${CHART.grid}"/>`; g += `<text x="${m.l - CHART.tickPad}" y="${p.sy(v) + 4}" text-anchor="end">${fmt(v)}</text>`; });
+    if (p.title) g += `<text x="${m.l}" y="${p.y0 - 8}">${p.title}</text>`;
+  });
+  // 直的格線：期間 3 年以上標年份（超過 12 年隔年），以下標月份（最多約 12 條）；淡色實線，上下各格一起（JC 2026-11-20 決定 2）
+  const fk = parseFloat(getComputedStyle(svg).getPropertyValue("--fk")) || 1, grid = timeGrid(n, s.day);
+  let lastX = -Infinity;
+  grid.forEach(t => { const x = sx(t.k);
+    g += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${bot}" stroke="${CHART.grid}"/>`;
+    const half = t.label.length * 3.4 * fk;   // 字寬的一半（約略）：太擠、或會超出繪圖區兩端的不寫字
+    if (x - half >= m.l && x + half <= W - m.r && x - lastX >= half * 2 + 12 * fk) { g += `<text x="${x}" y="${bot + 22}" text-anchor="middle">${t.label}</text>`; lastX = x; } });
+  if (!grid.length) for (let j = 0; j <= 4; j++) { const k = Math.round((n - 1) * j / 4); g += `<text x="${sx(k)}" y="${bot + 22}" text-anchor="${j === 0 ? "start" : j === 4 ? "end" : "middle"}">${ym(s.day(k))}</text>`; }   // 不到一個月：只寫頭尾和中間的年月
+  P.forEach(p => { if (p.y.base != null && p.y.base >= Math.min(p.y.lo, p.y.hi) && p.y.base <= Math.max(p.y.lo, p.y.hi))
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${p.sy(p.y.base)}" y2="${p.sy(p.y.base)}" stroke="${CHART.base.stroke}" opacity="${CHART.base.opacity}"/>`; });
+  // 線（每組一個 <g>，突顯、淡化以組為單位）；面積往基準線填
+  s.series.forEach(se => {
+    g += `<g class="${se.cls || ""}" data-s="${se.key}" clip-path="url(#${s.clip})">`;
+    se.parts.forEach(pt => { const p = P[pt.p];
+      if (pt.area) { const b = f1(p.sy(p.y.base)); g += `<path d="M${f1(sx(0))} ${b}${pt.v.map((v, k) => "L" + f1(sx(k)) + " " + f1(p.sy(v))).join("")}L${f1(sx(n - 1))} ${b}Z" fill="${pt.area}" opacity=".5"/>`; }
+      if (pt.w) { let d = "", pen = false; pt.v.forEach((v, k) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + f1(sx(k)) + " " + f1(p.sy(v)); pen = true; });
+        g += `<path d="${d}" fill="none" stroke="${pt.col}" stroke-width="${pt.w}" stroke-linejoin="round"/>`; } });
+    g += `</g>`;
+  });
+  // 游標（放在最後才蓋在線上面）：豎線、各線的點、底部日期（DESIGN「走勢圖的懸浮框」的游標樣式）
+  g += `<g data-cursor pointer-events="none" visibility="hidden"><line class="vl" y1="${m.t}" y2="${bot}" stroke="${CHART.cursor.stroke}" stroke-width="1" opacity="${CHART.cursor.opacity}"/><g class="dots"></g>`
+    + `<rect class="db" y="${bot + 4}" height="18" rx="3" fill="var(--panel)" stroke="var(--line)"/><text class="hd" y="${bot + 17}" text-anchor="middle"></text></g>`;
+  svg.innerHTML = g;
+  return { W, m, n, day: s.day, sx, panels: P, series: s.series };
+}
+// 時間軸的直格線位置：k＝第幾點、label＝年份或年月
+function timeGrid(n, day) {
+  if (n < 2) return [];
+  const yrs = (day(n - 1) - day(0)) / 365.25, out = [];
+  if (yrs >= 3) { const st = yrs > 12 ? 2 : 1; for (let k = 1; k < n; k++) { const a = iso(day(k - 1)).slice(0, 4), b = iso(day(k)).slice(0, 4); if (a !== b && +b % st === 0) out.push({ k, label: b }); } return out; }
+  const st = [1, 2, 3, 6].find(s => yrs * 12 / s <= 12) || 6;
+  for (let k = 1; k < n; k++) { const a = iso(day(k - 1)).slice(0, 7), b = iso(day(k)).slice(0, 7); if (a !== b && (+b.slice(5) - 1) % st === 0) out.push({ k, label: b }); }
+  return out;
+}
+// 走勢圖的游標：o.state()＝lineChart 回傳的 state（還沒畫就是 null）；o.focus(key)＝突顯那組（null＝全部恢復）；o.tip(k, key)＝懸浮框內容。
+// 游標在哪一格就比哪一格的值，離哪條線 18 單位以內就突顯那條。頁面載入後對每張走勢圖呼叫一次
+function lineCursor(svg, o) {
+  const cur = () => svg.querySelector("[data-cursor]");
+  const leave = () => { const c = cur(); if (c) c.setAttribute("visibility", "hidden"); o.focus(null); hideTip(); hoverClose(svg); };
+  const move = e => {
+    const S = o.state(); if (!S || svg.dataset.drag) return;
+    const p = svgPt(svg, e), m = S.m; if (p.x < m.l || p.x > S.W - m.r) { leave(); return; }   // 繪圖區外（刻度區）收起
+    const k = Math.max(0, Math.min(S.n - 1, Math.round((p.x - m.l) / (S.W - m.l - m.r) * (S.n - 1)))), x = S.sx(k);
+    let pi = 0; S.panels.forEach((P, j) => { if (j && p.y >= (S.panels[j - 1].y1 + P.y0) / 2) pi = j; });   // 游標在哪一格：以兩格中間為界
+    let near = null, best = 18;
+    S.series.forEach(se => se.parts.forEach(pt => { const v = pt.v[k]; if (pt.p !== pi || v == null) return; const d = Math.abs(S.panels[pi].sy(v) - p.y); if (d < best) { best = d; near = se.key; } }));
+    o.focus(near);
+    const c = cur(); c.setAttribute("visibility", "visible");
+    const vl = c.querySelector(".vl"); vl.setAttribute("x1", x); vl.setAttribute("x2", x);
+    let dots = "";
+    S.series.forEach(se => se.parts.forEach(pt => { const v = pt.v[k]; if (v == null) return;
+      dots += `<circle cx="${x}" cy="${S.panels[pt.p].sy(v)}" r="${se.key === near ? 5 : 3.5}" fill="${pt.area || pt.col}" stroke="var(--panel)" stroke-width="1.5" opacity="${near == null || se.key === near ? 1 : .25}"/>`; }));
+    c.querySelector(".dots").innerHTML = dots;
+    // 底部日期：框寬照字寬（手機上字放大也裝得下），靠邊時夾在圖內
+    const t = c.querySelector("text.hd"); t.textContent = iso(S.day(k));
+    const bw = Math.ceil(t.getComputedTextLength()) + 16, dx = Math.min(Math.max(x, m.l + bw / 2), S.W - m.r - bw / 2);
+    t.setAttribute("x", dx); const r = c.querySelector("rect.db"); r.setAttribute("x", dx - bw / 2); r.setAttribute("width", bw);
+    tip.innerHTML = o.tip(k, near); tipAt(e); hoverOpen(svg, leave);
+  };
+  svg.addEventListener("pointermove", move);
+  svg.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") leave(); });   // 觸控：手指抬起不收，點圖外面或捲動才收（bindHoverDismiss）
+  svg.addEventListener("pointerdown", e => { if (e.pointerType === "touch") move(e); });   // 觸控點一下就顯示
+  svg._leave = leave;
+}
+// 只橫向的縮放與拖曳（走勢圖）：o.state()＝{ a, b（目前畫面頭尾在整段資料裡的位置）, max（整段最後一點）, m, W } 或 null；
+// o.view(a, b)：設新範圍並重畫（a＝null 回到預設）。Ctrl（⌘）＋滾輪以游標為中心縮放；滑鼠拖曳移動，觸控不拖（留給捲動頁面）。回傳 { zoom, reset } 給縮放按鈕
+function xZoom(svg, o) {
+  let drag = null;
+  const zoom = (f, c) => {
+    const S = o.state(); if (!S) return; if (c == null) c = (S.a + S.b) / 2;
+    const a = Math.max(0, Math.round(c - (c - S.a) * f)), b = Math.min(S.max, Math.round(c + (S.b - c) * f));
+    if (b - a >= 10) o.view(a, b);
+  };
+  svg.addEventListener("wheel", e => {
+    const S = o.state(); if (!(e.ctrlKey || e.metaKey) || !S) return; e.preventDefault();
+    zoom(e.deltaY > 0 ? 1.25 : 0.8, S.a + (svgPt(svg, e).x - S.m.l) / (S.W - S.m.l - S.m.r) * (S.b - S.a));
+  }, { passive: false });
+  svg.addEventListener("pointerdown", e => { const S = o.state(); if (e.button !== 0 || e.pointerType === "touch" || !S) return; e.preventDefault();
+    drag = { x: svgPt(svg, e).x, a: S.a, b: S.b }; svg.dataset.drag = "1"; try { svg.setPointerCapture(e.pointerId); } catch (err) {} });
+  svg.addEventListener("pointermove", e => {
+    if (!drag) return; const S = o.state(); if (!S) return;
+    let di = Math.round(-(svgPt(svg, e).x - drag.x) / (S.W - S.m.l - S.m.r) * (drag.b - drag.a));
+    di = Math.max(-drag.a, Math.min(S.max - drag.b, di)); if (!di) return;
+    if (svg._leave) svg._leave(); o.view(drag.a + di, drag.b + di);
+  });
+  ["pointerup", "pointercancel"].forEach(t => svg.addEventListener(t, () => { drag = null; delete svg.dataset.drag; }));
+  return { zoom: f => zoom(f), reset: () => o.view(null) };
+}
+
+// ── 空頭走勢圖：以基準高點那天＝100，各檔怎麼跌、怎麼回來
+const epCol = (s, k) => s.x.c === BN ? "var(--fg)" : `var(${LINE_COLORS[(k - 1) % LINE_COLORS.length]})`;
 function drawEpChart(ep) {
-  const svg = $("epchart"), Wd = 900, H = 360, m = { l: 48, r: 16, t: 14, b: 32 };
+  const svg = $("epchart"), W = 900, H = 360, m = { l: 48, r: 16, t: 14 }, bottom = 32;
   // 顯示區間：預設是這次大跌前後各約一個月；手動選了起迄就用手動的（0% 基準仍是基準高點那天）
   const last = D.dates.length - 1;
   let i0 = Math.max(0, ep.pk - 20), i1 = Math.min(last, (ep.rec == null ? last : ep.rec) + 20);
@@ -204,54 +326,24 @@ function drawEpChart(ep) {
   let lo = 100, hi = 100;
   const series = sel.map(x => { const v = []; for (let i = i0; i <= i1; i++) v.push(x.p[i] == null ? null : x.p[i] / x.p[ep.pk] * 100); v.forEach(y => { if (y != null) { lo = Math.min(lo, y); hi = Math.max(hi, y); } }); return { x, v }; });
   lo = Math.floor(lo / 10) * 10; hi = Math.ceil(hi / 10) * 10;
-  const sx = i => m.l + (i - i0) / (i1 - i0) * (Wd - m.l - m.r), sy = v => H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b);
-  const bx0 = Math.min(Math.max(sx(ep.pk), m.l), Wd - m.r), bx1 = Math.min(Math.max(sx(ep.tr), m.l), Wd - m.r);
-  let g = `<rect x="${bx0}" y="${m.t}" width="${bx1 - bx0}" height="${H - m.t - m.b}" fill="var(--dn)" fill-opacity="${crashAlpha(ep.depth, .1, .3)}"/>`;
-  const step = (hi - lo) > 120 ? 40 : (hi - lo) > 60 ? 20 : 10;
-  for (let v = lo; v <= hi; v += step) g += `<line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${m.l - 6}" y="${sy(v) + 4}" text-anchor="end">${v}</text>`;
-  g += `<line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(100)}" y2="${sy(100)}" stroke="var(--fg)" stroke-dasharray="3 4" opacity=".5"/>`;
-  const nTicks = 5; for (let k = 0; k <= nTicks; k++) { const i = Math.round(i0 + (i1 - i0) * k / nTicks); g += `<text x="${sx(i)}" y="${H - 10}" text-anchor="${k === 0 ? "start" : k === nTicks ? "end" : "middle"}">${ym(D.dates[i])}</text>`; }
-  const leg = [];
-  series.forEach((s, k) => {
-    const col = s.x.c === BN ? "var(--fg)" : `var(${LINE_COLORS[(k - 1) % LINE_COLORS.length]})`;
-    let d = "", pen = false; s.v.forEach((y, j) => { if (y == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(i0 + j).toFixed(1) + " " + sy(y).toFixed(1); pen = true; });
-    g += `<path class="epl" data-s="${k}" d="${d}" fill="none" stroke="${col}" stroke-width="${s.x.c === BN ? 2.6 : 1.6}" stroke-linejoin="round"/>`;
-    leg.push(`<span data-s="${k}"><span class="swatch" style="--c:${col}"></span>${s.x.c} ${s.x.n}</span>`);
-  });
-  // 游標對準的那一天：直線、各線的點、底部日期（放在最後才會蓋在線上面）
-  g += `<g id="ephover" visibility="hidden"><line id="ephl" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-width="1" opacity=".6"/><g id="ephdots"></g><rect id="ephbg" y="${H - m.b + 4}" height="18" rx="3" fill="var(--panel)" stroke="var(--line)"/><text id="ephd" class="hd" y="${H - m.b + 17}" text-anchor="middle"></text></g>`;
-  svg.innerHTML = g;
-  $("eplegend").innerHTML = leg.join("");
-  epState = { i0, i1, sx, sy, series, m, Wd, H, ep };
+  const step = (hi - lo) > 120 ? 40 : (hi - lo) > 60 ? 20 : 10, ticks = []; for (let v = lo; v <= hi; v += step) ticks.push(v);
+  const S = lineChart(svg, { W, m, bottom, clip: "epClip", n: i1 - i0 + 1, day: k => D.dates[i0 + k],
+    panels: [{ h: H - m.t - bottom, y: { lo, hi, ticks, base: 100 } }],
+    shade: [{ p: 0, k0: ep.pk - i0, k1: ep.tr - i0, fill: "var(--dn)", opacity: crashAlpha(ep.depth, .1, .3, computeEps().th) }],
+    series: series.map((s, k) => ({ key: k, cls: "epl", parts: [{ p: 0, v: s.v, col: epCol(s, k), w: s.x.c === BN ? 2.6 : 1.6 }] })) });
+  $("eplegend").innerHTML = series.map((s, k) => `<span data-s="${k}"><span class="swatch" style="--c:${epCol(s, k)}"></span>${s.x.c} ${s.x.n}</span>`).join("");
+  epState = { ...S, i0, i1, epSeries: series, ep };
 }
-// 走勢圖的游標互動：對準最近的交易日，顯示日期和各檔相對基準高點那天的漲跌
-function epHover(e) {
-  if (!epState || epDrag) return;
-  const svg = $("epchart"), S = epState, pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-  if (p.x < S.m.l || p.x > S.Wd - S.m.r) { epLeave(); return; }
-  const i = Math.max(S.i0, Math.min(S.i1, Math.round(S.i0 + (p.x - S.m.l) / (S.Wd - S.m.l - S.m.r) * (S.i1 - S.i0)))), j = i - S.i0, x = S.sx(i);
-  $("ephover").setAttribute("visibility", "visible");
-  $("ephl").setAttribute("x1", x); $("ephl").setAttribute("x2", x);
-  const label = iso(D.dates[i]); $("ephd").textContent = label; $("ephd").setAttribute("x", Math.min(Math.max(x, S.m.l + 40), S.Wd - S.m.r - 40));
-  $("ephbg").setAttribute("x", +$("ephd").getAttribute("x") - 40); $("ephbg").setAttribute("width", 80);
-  // 游標上下離哪條線最近（18 單位以內）就突顯那條，其他變淡
-  let near = null, best = 18;
-  S.series.forEach((s, k) => { const v = s.v[j]; if (v != null && Math.abs(S.sy(v) - p.y) < best) { best = Math.abs(S.sy(v) - p.y); near = k; } });
-  epFocus(near);
-  const lines = []; let dots = "";
-  S.series.forEach((s, k) => {
-    const v = s.v[j]; if (v == null) return;
-    const col = s.x.c === BN ? "var(--fg)" : `var(${LINE_COLORS[(k - 1) % LINE_COLORS.length]})`;
-    dots += `<circle cx="${x}" cy="${S.sy(v)}" r="${k === near ? 5 : 3.5}" fill="${col}" stroke="var(--panel)" stroke-width="1.5" opacity="${near == null || k === near ? 1 : .25}"/>`;
-    lines.push({ c: s.x.c, n: s.x.n, v, col, on: k === near });
-  });
-  $("ephdots").innerHTML = dots;
+// 空頭走勢圖的懸浮框：日期和各檔相對基準高點那天的漲跌，高的在上
+function epTip(k, near) {
+  const S = epState, label = iso(D.dates[S.i0 + k]), lines = [];
+  S.epSeries.forEach((s, j) => { const v = s.v[k]; if (v != null) lines.push({ c: s.x.c, n: s.x.n, v, col: epCol(s, j), on: j === near }); });
   lines.sort((a, b) => b.v - a.v);
   const bv = (lines.find(l => l.c === BN) || {}).v;   // 顏色看「這檔 − 基準」：正數＝這時候比基準好（全站上色原則）；數字照舊是這檔自己的漲跌
-  tip.innerHTML = `<strong>${label}</strong>（相對 ${iso(D.dates[S.ep.pk])} 高點）<br>` + lines.map(l => tipRow(near == null ? "" : l.on ? "ep-on" : "ep-dim", l.col, `${l.c} ${l.n}`, [[bv == null || l.c === BN ? "" : ud((l.v - bv) / 100), pct(l.v / 100 - 1)]])).join("<br>");
-  tipAt(e); hoverOpen(svg, epLeave);
+  return `<strong>${label}</strong>（相對 ${iso(D.dates[S.ep.pk])} 高點）<br>` + lines.map(l => tipRow(near == null ? "" : l.on ? "ep-on" : "ep-dim", l.col, `${l.c} ${l.n}`, [[bv == null || l.c === BN ? "" : ud((l.v - bv) / 100), pct(l.v / 100 - 1)]])).join("<br>");
 }
+// 頁面載入後呼叫一次：空頭走勢圖的游標
+function bindEpCursor() { lineCursor($("epchart"), { state: () => epState, focus: epFocus, tip: epTip }); }
 // 懸浮框的一列：色票＋名稱＋數字格；state 是 ep-on（突顯）／ep-dim（淡化）／空字串；cells 每格 [上色 class, 文字, 前綴]（空頭、槓桿頁走勢圖共用）
 function tipRow(state, col, label, cells) {
   return `<span class="${state}"><span class="swatch" style="--c:${col}"></span> ${label}` + cells.map(([cls, txt, pre]) => `　${pre || ""}<span class="${cls}" style="font-family:var(--f-num)">${txt}</span>`).join("") + "</span>";
@@ -279,31 +371,11 @@ function tipAt(e) {
 function epFocus(k) {
   const on = el => k != null && +el.dataset.s === k, dim = el => k != null && +el.dataset.s !== k;
   document.querySelectorAll("#epchart .epl, #eplegend [data-s]").forEach(el => { el.classList.toggle("on", on(el)); el.classList.toggle("dim", dim(el)); });
-  const f = k != null && document.querySelector(`#epchart .epl[data-s="${k}"]`); if (f) $("epchart").insertBefore(f, $("ephover"));   // 移到其他線上面
+  const f = k != null && document.querySelector(`#epchart .epl[data-s="${k}"]`); if (f) $("epchart").insertBefore(f, $("epchart").querySelector("[data-cursor]"));   // 移到其他線上面
 }
-function epLeave() { const g = $("ephover"); if (g) g.setAttribute("visibility", "hidden"); epFocus(null); hideTip(); hoverClose($("epchart")); }
-function epZoom(f, ci) {
-  const S = epState; if (!S) return;
-  const last = D.dates.length - 1; if (ci == null) ci = (S.i0 + S.i1) / 2;
-  const a = Math.max(0, Math.round(ci - (ci - S.i0) * f)), b = Math.min(last, Math.round(ci + (S.i1 - ci) * f));
-  if (b - a < 10) return;
-  epView = { from: iso(D.dates[a]), to: iso(D.dates[b]) }; drawEpChart(S.ep);
-}
-// 空頭走勢圖的縮放與拖曳：只橫向（日期範圍 epView）；觸控不拖，留給捲動頁面
+function epLeave() { const l = $("epchart")._leave; if (l) l(); }
+// 空頭走勢圖的縮放與拖曳：只橫向（日期範圍 epView），做法在 xZoom
 function bindEpZoom() {
-  const ec = $("epchart");
-  ec.addEventListener("wheel", e => {
-    if (!(e.ctrlKey || e.metaKey) || !epState) return; e.preventDefault();
-    const S = epState, p = svgPt(ec, e);
-    epZoom(e.deltaY > 0 ? 1.25 : 0.8, S.i0 + (p.x - S.m.l) / (S.Wd - S.m.l - S.m.r) * (S.i1 - S.i0));
-  }, { passive: false });
-  ec.addEventListener("pointerdown", e => { if (e.button !== 0 || e.pointerType === "touch" || !epState) return; e.preventDefault(); epDrag = { x: svgPt(ec, e).x, i0: epState.i0, i1: epState.i1 }; ec.setPointerCapture(e.pointerId); });
-  ec.addEventListener("pointermove", e => {
-    if (!epDrag) return; const S = epState, last = D.dates.length - 1;
-    let di = Math.round(-(svgPt(ec, e).x - epDrag.x) / (S.Wd - S.m.l - S.m.r) * (epDrag.i1 - epDrag.i0));
-    di = Math.max(-epDrag.i0, Math.min(last - epDrag.i1, di)); if (!di) return; epLeave();
-    epView = { from: iso(D.dates[epDrag.i0 + di]), to: iso(D.dates[epDrag.i1 + di]) }; drawEpChart(S.ep);
-  });
-  ["pointerup", "pointercancel"].forEach(t => ec.addEventListener(t, () => { epDrag = null; }));
-  return { zoom: f => epZoom(f), reset: () => { epView = null; if (epState) drawEpChart(epState.ep); } };
+  return xZoom($("epchart"), { state: () => epState && { a: epState.i0, b: epState.i1, max: D.dates.length - 1, m: epState.m, W: epState.W },
+    view: (a, b) => { epView = a == null ? null : { from: iso(D.dates[a]), to: iso(D.dates[b]) }; if (epState) drawEpChart(epState.ep); } });
 }

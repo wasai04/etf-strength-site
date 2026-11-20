@@ -180,8 +180,8 @@ tr.changed td:first-child { box-shadow: inset 4px 0 0 var(--fg); }
 .chips button { font: inherit; font-family: var(--f-num); font-size: .84rem; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
 .chips button:hover { border-color: var(--accent); }
 .chips button[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--on-fill); }
-#epchart { cursor: crosshair; touch-action: pan-y; }
-#epchart text.hd, #lvNav text.hd { fill: var(--fg); font-weight: 500; }   /* 走勢圖游標底部的日期 */
+#epchart, #lvNav { cursor: crosshair; touch-action: pan-y; }
+svg.chart text.hd { fill: var(--fg); font-weight: 500; }   /* 走勢圖游標底部的日期 */
 #chart circle[data-c] { cursor: pointer; }tr.bench td { font-weight: 700; }
 .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-family: var(--f-body); font-size: .8rem; color: var(--fg); background: color-mix(in srgb, var(--c) 28%, var(--panel)); border: 1px solid var(--c); }   /* 淡底＋墨色字，亮暗主題對比都夠 */
 .flag { display: inline-block; padding: 0 6px; border-radius: 4px; font-family: var(--f-body); font-size: .76rem; border: 1px solid var(--c-burst); color: var(--c-burst); }
