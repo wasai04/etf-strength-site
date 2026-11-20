@@ -96,7 +96,7 @@ function episodes(D, th) {
   if (inDD && p[tr] / p[pk] - 1 <= -th) out.push({ pk, tr, rec: null, depth: p[tr] / p[pk] - 1 });
   return out;
 }
-// 一檔在某次大跌的表現：基準高點那天還沒上市＝null。dd＝基準高點到基準回到高點之間，這檔的最大跌幅（從基準高點那天的價格起算）
+// 一檔在某次大跌的表現：基準高點那天還沒上市＝null。dd＝基準高點到基準回到高點之間，這檔的最大跌幅（高點逐日更新：基準高點之後這檔又創新高再跌，就從那個新高算）
 function epStats(p, ep, D) {
   if (p[ep.pk] == null) return null;
   const end = ep.rec == null ? p.length - 1 : ep.rec;

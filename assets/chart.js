@@ -102,7 +102,7 @@ function drawChart(rows, B) {
   rows.filter(r => r.x.c !== BN).concat(rows.filter(r => r.x.c === BN)).forEach(r => {
     const isB = r.x.c === BN, ch = r.cat !== r.def, hollow = !isB && (r.cat === "穩強" || r.cat === "猛強") && !r.ok;
     const tags = [r.burst ? flagName("bu", r.x) : "", hollow ? "未經空頭驗證" : ""].filter(Boolean).join("・");
-    const tipText = `${r.x.c} ${r.x.n}｜${isB ? "標竿" : CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}&#10;最大回撤 ${pct(r.m.mdd)}${isB ? "" : `&#10;上市以來 vs ${BN} ${r.life == null ? "—" : sgn(r.life)}`}`;
+    const tipText = `${r.x.c} ${r.x.n}｜${isB ? "基準" : CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}&#10;最大回撤 ${pct(r.m.mdd)}${isB ? "" : `&#10;上市以來 vs ${BN} ${r.life == null ? "—" : sgn(r.life)}`}`;
     const cx = sx(r.m.mdd), cy = sy(r.m.cagr);
     if (ch && !isB) g += `<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--fg)" stroke-width="1.5"/>`;
     g += isB

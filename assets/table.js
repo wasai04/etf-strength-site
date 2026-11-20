@@ -165,7 +165,7 @@ function drawEpTable(E, ep) {
     const v = chaseMo(r), m = Math.abs(v);
     return r.cr.lead ? (m === Infinity ? "還沒被追上" : `${m} 個月後被追上`) : (m === Infinity ? "還沒追上" : `${m} 個月後追上`);
   };
-  const get = (r, k) => k === "c" || k === "n" || k === "t" ? r.x[k] : k === "pick" ? (picks.has(r.x.c) ? 1 : 0) : k === "sel" ? -r.sel
+  const get = (r, k) => k === "c" || k === "n" || k === "t" ? r.x[k] : k === "pick" ? (picks.has(r.x.c) ? 1 : 0) : k === "sel" ? r.sel
     : k === "chase" ? chaseMo(r) : k === "cat" ? (r.ov ? CATS.findIndex(c => c[0] === r.ov.cat) : null) : r[k];
   const cell = (r, k) => {
     const b = r.x.c === BN;
@@ -187,7 +187,7 @@ function drawEpTable(E, ep) {
   $("eptbl").querySelector("thead").innerHTML = "<tr>" + headCells(cols, epSort, epDir, EPTIPS, "ep") + "</tr>";
   $("eptbl").querySelector("tbody").innerHTML = sortRows(rows, epSort, epDir, get).map(r => `<tr data-row="${r.x.c}" ${r.ov ? `data-cat style="--c:${colorOf(r.ov.cat)}"` : ""} class="${r.x.c === BN ? "bench" : ""}">${cols.map(([k]) => cell(r, k)).join("")}</tr>`).join("");
   if (!rows.length) { $("eptbl").querySelector("tbody").innerHTML = emptyRow(cols.length, "ep", pre.length > 0); bindEmpty($("eptbl")); }
-  $("eptbl").querySelectorAll("th button[data-k]").forEach(b => b.onclick = () => { const k = b.dataset.k; if (epSort === k) epDir = -epDir; else { epSort = k; epDir = ["c", "n", "t", "sel", "rec", "slow"].includes(k) ? 1 : -1; } renderEps(); });
+  $("eptbl").querySelectorAll("th button[data-k]").forEach(b => b.onclick = () => { const k = b.dataset.k; if (epSort === k) epDir = -epDir; else { epSort = k; epDir = ["c", "n", "t", "rec", "slow"].includes(k) ? 1 : -1; } renderEps(); });
   $("eptbl").querySelectorAll("tbody input").forEach(cb => cb.onchange = () => {
     const c = cb.dataset.c, drawn = [...picks].filter(k => { const x = D.etfs.find(y => y.c === k); return x && x.p[ep.pk] != null; }).length;
     if (cb.checked) { if (drawn >= 8) { cb.checked = false; $("epnote").insertAdjacentHTML("beforeend", "<br><strong>走勢圖最多 8 條，先取消幾條再加。</strong>"); return; } picks.add(c); } else picks.delete(c);
