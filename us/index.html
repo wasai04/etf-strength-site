@@ -389,7 +389,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <div class="row" style="gap:8px"><button type="button" class="btn" id="tourEnd">結束</button><span style="margin-left:auto"></span><button type="button" class="btn" id="tourPrev">上一步</button><button type="button" class="btn btn-fill" id="tourNext">下一步</button></div></div>
 
 <script src="../assets/core.js?v=20261120"></script>   <!-- 兩頁共用的計算核心（2026-11-17）；改了 core.js 就把 ?v= 換成當天日期 -->
-<script src="../assets/chart.js?v=20261120d"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
+<script src="../assets/chart.js?v=20261120e"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
 <script src="../assets/table.js?v=20261120"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
 
 <script>
@@ -1459,23 +1459,18 @@ function lvScatter(r, x, L, U, last) {
   for (let i = all0; i + h <= last; i += 5) { const a = L[i], b = L[i + h], c = U[i], d = U[i + h]; if (a == null || b == null || c == null || d == null) continue; pts.push({ i, u: d / c - 1, l: b / a - 1 }); }
   const hl = LEV_H.find(z => z[1] === h)[0], thin = r.by[h] && r.by[h].thin;
   $("lvH3").textContent = `持有 ${hl}：實際拿到的 vs 以為的「${x.x} 倍」`;
-  const W = 900, FH = 380, F = CHART.scatterM;
   if (pts.length < 10) { lvState = null; emptyState($("lvSc"), "資料不夠長"); $("lvHead2").textContent = "資料不夠長。"; $("lvLeg2").innerHTML = ""; $("lvFoot").textContent = ""; return; }
   const xs = pts.map(p => p.u), ys = pts.map(p => p.l);
   const bx0 = Math.min(...xs), bx1 = Math.max(...xs), by0 = Math.min(...ys, x.x * bx0, -0.05), by1 = Math.max(...ys, 0.05);
   // 縮放（2026-11-17，和總覽散布圖同一套：clampSc 限制範圍）；換標的或持有期間就回到預設範圍
   const key = x.c + "|" + h; if (!lvState || lvState.key !== key) lvView = null;
-  const base0 = { x0: bx0, x1: bx1, y0: by0, y1: by1 }, V = lvView ? (lvView = clampSc(lvView, base0)) : base0;
-  const xlo = V.x0, xhi = V.x1, ylo = V.y0, yhi = V.y1;
-  lvState = { key, args: [r, x, L, U, last], x0: xlo, x1: xhi, y0: ylo, y1: yhi, m: F, Wd: W, H: FH };
-  const A = axes({ W, H: FH, m: F, x: [xlo, xhi], y: [ylo, yhi], xStep: pctStep, yStep: pctStep, zero: true, clip: "lvClip", xTitle: `原型 ${x.u} 持有 ${hl}的報酬`, yTitle: `${x.c} 實際報酬 ↑` });
-  const px = A.sx, py = v => A.sy(Math.max(v, lvView ? -Infinity : ylo));   // 沒縮放時，以為的 N 倍低於 −100% 的部分夾在底線
-  let g = A.g;
-  const below = p => p.l < x.x * p.u;
-  g += `<g clip-path="url(#lvClip)">` + pts.map(p => `<circle cx="${px(p.u).toFixed(1)}" cy="${py(p.l).toFixed(1)}" r="3" fill="${below(p) ? "var(--dn)" : "var(--up)"}" fill-opacity=".55" data-tip="${iso(RAW.dates[p.i])} 起持有 ${hl}：${x.u} ${pct(p.u)}，以為 ${x.x} 倍 ${pct(x.x * p.u)}，實際 ${x.c} ${pct(p.l)}"></circle>`).join("") + `</g>`;
-  // 「以為的 N 倍」：y = 倍數 × x；低於 −100% 的部分夾在底線（實際上會歸零）。畫在點的上面（點很密時會蓋住線，JC 2026-11-17）
-  g += refLines([{ x1: px(xlo), y1: py(x.x * xlo), x2: px(xhi), y2: py(x.x * xhi), stroke: CHART.ref.stroke, width: 1.6, dash: "6 4" }], "lvClip");
-  $("lvSc").innerHTML = g;
+  const base0 = { x0: bx0, x1: bx1, y0: by0, y1: by1 }, below = p => p.l < x.x * p.u;
+  const G = scatterChart($("lvSc"), { W: 900, H: 380, m: CHART.scatterM, clip: "lvClip", base: base0, view: lvView, dp: 1, xTitle: `原型 ${x.u} 持有 ${hl}的報酬`, yTitle: `${x.c} 實際報酬 ↑`,
+    points: pts.map(p => ({ x: p.u, y: p.l, r: 3, fill: below(p) ? "var(--dn)" : "var(--up)", fo: ".55", tip: `${iso(RAW.dates[p.i])} 起持有 ${hl}：${x.u} ${pct(p.u)}，以為 ${x.x} 倍 ${pct(x.x * p.u)}，實際 ${x.c} ${pct(p.l)}` })),
+    // 「以為的 N 倍」：y = 倍數 × x；沒縮放時低於 −100% 的部分夾在底線（實際上會歸零）。畫在點的上面（點很密時會蓋住線，JC 2026-11-17）
+    refs: ({ sx, sy, x0, x1, y0 }) => { const py = v => sy(Math.max(v, lvView ? -Infinity : y0)); return [{ x1: sx(x0), y1: py(x.x * x0), x2: sx(x1), y2: py(x.x * x1), stroke: CHART.ref.stroke, width: 1.6, dash: "6 4" }]; } });
+  if (lvView) lvView = G.view;
+  lvState = { key, args: [r, x, L, U, last], x0: G.x0, x1: G.x1, y0: G.y0, y1: G.y1, m: G.m, Wd: G.W, H: G.H };
   const nb = pts.filter(below).length, flat = pts.filter(p => Math.abs(p.u) <= 0.1), fb = flat.filter(below).length;
   $("lvHead2").innerHTML = `${pts.length} 個起點裡，${pct(nb / pts.length, 0)} 實際報酬低於「${x.u} × ${x.x}」` + (flat.length >= 10 ? `；${x.u} 漲跌在 ±10% 以內的時候（盤整），${pct(fb / flat.length, 0)} 低於。` : "。")
     + (thin ? `<br>樣本少：可比期間約 ${r.spanY.toFixed(1)} 年，不到持有期間的 3 倍，點大多重疊在同幾段行情，只當參考。` : "");

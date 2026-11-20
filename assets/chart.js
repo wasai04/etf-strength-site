@@ -1,5 +1,5 @@
 // 兩頁共用的圖表程式（2026-11-17 起，共用元件重構第三階段；DESIGN.md「共用檔」「圖表規格」）。
-// 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons；固定樣式 CHART 和零件 axes、refLines、emptyState、fitChartText（標準化 A 階段）。
+// 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons；固定樣式 CHART 和零件 axes、refLines、emptyState、fitChartText（標準化 A 階段）；散布圖 scatterChart（C 階段）。
 // 走勢圖的 lineChart、timeGrid、lineCursor、xZoom（標準化 B 階段）。
 // 兩頁同結構的：總覽散布圖 drawChart／markLabels／toggleMark、空頭走勢圖 drawEpChart／epTip／bindEpCursor／epFocus／epLeave／bindEpZoom。
 //   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、computeEps、tip、tipFor、hideTip、LINE_COLORS、CAT_NAME、colorOf、
@@ -101,62 +101,76 @@ function fitChartText() {
 // 空狀態：圖中央一行字（大小照 viewBox）
 function emptyState(svg, text) { const v = svg.viewBox.baseVal; svg.innerHTML = `<text x="${v.width / 2}" y="${v.height / 2}" text-anchor="middle">${text}</text>`; }
 
+// ── 散布圖（標準化 C 階段，2026-11-20）：總覽散布圖、槓桿散布圖都用 scatterChart，頁面只給點、參考線、預設範圍；新的散布圖照用
+// s = { W, H, m, clip, base（預設範圍 x0 x1 y0 y1）, view（縮放後的範圍，沒縮放是 null）, xTitle, yTitle, dp（點座標取幾位小數，沒給不取）,
+//   under(G)：點底下、裁在繪圖區裡的東西（象限底色、線的名字）, over(G)：不裁切的說明字（象限說明）,
+//   points: [{ x, y, r, fill, fo（fill-opacity）, stroke, sw（stroke-width）, c（data-c：點一下標註）, tip（data-tip）, ring（外圈：類別和預設不同）, target（基準的靶心） }]（後面的畫在上面）,
+//   refs(G)：參考線清單（給 refLines，畫在點的上面）, labels: [{ c, x, y }]（標註的深色方框） }
+// G＝{ sx, sy, x0, x1, y0, y1, m, W, H }。回傳 G 加上 view（夾過範圍限制的縮放範圍，沒縮放是 null），頁面存回去給 panZoom
+function scatterChart(svg, s) {
+  const { W, H, m } = s, v = s.view ? clampSc(s.view, s.base) : s.base;
+  const A = axes({ W, H, m, x: [v.x0, v.x1], y: [v.y0, v.y1], xStep: pctStep, yStep: pctStep, zero: true, clip: s.clip, xTitle: s.xTitle, yTitle: s.yTitle });
+  const G = { sx: A.sx, sy: A.sy, x0: v.x0, x1: v.x1, y0: v.y0, y1: v.y1, m, W, H }, f = s.dp == null ? n => n : n => n.toFixed(s.dp);
+  const at = (k, val) => val == null ? "" : ` ${k}="${val}"`, hit = p => at("data-c", p.c) + at("data-tip", p.tip);
+  let g = A.g;
+  const u = s.under ? s.under(G) : ""; if (u) g += `<g clip-path="url(#${s.clip})">${u}</g>`;
+  if (s.over) g += s.over(G);
+  g += `<g clip-path="url(#${s.clip})">` + s.points.map(p => {
+    const cx = f(G.sx(p.x)), cy = f(G.sy(p.y)), c = `cx="${cx}" cy="${cy}"`;
+    return (p.ring ? `<circle ${c} r="9" fill="none" stroke="var(--fg)" stroke-width="1.5"/>` : "")
+      + (p.target   // 靶心：深色外圈、淺色環、深色中心，最外面一圈透明的接滑鼠
+        ? `<circle ${c} r="8" fill="var(--fg)"/><circle ${c} r="5.5" fill="var(--panel)"/><circle ${c} r="3" fill="var(--fg)"/><circle ${c} r="9" fill="transparent"${hit(p)}></circle>`
+        : `<circle ${c} r="${p.r}" fill="${p.fill}"${at("fill-opacity", p.fo)}${at("stroke", p.stroke)}${at("stroke-width", p.sw)}${hit(p)}></circle>`);
+  }).join("") + `</g>`;
+  if (s.refs) g += refLines(s.refs(G), s.clip);
+  if (s.labels) g += markLabels(s.labels.map(l => ({ c: l.c, x: G.sx(l.x), y: G.sy(l.y) })), [], { x0: m.l, y0: m.t, x1: W - m.r, y1: H - m.b });
+  svg.innerHTML = g;
+  return { ...G, view: s.view ? v : null };
+}
+
 // ── 總覽散布圖
 function drawChart(rows, B) {
-  const svg = $("chart"), Wd = 900, H = 420, m = CHART.scatterM;
+  const svg = $("chart");
   if (!rows.length) { scState = null; emptyState(svg, "沒有符合篩選的 ETF"); return; }   // scState 清掉：縮放、拖曳才不會拿上一輪的點重畫
   const xs = rows.map(r => r.m.mdd), ys = rows.map(r => r.m.cagr);
   // 預設範圍包住所有點；縮放／拖曳後用 scView 的範圍（換期間或篩選不重設，按「重設」才回預設）
   const base0 = { x0: Math.min(-0.1, Math.floor(Math.min(...xs, B.mdd) * 10) / 10), x1: 0,
     y0: Math.floor(Math.min(...ys, B.cagr, 0) * 10) / 10, y1: Math.ceil(Math.max(...ys, B.cagr, 0.1) * 10) / 10 };
-  if (scView) scView = clampSc(scView, base0);
-  const { x0, x1, y0, y1 } = scView || base0;
-  const A = axes({ W: Wd, H, m, x: [x0, x1], y: [y0, y1], xStep: pctStep, yStep: pctStep, zero: true, clip: "scClip", xTitle: "最大回撤", yTitle: "年化報酬 ↑" }), { sx, sy } = A;
-  scState = { rows, B, base0, x0, x1, y0, y1, m, Wd, H };
-  let g = A.g;
-  g += `<g clip-path="url(#scClip)"><rect x="${sx(B.mdd)}" y="${sy(y1 + 10)}" width="${Math.max(0, sx(x1 + 10) - sx(B.mdd))}" height="${Math.max(0, sy(B.cagr) - sy(y1 + 10))}" fill="var(--quad)"/>`;
   const negB = !(B.rr > 0);   // 基準年化 ≤ 0：划算線改成基準回撤這條直線，畫成綠色
   $("negnote").hidden = !negB;
-  // 基準的十字（直線在基準年化 ≤ 0 時兼當划算線）
-  const refs = [{ x1: sx(B.mdd), y1: m.t, x2: sx(B.mdd), y2: H - m.b, ...(negB ? { ...CHART.good, width: 1.6, opacity: 1 } : { ...CHART.ref, width: 1 }) },
-    { x1: m.l, y1: sy(B.cagr), x2: Wd - m.r, y2: sy(B.cagr), ...CHART.ref }];
-  // 和基準一樣划算的線：年化 = 基準的報酬／回撤 × 回撤幅度；線上方比基準划算
-  if (B.rr > 0) {
-    refs.push({ x1: sx(-2), y1: sy(B.rr * 2), x2: sx(0), y2: sy(0), ...CHART.good, width: 1.4 });
-    // 線名標在線進入畫面的那一端（左邊或上緣）
-    let xl = Math.max(x0, -y1 / B.rr) + (x1 - x0) * 0.06;
-    // 有象限說明時（沒縮放），字至少放在上緣往下 40px 的位置，避開左上角「報酬更高、跌得更深」
-    if (!scView) { const vTop = y0 + (H - m.b - (m.t + 40)) / (H - m.t - m.b) * (y1 - y0); xl = Math.max(xl, -vTop / B.rr); }
-    const yl = B.rr * -xl;
-    if (yl > y0 && yl < y1) g += `<text class="q" x="${sx(xl) + 6}" y="${Math.max(sy(yl) - 6, m.t + 12)}" style="fill:var(--calmar)">划算線</text>`;
-  }
-  // 基準年化是負的：年化 ÷ 回撤沒有意義，划算線不畫，改用「回撤有沒有比基準深」（就是那條直的虛線）
-  if (negB) g += `<text class="q" x="${sx(B.mdd) + 6}" y="${m.t + 34}" style="fill:var(--calmar)">划算線（${BN} 年化是負的，只看回撤）</text>`;
-  g += `</g>`;
-  if (!scView) {
-    g += `<text class="q4" x="${Wd - m.r - 6}" y="${m.t + 16}" text-anchor="end">報酬更高、跌得更少</text><text class="q4" x="${m.l + 6}" y="${m.t + 16}">報酬更高、跌得更深</text>`;
-    g += `<text class="q4" x="${Wd - m.r - 6}" y="${H - m.b - 8}" text-anchor="end">跌得少、報酬也少</text><text class="q4" x="${m.l + 6}" y="${H - m.b - 8}">報酬少、跌得也深</text>`;
-  }
-  g += `<g clip-path="url(#scClip)">`;
-  // 基準最後畫（不被蓋住），畫成全圖唯一的靶心：深色外圈、淺色環、深色中心，不用類別色
-  rows.filter(r => r.x.c !== BN).concat(rows.filter(r => r.x.c === BN)).forEach(r => {
-    const isB = r.x.c === BN, ch = r.cat !== r.def, hollow = !isB && (r.cat === "穩強" || r.cat === "猛強") && !r.ok;
-    const tags = [r.burst ? flagName("bu", r.x) : "", hollow ? "未經空頭驗證" : ""].filter(Boolean).join("・");
-    const tipText = `${r.x.c} ${r.x.n}｜${isB ? "基準" : CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}&#10;最大回撤 ${pct(r.m.mdd)}${isB ? "" : `&#10;上市以來 vs ${BN} ${r.life == null ? "—" : sgn(r.life)}`}`;
-    const cx = sx(r.m.mdd), cy = sy(r.m.cagr);
-    if (ch && !isB) g += `<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--fg)" stroke-width="1.5"/>`;
-    g += isB
-      ? `<circle cx="${cx}" cy="${cy}" r="8" fill="var(--fg)"/><circle cx="${cx}" cy="${cy}" r="5.5" fill="var(--panel)"/><circle cx="${cx}" cy="${cy}" r="3" fill="var(--fg)"/><circle cx="${cx}" cy="${cy}" r="9" fill="transparent" data-c="${r.x.c}" data-tip="${tipText}"></circle>`
-      : hollow
-      ? `<circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--panel)" stroke="${colorOf(r.cat)}" stroke-width="2" data-c="${r.x.c}" data-tip="${tipText}"></circle>`
-      : `<circle cx="${cx}" cy="${cy}" r="5" fill="${colorOf(r.cat)}" fill-opacity=".85" data-c="${r.x.c}" data-tip="${tipText}"></circle>`;
-  });
-  g += `</g>`;
-  g += refLines(refs, "scClip");   // 參考線畫在點的上面（DESIGN「圖表規格」，2026-11-17）
-  // 基準不另畫方框標籤（靶心本身就是基準；JC 不要圖中間出現基準的代號）
-  const boxes = [];
-  g += markLabels(rows.filter(r => marks.has(r.x.c) && r.x.c !== BN).map(r => ({ c: r.x.c, x: sx(r.m.mdd), y: sy(r.m.cagr) })), boxes, { x0: m.l, y0: m.t, x1: Wd - m.r, y1: H - m.b });
-  svg.innerHTML = g;
+  const G = scatterChart(svg, { W: 900, H: 420, m: CHART.scatterM, clip: "scClip", base: base0, view: scView, xTitle: "最大回撤", yTitle: "年化報酬 ↑",
+    // 右上角（報酬更高、跌得更少）的底色，和划算線的名字
+    under: ({ sx, sy, x0, x1, y0, y1, m, H }) => {
+      let g = `<rect x="${sx(B.mdd)}" y="${sy(y1 + 10)}" width="${Math.max(0, sx(x1 + 10) - sx(B.mdd))}" height="${Math.max(0, sy(B.cagr) - sy(y1 + 10))}" fill="var(--quad)"/>`;
+      if (B.rr > 0) {
+        // 線名標在線進入畫面的那一端（左邊或上緣）；有象限說明時（沒縮放），字至少放在上緣往下 40px 的位置，避開左上角「報酬更高、跌得更深」
+        let xl = Math.max(x0, -y1 / B.rr) + (x1 - x0) * 0.06;
+        if (!scView) { const vTop = y0 + (H - m.b - (m.t + 40)) / (H - m.t - m.b) * (y1 - y0); xl = Math.max(xl, -vTop / B.rr); }
+        const yl = B.rr * -xl;
+        if (yl > y0 && yl < y1) g += `<text class="q" x="${sx(xl) + 6}" y="${Math.max(sy(yl) - 6, m.t + 12)}" style="fill:var(--calmar)">划算線</text>`;
+      }
+      // 基準年化是負的：年化 ÷ 回撤沒有意義，划算線不畫，改用「回撤有沒有比基準深」（就是那條直的虛線）
+      if (negB) g += `<text class="q" x="${sx(B.mdd) + 6}" y="${m.t + 34}" style="fill:var(--calmar)">划算線（${BN} 年化是負的，只看回撤）</text>`;
+      return g;
+    },
+    over: ({ m, W, H }) => scView ? "" : `<text class="q4" x="${W - m.r - 6}" y="${m.t + 16}" text-anchor="end">報酬更高、跌得更少</text><text class="q4" x="${m.l + 6}" y="${m.t + 16}">報酬更高、跌得更深</text>`
+      + `<text class="q4" x="${W - m.r - 6}" y="${H - m.b - 8}" text-anchor="end">跌得少、報酬也少</text><text class="q4" x="${m.l + 6}" y="${H - m.b - 8}">報酬少、跌得也深</text>`,
+    // 基準最後畫（不被蓋住），畫成全圖唯一的靶心，不用類別色；未經空頭驗證的穩強、猛強畫空心
+    points: rows.filter(r => r.x.c !== BN).concat(rows.filter(r => r.x.c === BN)).map(r => {
+      const isB = r.x.c === BN, ch = r.cat !== r.def, hollow = !isB && (r.cat === "穩強" || r.cat === "猛強") && !r.ok;
+      const tags = [r.burst ? flagName("bu", r.x) : "", hollow ? "未經空頭驗證" : ""].filter(Boolean).join("・");
+      const tip = `${r.x.c} ${r.x.n}｜${isB ? "基準" : CAT_NAME(r.cat)}${ch ? `（預設：${CAT_NAME(r.def)}）` : ""}${tags ? `｜${tags}` : ""}&#10;年化 ${pct(r.m.cagr)}&#10;最大回撤 ${pct(r.m.mdd)}${isB ? "" : `&#10;上市以來 vs ${BN} ${r.life == null ? "—" : sgn(r.life)}`}`;
+      return { x: r.m.mdd, y: r.m.cagr, c: r.x.c, tip, ring: ch && !isB, target: isB,
+        ...(hollow ? { r: 4.5, fill: "var(--panel)", stroke: colorOf(r.cat), sw: 2 } : { r: 5, fill: colorOf(r.cat), fo: ".85" }) };
+    }),
+    // 基準的十字（直線在基準年化 ≤ 0 時兼當划算線）；和基準一樣划算的線：年化 = 基準的報酬／回撤 × 回撤幅度，線上方比基準划算
+    refs: ({ sx, sy, m, W, H }) => [{ x1: sx(B.mdd), y1: m.t, x2: sx(B.mdd), y2: H - m.b, ...(negB ? { ...CHART.good, width: 1.6, opacity: 1 } : { ...CHART.ref, width: 1 }) },
+      { x1: m.l, y1: sy(B.cagr), x2: W - m.r, y2: sy(B.cagr), ...CHART.ref }]
+      .concat(B.rr > 0 ? [{ x1: sx(-2), y1: sy(B.rr * 2), x2: sx(0), y2: sy(0), ...CHART.good, width: 1.4 }] : []),
+    // 基準不另畫方框標籤（靶心本身就是基準；JC 不要圖中間出現基準的代號）
+    labels: rows.filter(r => marks.has(r.x.c) && r.x.c !== BN).map(r => ({ c: r.x.c, x: r.m.mdd, y: r.m.cagr })) });
+  if (scView) scView = G.view;
+  scState = { rows, B, base0, x0: G.x0, x1: G.x1, y0: G.y0, y1: G.y1, m: G.m, Wd: G.W, H: G.H };
 }
 
 // 標註的標籤：和基準一樣的深色方框，自動找不重疊的位置。
