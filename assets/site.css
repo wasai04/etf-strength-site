@@ -144,9 +144,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .legend span { display: inline-flex; align-items: center; gap: 5px; }
 .legend svg { flex: none; }
 svg.chart { width: 100%; height: auto; display: block; -webkit-user-select: none; user-select: none; }
-svg.chart text { fill: var(--muted); font-family: var(--f-num); font-variant-numeric: tabular-nums; font-size: 11px; }
-svg.chart text.q, svg.chart text.q4 { font-family: var(--f-body); font-size: 12px; }   /* q＝划算線的標籤，q4＝四個角的象限說明 */
-@media (max-width: 600px) { svg.chart text, svg.chart text.q { font-size: 22px; } svg.chart text.q4 { display: none; } }   /* 手機上圖縮到約 1/3，字要放大才看得到；四個角的象限說明拿掉 */
+svg.chart text { fill: var(--muted); font-family: var(--f-num); font-variant-numeric: tabular-nums; font-size: calc(11px * var(--fk, 1)); }   /* --fk：圖畫得比 viewBox 窄時放大字（chart.js 的 fitChartText，稽核 2 M4） */
+svg.chart text.q, svg.chart text.q4 { font-family: var(--f-body); font-size: calc(12px * var(--fk, 1)); }   /* q＝划算線的標籤，q4＝四個角的象限說明 */
+@media (max-width: 600px) { svg.chart text.q4 { display: none; } }   /* 手機上四個角的象限說明拿掉（字級改由 --fk 依實際寬度算，2026-11-20） */
 .ctl output, .cnt .num, .cnt .delta, .chips button, .zoom output { font-variant-numeric: tabular-nums; }
 .tip { position: fixed; white-space: pre-line; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .84rem; line-height: 1.5; box-shadow: 0 4px 16px var(--shadow); max-width: 300px; z-index: 30; }
 .topscroll { overflow-x: auto; overflow-y: hidden; }
