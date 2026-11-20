@@ -10,7 +10,7 @@
 <link rel="preload" href="data.json" as="fetch" crossorigin>   <!-- 資料檔和頁面同時開始下載（2026-11-17）；下面 fetch 要用預設快取模式，才會接到這個預先下載 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=20261120d">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
+<link rel="stylesheet" href="../assets/site.css?v=20261120e">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
 <style>
 /* 只有美股頁用到的樣式；共用的在 ../assets/site.css */
 #levtbl tr.thin td { color: var(--muted); }   /* 樣本少的列變淡：只調字色、底色維持不透明（原本整格 opacity，凍結欄往右捲時後面的字會透出來疊在一起，2026-11-17） */
@@ -68,7 +68,6 @@ body:not(:is([data-page="overview"], [data-page="bear"])) .zonetop { display: no
 @media (max-width: 900px) { .hdtax { flex-basis: 100%; text-align: right; } }
 body:not(:is([data-page="overview"], [data-page="bear"])) .hdtax { display: none; }
 .levlink { margin: 0 0 12px; }
-.lvhead { margin: 0; font-size: 1.02rem; font-weight: 600; }
 #lvNav .lvs { transition: opacity .15s; } #lvNav .lvs.dim { opacity: .18; }
 </style>
 
@@ -215,12 +214,11 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       </div></section>
     </div>
     <section class="panel stack" id="epChartPanel">
-      <div class="head"><span class="foot" id="epnote"></span><div class="legend" id="eplegend"></div></div>
+      <div class="head"><h2>大跌前後的走勢</h2><span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button><button type="button" data-zc="ep:reset">重設</button></span></div>
       <div class="adj stack">
       <div class="row"><span class="lbl"><span class="term" tabindex="0" data-tip="只改走勢圖顯示的日期範圍，0% 基準一樣是這次大跌基準高點那天。&#10;下表的跌幅和回到前高不受影響。">圖表區間</span></span>
         <label>起 <input type="date" id="epFrom"></label><label>迄 <input type="date" id="epTo"></label>
-        <button type="button" class="btn" id="epReset">回到這次大跌</button>
-        <span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button></span></div>
+        </div>
       <div class="period" id="epperiod">
         <div class="ptrack" id="eptrack"><div class="pfill" id="epfill"></div></div>
         <input type="range" id="eS" aria-label="走勢圖的起日" step="1"><input type="range" id="eE" aria-label="走勢圖的迄日" step="1">
@@ -228,8 +226,9 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       </div>
       <div class="row" style="gap:6px;justify-content:center"><button type="button" class="btn" data-estep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-estep="21">往後 1 個月 ▶</button></div>
       </div>
-      <p class="hint"><span class="pkey"></span>色塊＝基準的大跌，越深跌越多。</p>
+      <p class="chartnote" id="epnote"></p>
       <svg id="epchart" class="chart" viewBox="0 0 900 360" role="img" aria-label="大跌期間各 ETF 的走勢，起點高點設為 100"></svg>
+      <div class="legend" id="eplegend"></div>
       <p class="foot">走勢以基準高點那天 = 100。</p>
       <div class="head"><span class="foot">列底色＝總覽目前的類別；和基準比的欄位，「漲」的顏色＝比基準好。</span>
         <span class="colctl"><details class="cols"><summary class="btn btn-fill">顯示欄位 ▾</summary><div class="colbox" id="epcolbox"></div></details><button type="button" class="btn" id="epcolReset">回復預設欄位</button><button type="button" class="btn" data-csv="eptbl">下載 CSV</button></span></div>
@@ -272,14 +271,14 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
     <section class="panel stack" id="lvPrev">
       <div class="head"><h2>槓桿和原型，走起來差多少</h2><span class="zoom"><button type="button" data-zc="lvn:in" aria-label="放大圖表">＋</button><button type="button" data-zc="lvn:out" aria-label="縮小圖表">−</button><button type="button" data-zc="lvn:reset">重設</button></span></div>
       <div class="adj"><div class="row" style="gap:8px 14px"><span class="lbl">期間</span><div class="seg" id="lvSpan" role="group" aria-label="期間"><button type="button" data-y="3" aria-pressed="false">3 年</button><button type="button" data-y="5" aria-pressed="false">5 年</button><button type="button" data-y="10" aria-pressed="false">10 年</button><button type="button" data-y="0" aria-pressed="true">全部</button></div></div></div>
-      <p class="lvhead" id="lvHead1"></p>
+      <p class="chartnote" id="lvHead1"></p>
       <svg id="lvNav" class="chart" viewBox="0 0 900 460" role="img" aria-label="槓桿和原型的淨值與回撤"></svg>
       <div class="legend" id="lvLeg1"></div>
     </section>
     <section class="panel stack" id="lvScPanel">
       <div class="head"><h2 id="lvH3"></h2><span class="zoom"><button type="button" data-zc="lv:in" aria-label="放大圖表">＋</button><button type="button" data-zc="lv:out" aria-label="縮小圖表">−</button><button type="button" data-zc="lv:reset">重設</button></span></div>
       <div class="adj"><div class="row" style="gap:8px 14px"><span class="lbl">持有期間</span><div class="seg" id="lvHold" role="group" aria-label="持有期間"></div></div></div>
-      <p class="lvhead" id="lvHead2"></p>
+      <p class="chartnote" id="lvHead2"></p>
       <svg id="lvSc" class="chart" viewBox="0 0 900 380" role="img" aria-label="每個起點的原型報酬與槓桿報酬"></svg>
       <div class="legend" id="lvLeg2"></div>
       <p class="foot" id="lvFoot"></p>
@@ -389,7 +388,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <div class="row" style="gap:8px"><button type="button" class="btn" id="tourEnd">結束</button><span style="margin-left:auto"></span><button type="button" class="btn" id="tourPrev">上一步</button><button type="button" class="btn btn-fill" id="tourNext">下一步</button></div></div>
 
 <script src="../assets/core.js?v=20261120"></script>   <!-- 兩頁共用的計算核心（2026-11-17）；改了 core.js 就把 ?v= 換成當天日期 -->
-<script src="../assets/chart.js?v=20261120f"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
+<script src="../assets/chart.js?v=20261120i"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
 <script src="../assets/table.js?v=20261120"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
 
 <script>
@@ -881,7 +880,7 @@ const TOUR = [
   { page: "overview", sel: "#filterBox", side: 1, t: "篩選", x: "地區、屬性、波動倍數上限、高波動，總覽和空頭頁共用。\n屬性先點大項（可複選），下方會出現細項可以再縮小；都不選＝全部。" },
   { page: "bear", sel: "#epsPanel", t: "空頭：大跌時各檔跌多少", x: "選一次基準的大跌，看同一段時間裡各檔最多跌多少、多久回到高點。\n「跌幅 vs 基準」正數＝跌得比基準淺。" },
   { page: "bear", sel: "#crashPanel", t: "大跌門檻", x: "拉桿決定基準跌多少算一次大跌；調低會多出幾次較小的回檔。\n側欄的「高波動」也用這裡的大跌來算。" },
-  { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以基準高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」加減線（最多 8 條），游標靠近哪條線就突顯哪條。\n拖時間軸兩端調整日期範圍、拖中間的藍色段整段移動，看誰先回到高點；Ctrl（⌘）＋滾輪縮放。\n起迄日期也可以直接輸入，「回到這次大跌」還原。" },
+  { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以基準高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」加減線（最多 8 條），游標靠近哪條線就突顯哪條。\n拖時間軸兩端調整日期範圍、拖中間的藍色段整段移動，看誰先回到高點；Ctrl（⌘）＋滾輪縮放。\n起迄日期也可以直接輸入，標題右邊的「重設」回到這次大跌。" },
   { page: "notes", sel: "#page-notes .insights", t: "觀察：資料裡看到的幾件事", x: "每張卡的按鈕會把總覽或空頭頁設成那一則的狀況，用目前的資料自己看。\n按下去之後，上方會出現情境列，可以切換同一則的幾個情境，× 收掉。" },
   { page: "lev", sel: "#lvPickPanel", t: "槓桿耗損", x: "選原型和槓桿 ETF，下面的圖都換成這一檔；下表點代號也可以換。\n淨值圖：游標靠近哪條線就突顯哪條。\n淨值圖的「期間」只管上圖；散布圖和下表共用同一個持有期間，下表點表頭排序。" },
   { sel: "#sysDet > .cbox", open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。\n「分享目前頁面設定」會複製連結，打開就是現在這個畫面。\n電腦版可以按左上角的按鈕收起側欄。" },
@@ -1221,6 +1220,7 @@ function resetSliders() { zoneSliders(); const d = D.defaults; $("weeks").value 
 // data.json 存全部分區；D 是目前分區（＋扣稅與否）的檢視，格式和台股版相同，計算引擎不用改：
 // D.etfs＝這一區的 ETF、D.bench_p＝這一區的基準、D.market_p＝SPY；日期從基準的第一筆開始（AGG 2003、IBIT 2024）
 let RAW = null, ZONE = "股票", TAX = false, BN = "SPY", BYC = {}, winBefore = null;
+const BN_LABEL = "基準";   // 說明文字裡怎麼稱呼基準（台股寫 0050、美股寫「基準」）；chart.js 的圖例用
 const ZONES = ["股票", "債券", "原物料", "加密貨幣", "槓桿"];
 // 各分區的門檻預設（JC 2026-11-16）：依基準的年化波動和 SPY（約 16%）的比例縮放後取整。債券 AGG 約 6%、加密貨幣 IBIT 約 50%；
 // 原物料 GLD 約 19%、槓桿區的基準也是 SPY，照股票區。沒列的用 data.json 的 defaults。換分區時拉桿回到該區的預設
@@ -1439,12 +1439,13 @@ function lvDraw(navOnly) {
   const tl = nl[nl.length - 1] / 100 - 1, tu = nu[nu.length - 1] / 100 - 1, yrs = (RAW.dates[idx[idx.length - 1]] - RAW.dates[idx[0]]) / 365.25;
   const cg = v => (Math.pow(1 + v, 1 / yrs) - 1);
   $("lvHead1").innerHTML = `${iso(RAW.dates[idx[0]])} 起 ${yrs.toFixed(1)} 年：<span style="color:var(--l1)">${x.c}</span> 年化 ${pct(cg(tl))}、最深跌 ${pct(Math.min(...dl), 0)}；原型 ${x.u} 年化 ${pct(cg(tu))}、最深跌 ${pct(Math.min(...du), 0)}。`;
-  $("lvLeg1").innerHTML = `<span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--l1)" stroke-width="3"/></svg>${x.c}（${x.x} 倍）</span><span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--muted)" stroke-width="3"/></svg>原型 ${x.u}</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--l1)" opacity=".5"/></svg>${x.c} 回撤</span><span><svg width="18" height="12"><rect width="18" height="12" fill="var(--muted)" opacity=".5" stroke="var(--fg)"/></svg>${x.u} 回撤</span><span>淨值：起點＝100，對數座標（同樣高度＝同樣漲幅 %）</span>`;
+  legend($("lvLeg1"), [{ kind: "line", col: "var(--l1)", label: `${x.c}（${x.x} 倍）`, key: "L" }, { kind: "line", col: "var(--muted)", label: `原型 ${x.u}`, key: "U" },
+    { kind: "area", col: "var(--l1)", label: `${x.c} 回撤`, key: "L" }, { kind: "areaout", col: "var(--muted)", label: `${x.u} 回撤`, key: "U" }, { kind: "text", label: "淨值：起點＝100，對數座標（同樣高度＝同樣漲幅 %）" }]);
   if (!navOnly) lvScatter(r, x, L, U, last);
 }
 
 // 槓桿走勢圖的游標：靠近哪條（槓桿 L／原型 U）就突顯哪條；懸浮框照空頭走勢圖
-const lvFocus = near => $("lvNav").querySelectorAll(".lvs").forEach(el => el.classList.toggle("dim", near != null && el.dataset.s !== near));
+const lvFocus = near => document.querySelectorAll("#lvNav .lvs, #lvLeg1 [data-s]").forEach(el => el.classList.toggle("dim", near != null && el.dataset.s !== near));
 function lvTip(k, near) {
   const { x, idx, nl, nu, dl, du } = lvNavState;
   // 槓桿那列的顏色看「槓桿 − 原型」：正數＝這時候比原型好（全站上色原則）；數字照舊是各自的累計報酬、回撤
@@ -1474,7 +1475,8 @@ function lvScatter(r, x, L, U, last) {
   const nb = pts.filter(below).length, flat = pts.filter(p => Math.abs(p.u) <= 0.1), fb = flat.filter(below).length;
   $("lvHead2").innerHTML = `${pts.length} 個起點裡，${pct(nb / pts.length, 0)} 實際報酬低於「${x.u} × ${x.x}」` + (flat.length >= 10 ? `；${x.u} 漲跌在 ±10% 以內的時候（盤整），${pct(fb / flat.length, 0)} 低於。` : "。")
     + (thin ? `<br>樣本少：可比期間約 ${r.spanY.toFixed(1)} 年，不到持有期間的 3 倍，點大多重疊在同幾段行情，只當參考。` : "");
-  $("lvLeg2").innerHTML = `<span><svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="6 4"/></svg><span class="term" tabindex="0" data-tip="多數人以為的「${x.x} 倍」。&#10;原型來回震盪、最後沒漲沒跌時，點多半在虛線下方；單邊大漲時在上方；大跌時跌不到 ${x.x} 倍，也不會跌超過 −100%。">以為的：${x.u} 報酬 × ${x.x}</span></span><span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--dn)" fill-opacity=".7"/></svg>實際比以為的少</span><span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--up)" fill-opacity=".7"/></svg>實際比以為的多</span><span>${r.since} 起、每週一個起點</span>`;
+  legend($("lvLeg2"), [{ kind: "dash", col: "var(--fg)", label: `<span class="term" tabindex="0" data-tip="多數人以為的「${x.x} 倍」。&#10;原型來回震盪、最後沒漲沒跌時，點多半在虛線下方；單邊大漲時在上方；大跌時跌不到 ${x.x} 倍，也不會跌超過 −100%。">以為的：${x.u} 報酬 × ${x.x}</span>` },
+    { kind: "dot", col: "var(--dn)", label: "實際比以為的少" }, { kind: "dot", col: "var(--up)", label: "實際比以為的多" }, { kind: "text", label: `${r.since} 起、每週一個起點` }]);
   $("lvFoot").innerHTML = "";
 }
 
@@ -1490,8 +1492,7 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
     $("dataAge").innerHTML = `資料截至 ${d.end} 收盤（${age} 天前）。每週六自動更新一次。` + (age > 10 ? `<br><strong>已經超過 10 天沒有更新，自動更新可能出了問題；</strong>數字是那天以前的，期間短的（例如 1 年）影響比較大。` : "")
       + (d.list_asof ? `<br>收錄哪些 ETF 的名單更新於 ${d.list_asof}（規模 10 億美元以上）；之後新上市的要手動加入，和每週的價格更新分開。` : ""); }
   syncSub();
-  const ring = `<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4" fill="var(--muted)"/><circle cx="10" cy="10" r="8" fill="none" stroke="var(--fg)" stroke-width="1.5"/></svg>`;
-  $("legend").innerHTML = `<span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="var(--fg)"/><circle cx="9" cy="9" r="5.5" fill="var(--panel)"/><circle cx="9" cy="9" r="3" fill="var(--fg)"/></svg>基準</span>` + CATS.map(([c, v]) => `<span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--c-steady)" stroke-width="2"/></svg>空心＝未經空頭驗證的穩強／猛強</span><span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span><span><svg aria-hidden="true" width="34" height="16" viewBox="0 0 34 16"><rect x="0" y="0" width="34" height="16" fill="var(--fg)"/><text x="17" y="12" text-anchor="middle" style="fill:var(--panel);font-weight:700;font-size:10px">代號</text></svg>深色方框＝標註的</span>`;
+  scLegend("基準");   // 總覽散布圖的圖例（assets/chart.js）
   $("foot").innerHTML = `資料來源：ETF 名單取自 stockanalysis.com（規模 10 億美元以上，2026-11-06）；價格與配息取自 Yahoo Finance 含息還原價。屬性與地區依基金名稱和晨星分類標註。<br>備註：各檔對齊到 SPY 的交易日，資料最早從 1999 年初。GBTC、ETHE 轉成 ETF 之前是場外交易的信託、SMH 2011 年以前是另一種信託，都只用轉換後的價格。<br>槓桿耗損頁收規模 1 億美元以上的槓桿 ETF（反向、VIX、原油、天然氣、上市不滿一年的不收），倍數改過的只用改了之後的資料。`;
   $("dStart").min = $("dEnd").min = iso(d.dates[0]); $("dStart").max = $("dEnd").max = d.end;
   $("epFrom").min = $("epTo").min = iso(d.dates[0]); $("epFrom").max = $("epTo").max = d.end;
@@ -1526,7 +1527,6 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   fitChartText();   // 圖上的字跟著圖實際寬度放大（assets/chart.js）
   bindZoom();
   ["epFrom", "epTo"].forEach(id => $(id).addEventListener("change", () => { if ($("epTo").value > $("epFrom").value) { epView = { from: $("epFrom").value, to: $("epTo").value }; renderEps(); } }));
-  $("epReset").onclick = () => { epView = null; renderEps(); };
   // 主題按鈕：跟系統＝拿掉 data-theme；全頁字級 50%～150%（表格跟著變，不另設表格字級）
   const syncTheme = () => { const cur = document.documentElement.dataset.theme || "auto"; document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === cur)); };
   document.querySelectorAll("[data-th]").forEach(b => b.onclick = () => {

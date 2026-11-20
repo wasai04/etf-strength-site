@@ -10,7 +10,7 @@
 <link rel="preload" href="data.json" as="fetch" crossorigin>   <!-- 資料檔和頁面同時開始下載（2026-11-17）；下面 fetch 要用預設快取模式，才會接到這個預先下載 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="assets/site.css?v=20261120d">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
+<link rel="stylesheet" href="assets/site.css?v=20261120e">   <!-- 兩頁共用樣式（2026-11-17）；改了 site.css 就把 ?v= 換成當天日期 -->
 
 <script>
 // 主題（跟系統／亮／暗）與全頁字級，存在這個瀏覽器；先套用再畫面，避免閃爍
@@ -145,12 +145,11 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       </div></section>
     </div>
     <section class="panel stack" id="epChartPanel">
-      <div class="head"><span class="foot" id="epnote"></span><div class="legend" id="eplegend"></div></div>
+      <div class="head"><h2>大跌前後的走勢</h2><span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button><button type="button" data-zc="ep:reset">重設</button></span></div>
       <div class="adj stack">
       <div class="row"><span class="lbl"><span class="term" tabindex="0" data-tip="只改走勢圖顯示的日期範圍，0% 基準一樣是這次大跌 0050 高點那天。&#10;下表的跌幅和回到前高不受影響。">圖表區間</span></span>
         <label>起 <input type="date" id="epFrom"></label><label>迄 <input type="date" id="epTo"></label>
-        <button type="button" class="btn" id="epReset">回到這次大跌</button>
-        <span class="zoom"><button type="button" data-zc="ep:in" aria-label="放大圖表">＋</button><button type="button" data-zc="ep:out" aria-label="縮小圖表">−</button></span></div>
+        </div>
       <div class="period" id="epperiod">
         <div class="ptrack" id="eptrack"><div class="pfill" id="epfill"></div></div>
         <input type="range" id="eS" aria-label="走勢圖的起日" step="1"><input type="range" id="eE" aria-label="走勢圖的迄日" step="1">
@@ -158,8 +157,9 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
       </div>
       <div class="row" style="gap:6px;justify-content:center"><button type="button" class="btn" data-estep="-21">◀ 往前 1 個月</button><button type="button" class="btn" data-estep="21">往後 1 個月 ▶</button></div>
       </div>
-      <p class="hint"><span class="pkey"></span>色塊＝0050 的大跌，越深跌越多。</p>
+      <p class="chartnote" id="epnote"></p>
       <svg id="epchart" class="chart" viewBox="0 0 900 360" role="img" aria-label="大跌期間各 ETF 的走勢，起點高點設為 100"></svg>
+      <div class="legend" id="eplegend"></div>
       <p class="foot">走勢以 0050 高點那天 = 100。</p>
       <div class="head"><span class="foot">列底色＝總覽目前的類別；和 0050 比的欄位，「漲」的顏色＝比 0050 好。</span>
         <span class="colctl"><details class="cols"><summary class="btn btn-fill">顯示欄位 ▾</summary><div class="colbox" id="epcolbox"></div></details><button type="button" class="btn" id="epcolReset">回復預設欄位</button><button type="button" class="btn" data-csv="eptbl">下載 CSV</button></span></div>
@@ -259,7 +259,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <div class="row" style="gap:8px"><button type="button" class="btn" id="tourEnd">結束</button><span style="margin-left:auto"></span><button type="button" class="btn" id="tourPrev">上一步</button><button type="button" class="btn btn-fill" id="tourNext">下一步</button></div></div>
 
 <script src="assets/core.js?v=20261120"></script>   <!-- 兩頁共用的計算核心（2026-11-17）；改了 core.js 就把 ?v= 換成當天日期 -->
-<script src="assets/chart.js?v=20261120f"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
+<script src="assets/chart.js?v=20261120i"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
 <script src="assets/table.js?v=20261120"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
 
 <script>
@@ -267,6 +267,7 @@ const CATS = [["穩強","--c-steady"],["猛強","--c-strong"],["約等於0050","
 const FLAG_TIP = { hv: "歷次大跌平均跌得比 0050 深，超過高波動門檻（門檻在左側欄的篩選）。", bu: "贏 0050 主要靠少數幾段急漲；中途進出、剛好錯過那幾段就不一定贏。", nv: "穩強、猛強裡，上市以來沒經歷過大空頭，或上市以來的年化輸 0050 超過 1%。", fo: "被目前的篩選擋掉，因為搜尋選了它才暫時列出；再打字或按 × 就收回。" };   // 標記的說明（表格和表上方共用）
 const CAT_NAME = c => c === "約等於0050" ? "接近 0050" : c;
 const BN = "0050";   // 基準的代號（美股頁隨分區換）；共用的圖表程式 assets/chart.js 用這個名字
+const BN_LABEL = "0050 ";   // 說明文字裡怎麼稱呼基準（台股寫 0050、美股寫「基準」）；chart.js 的圖例用
 const flagName = k => k === "hv" ? "高波動" : "靠爆發";   // 標記字樣（美股頁槓桿區改成「原型…」）；chart.js 用
 const enName = x => x.n, nbMark = () => "", flagTip = k => FLAG_TIP[k];   // 英文全名、註記、原型說明只有美股頁有；共用的 assets/table.js 用這些名字
 const colorOf = c => `var(${CATS.find(x => x[0] === c)[1]})`;
@@ -674,7 +675,7 @@ const TOUR = [
   { page: "overview", sel: "#filterBox", side: 1, t: "篩選", x: "地區、類型、波動倍數上限、高波動，總覽和空頭頁共用。" },
   { page: "bear", sel: "#epsPanel", t: "空頭：大跌時各檔跌多少", x: "選一次 0050 的大跌，看同一段時間裡各檔最多跌多少、多久回到高點。\n「跌幅 vs 0050」正數＝跌得比 0050 淺。" },
   { page: "bear", sel: "#crashPanel", t: "大跌門檻", x: "拉桿決定 0050 跌多少算一次大跌；調低會多出幾次較小的回檔。\n側欄的「高波動」也用這裡的大跌來算。" },
-  { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以 0050 高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」加減線（最多 8 條），游標靠近哪條線就突顯哪條。\n拖時間軸兩端調整日期範圍、拖中間的藍色段整段移動，看誰先回到高點；Ctrl（⌘）＋滾輪縮放。\n起迄日期也可以直接輸入，「回到這次大跌」還原。" },
+  { page: "bear", sel: "#epChartPanel", t: "走勢圖", x: "以 0050 高點那天＝100，看各檔怎麼跌、怎麼回來。\n下表勾「畫圖」加減線（最多 8 條），游標靠近哪條線就突顯哪條。\n拖時間軸兩端調整日期範圍、拖中間的藍色段整段移動，看誰先回到高點；Ctrl（⌘）＋滾輪縮放。\n起迄日期也可以直接輸入，標題右邊的「重設」回到這次大跌。" },
   { page: "notes", sel: "#page-notes .insights", t: "觀察：資料裡看到的幾件事", x: "每張卡的按鈕會把總覽或空頭頁設成那一則的狀況，用目前的資料自己看。" },
   { sel: "#sysDet > .cbox", open: "#sysDet", t: "看起來的樣子", x: "亮暗主題、漲跌顏色（台股紅漲、美股綠漲）、文字大小都在這裡。\n想再看一次導覽，按上面的「新手導覽」。\n「分享目前頁面設定」會複製連結，打開就是現在這個畫面。\n電腦版可以按左上角的按鈕收起側欄。" },
   { page: "about", sel: "#page-about .panel", t: "還有疑問就看「說明」", x: "名詞、類別的規則、使用前要知道的限制都在說明頁。\n導覽到這裡結束。" }
@@ -942,8 +943,7 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   { const age = Math.floor((Date.now() - Date.parse(d.end)) / 864e5);   // 資料多久沒更新：只寫在說明頁
     $("dataAge").innerHTML = `資料截至 ${d.end} 收盤（${age} 天前）。每週六自動更新一次。` + (age > 10 ? `<br><strong>已經超過 10 天沒有更新，自動更新可能出了問題；</strong>數字是那天以前的，期間短的（例如 1 年）影響比較大。` : ""); }
   $("sub").textContent = `資料截至 ${d.end} 收盤・基準 0050（含息）`;
-  const ring = `<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4" fill="var(--muted)"/><circle cx="10" cy="10" r="8" fill="none" stroke="var(--fg)" stroke-width="1.5"/></svg>`;
-  $("legend").innerHTML = `<span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="var(--fg)"/><circle cx="9" cy="9" r="5.5" fill="var(--panel)"/><circle cx="9" cy="9" r="3" fill="var(--fg)"/></svg>0050（基準）</span>` + CATS.map(([c, v]) => `<span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(${v})"/></svg>${CAT_NAME(c)}</span>`).join("") + `<span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--c-steady)" stroke-width="2"/></svg>空心＝未經空頭驗證的穩強／猛強</span><span>${ring}外圈＝和預設門檻相比換了類別（動過拉桿才會出現）</span><span><svg aria-hidden="true" width="34" height="16" viewBox="0 0 34 16"><rect x="0" y="0" width="34" height="16" fill="var(--fg)"/><text x="17" y="12" text-anchor="middle" style="fill:var(--panel);font-weight:700;font-size:10px">代號</text></svg>深色方框＝標註的</span>`;
+  scLegend("0050（基準）");   // 總覽散布圖的圖例（assets/chart.js）
   $("foot").innerHTML = `資料來源：證交所 ISIN 名單與開放資料、Yahoo 含息還原價（台股 ETF）、加權指數 ^TWII。<br>備註：各檔對齊到 0050 的交易日，上櫃 ETF 的數字可能有些微誤差。<br>Yahoo 對少數 ETF 有上市前的孤立價格（例：00637L 上市前 3 個月有一筆 9.13），資料整理時已去掉；多數新 ETF 上市頭幾天固定在發行價附近，沒有漲跌，不影響報酬。`;
   $("dStart").min = $("dEnd").min = iso(d.dates[0]); $("dStart").max = $("dEnd").max = d.end;
   $("epFrom").min = $("epTo").min = iso(d.dates[0]); $("epFrom").max = $("epTo").max = d.end;
@@ -978,7 +978,6 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   fitChartText();   // 圖上的字跟著圖實際寬度放大（assets/chart.js）
   bindZoom();
   ["epFrom", "epTo"].forEach(id => $(id).addEventListener("change", () => { if ($("epTo").value > $("epFrom").value) { epView = { from: $("epFrom").value, to: $("epTo").value }; renderEps(); } }));
-  $("epReset").onclick = () => { epView = null; renderEps(); };
   // 主題按鈕：跟系統＝拿掉 data-theme；全頁字級 50%～150%（表格跟著變，不另設表格字級）
   const syncTheme = () => { const cur = document.documentElement.dataset.theme || "auto"; document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === cur)); };
   document.querySelectorAll("[data-th]").forEach(b => b.onclick = () => {

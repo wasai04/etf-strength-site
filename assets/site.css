@@ -186,7 +186,18 @@ svg.chart text.hd { fill: var(--fg); font-weight: 500; }   /* 走勢圖游標底
 .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-family: var(--f-body); font-size: .8rem; color: var(--fg); background: color-mix(in srgb, var(--c) 28%, var(--panel)); border: 1px solid var(--c); }   /* 淡底＋墨色字，亮暗主題對比都夠 */
 .flag { display: inline-block; padding: 0 6px; border-radius: 4px; font-family: var(--f-body); font-size: .76rem; border: 1px solid var(--c-burst); color: var(--c-burst); }
 .was { color: var(--muted); font-family: var(--f-body); font-size: .76rem; margin-left: 4px; }
-.swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; }
+.swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; flex: none; }
+/* 圖例的色票（標準化 D 階段，chart.js 的 legend）：.swatch 預設是線（懸浮框每列也用），其他樣子用 sw-*，顏色都從 --c 來 */
+.swatch.sw-line { width: 18px; }
+.swatch.sw-dash { width: 22px; height: 0; border-radius: 0; background: none; border-top: 2px dashed var(--c); }
+.swatch:is(.sw-area, .sw-areaout) { width: 16px; height: 11px; border-radius: 2px; background: color-mix(in srgb, var(--c) 50%, transparent); }
+.swatch.sw-areaout { box-shadow: inset 0 0 0 1px var(--fg); }
+.swatch.sw-dot { width: 10px; height: 10px; border-radius: 50%; }
+.swatch.sw-hollow { width: 10px; height: 10px; border-radius: 50%; background: none; box-shadow: inset 0 0 0 2px var(--c); }
+.swatch.sw-ring { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle, var(--muted) 0 4px, transparent 4.5px); box-shadow: inset 0 0 0 1.5px var(--fg); }
+.swatch.sw-target { width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle, var(--fg) 0 3px, var(--panel) 3.3px 5.5px, var(--fg) 5.8px); }
+.swatch.sw-box { width: auto; height: auto; border-radius: 0; background: var(--fg); color: var(--panel); font: 700 10px/1.5 var(--f-num); padding: 0 6px; }
+.chartnote { margin: 0; font-size: 1.02rem; font-weight: 600; }   /* 圖上方那一句（這張圖現在畫的是什麼）：四張圖同一個樣子 */
 details.cols { position: relative; }
 /* 搜尋：側欄分頁和篩選之間；邊打邊跳建議 */
 .search { display: block; position: relative; width: 100%; }
@@ -425,8 +436,8 @@ tr.empty .linkbtn { margin-left: 8px; }
   body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }
 /* 走勢圖：游標靠近的那條線突顯，其他變淡 */
-.epl, #eplegend [data-s] { transition: opacity .12s; }
-.epl.dim, #eplegend .dim { opacity: .18; }
+.epl, .legend [data-s] { transition: opacity .12s; }
+.epl.dim, .legend [data-s].dim { opacity: .18; }
 #eplegend .on { font-weight: 600; }
 .ep-dim { opacity: .45; } .ep-on { font-weight: 600; }
 @media (min-width: 481px) { .tip .tiprow { white-space: nowrap; } }   /* 走勢圖懸浮框的每一列不換行（手機太窄時才讓它換行） */

@@ -1,8 +1,8 @@
 // 兩頁共用的圖表程式（2026-11-17 起，共用元件重構第三階段；DESIGN.md「共用檔」「圖表規格」）。
-// 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons；固定樣式 CHART 和零件 axes、refLines、emptyState、fitChartText（標準化 A 階段）；散布圖 scatterChart（C 階段）。
+// 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons；固定樣式 CHART 和零件 axes、refLines、emptyState、fitChartText（標準化 A 階段）；散布圖 scatterChart（C 階段）；圖例 legend、scLegend（D 階段）。
 // 走勢圖的 lineChart、timeGrid、lineCursor、xZoom（標準化 B 階段）。
 // 兩頁同結構的：總覽散布圖 drawChart／markLabels／toggleMark、空頭走勢圖 drawEpChart／epTip／bindEpCursor／epFocus／epLeave／bindEpZoom。
-//   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、computeEps、tip、tipFor、hideTip、LINE_COLORS、CAT_NAME、colorOf、
+//   這些直接用頁面的全域變數與函式（D、BN、BN_LABEL、marks、picks、scState、scView、epState、epView、computeEps、tip、tipFor、hideTip、LINE_COLORS、CAT_NAME、colorOf、
 //   drawTable、syncRange、crashAlpha、$ 等）和元素（#chart、#epchart…），兩頁名字一致才放這裡；頁面改這些名字前先搜這個檔。
 // 只宣告函式、不在載入時執行，所以可以在頁面主程式之前載入。改了這個檔：把兩頁 <script src> 的 ?v= 換成當天日期。
 
@@ -97,6 +97,18 @@ function refLines(list, clip) {
 function fitChartText() {
   const ro = new ResizeObserver(es => es.forEach(e => { const w = e.contentRect.width; if (w) e.target.style.setProperty("--fk", Math.max(1, e.target.viewBox.baseVal.width / w * 0.85).toFixed(3)); }));
   document.querySelectorAll("svg.chart").forEach(s => ro.observe(s));
+}
+// 圖例（標準化 D 階段，2026-11-20）：一律放在圖下方（JC 決定 3），色票統一用 .swatch 的幾種樣子，不再在圖例裡畫小 SVG。
+// items: [{ kind, col, label（HTML）, key（data-s：和圖上的突顯、淡化同步）, box（kind 是 box 時框裡的字） }]
+// kind：line 線、dash 虛線、area 面積、areaout 有外框的面積、dot 實心點、hollow 空心點、ring 外圈、target 靶心、box 深色方框、text 只有字
+function legend(el, items) {
+  el.innerHTML = items.map(it => `<span${it.key != null ? ` data-s="${it.key}"` : ""}>${it.kind === "text" ? "" : `<span class="swatch sw-${it.kind}"${it.col ? ` style="--c:${it.col}"` : ""} aria-hidden="true">${it.box || ""}</span>`}${it.label}</span>`).join("");
+}
+// 總覽散布圖的圖例（兩頁一樣，只有基準的寫法不同）
+function scLegend(bench) {
+  legend($("legend"), [{ kind: "target", label: bench }, ...CATS.map(([c, v]) => ({ kind: "dot", col: `var(${v})`, label: CAT_NAME(c) })),
+    { kind: "hollow", col: "var(--c-steady)", label: "空心＝未經空頭驗證的穩強／猛強" }, { kind: "ring", label: "外圈＝和預設門檻相比換了類別（動過拉桿才會出現）" },
+    { kind: "box", box: "代號", label: "深色方框＝標註的" }]);
 }
 // 空狀態：圖中央一行字（大小照 viewBox）
 function emptyState(svg, text) { const v = svg.viewBox.baseVal; svg.innerHTML = `<text x="${v.width / 2}" y="${v.height / 2}" text-anchor="middle">${text}</text>`; }
@@ -232,14 +244,17 @@ function lineChart(svg, s) {
   // 陰影（大跌段）：超出畫面的部分夾在繪圖區內
   (s.shade || []).forEach(d => { const p = P[d.p], a = Math.min(Math.max(sx(d.k0), m.l), W - m.r), b = Math.min(Math.max(sx(d.k1), m.l), W - m.r);
     g += `<rect x="${a}" y="${p.y0}" width="${b - a}" height="${p.h}" fill="${d.fill}" fill-opacity="${d.opacity}"/>`; });
-  // 橫的格線、刻度字、各格的小標；基準線（0 或 100）用細實線，畫在格線上面
+  // 橫的格線、刻度字、各格的小標；基準線（0 或 100）用細實線，畫在格線上面。
+  // 字跟著圖寬放大（--fk，fitChartText）時：刻度字太擠的跳過（格線照畫），第二格起的小標在字放大很多時不寫（圖例有說明），免得疊在一起
+  const fk = parseFloat(getComputedStyle(svg).getPropertyValue("--fk")) || 1, grid = timeGrid(n, s.day);
   P.forEach(p => {
-    const fmt = p.y.fmt || (v => v);
-    p.y.ticks.forEach(v => { if (v !== p.y.base) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${p.sy(v)}" y2="${p.sy(v)}" stroke="${CHART.grid}"/>`; g += `<text x="${m.l - CHART.tickPad}" y="${p.sy(v) + 4}" text-anchor="end">${fmt(v)}</text>`; });
-    if (p.title) g += `<text x="${m.l}" y="${p.y0 - 8}">${p.title}</text>`;
+    const fmt = p.y.fmt || (v => v); let lastY = null;
+    p.y.ticks.slice().sort((a, b) => p.sy(a) - p.sy(b)).forEach(v => { const y = p.sy(v);
+      if (v !== p.y.base) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="${CHART.grid}"/>`;
+      if (lastY == null || y - lastY >= 13 * fk) { g += `<text x="${m.l - CHART.tickPad}" y="${y + 4}" text-anchor="end">${fmt(v)}</text>`; lastY = y; } });
+    if (p.title && fk <= 1.6) g += `<text x="${m.l}" y="${p.y0 - 8}">${p.title}</text>`;
   });
   // 直的格線：期間 3 年以上標年份（超過 12 年隔年），以下標月份（最多約 12 條）；淡色實線，上下各格一起（JC 2026-11-20 決定 2）
-  const fk = parseFloat(getComputedStyle(svg).getPropertyValue("--fk")) || 1, grid = timeGrid(n, s.day);
   let lastX = -Infinity;
   grid.forEach(t => { const x = sx(t.k);
     g += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${bot}" stroke="${CHART.grid}"/>`;
@@ -345,7 +360,7 @@ function drawEpChart(ep) {
     panels: [{ h: H - m.t - bottom, y: { lo, hi, ticks, base: 100 } }],
     shade: [{ p: 0, k0: ep.pk - i0, k1: ep.tr - i0, fill: "var(--dn)", opacity: crashAlpha(ep.depth, .1, .3, computeEps().th) }],
     series: series.map((s, k) => ({ key: k, cls: "epl", parts: [{ p: 0, v: s.v, col: epCol(s, k), w: s.x.c === BN ? 2.6 : 1.6 }] })) });
-  $("eplegend").innerHTML = series.map((s, k) => `<span data-s="${k}"><span class="swatch" style="--c:${epCol(s, k)}"></span>${s.x.c} ${s.x.n}</span>`).join("");
+  legend($("eplegend"), series.map((s, k) => ({ kind: "line", col: epCol(s, k), label: `${s.x.c} ${s.x.n}`, key: k })).concat([{ kind: "area", col: "var(--dn)", label: `色塊＝${BN_LABEL}的大跌，越深跌越多` }]));
   epState = { ...S, i0, i1, epSeries: series, ep };
 }
 // 空頭走勢圖的懸浮框：日期和各檔相對基準高點那天的漲跌，高的在上
