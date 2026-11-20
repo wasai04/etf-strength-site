@@ -1,5 +1,5 @@
 // 兩頁共用的圖表程式（2026-11-17 起，共用元件重構第三階段；DESIGN.md「共用檔」「圖表規格」）。
-// 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons。
+// 通用的：svgPt、clampSc、panZoom（散布圖縮放拖曳）、zoomButtons；固定樣式 CHART 和零件 axes、refLines、emptyState（標準化 A 階段）。
 // 兩頁同結構的：總覽散布圖 drawChart／markLabels／toggleMark、空頭走勢圖 drawEpChart／epHover／epFocus／epLeave／epZoom／bindEpZoom。
 //   這些直接用頁面的全域變數與函式（D、BN、marks、picks、scState、scView、epState、epView、epDrag、tip、tipFor、hideTip、LINE_COLORS、CAT_NAME、colorOf、
 //   drawTable、syncRange、crashAlpha、$ 等）和元素（#chart、#epchart…），兩頁名字一致才放這裡；頁面改這些名字前先搜這個檔。
@@ -56,33 +56,64 @@ function zoomButtons(h) {
   });
 }
 
+// ── 圖表的固定樣式與零件（標準化 A 階段，2026-11-20；_local/plan-ui-standardization-20261117.md）
+// JC 的標準：資料進來，會變的只有點／線本身和座標範圍；格線、刻度、軸標題、基準線、參考線、裁切、空狀態都從這裡來，圖本身不再自己寫
+const CHART = {
+  grid: "var(--line)",                                     // 格線
+  base: { stroke: "var(--fg)" },                           // 0 的基準線（座標本身的基準）
+  ref: { stroke: "var(--fg)", dash: "4 4", opacity: ".55" },   // 拿來比的參考線（基準十字）
+  good: { stroke: "var(--calmar)", dash: "6 5" },          // 划算線
+  tickPad: 6, xTickDy: 16, titleDy: 6,                     // y 刻度字離繪圖區、x 刻度字在底線下、x 軸標題離圖底
+};
+// 線性百分比的刻度間距：0.01～1 裡取格數不超過 8 的最小間距
+const pctStep = span => [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1].find(s => span / s <= 8) || 1;
+// 座標軸：s = { W, H, m（邊界）, x: [lo, hi], y: [lo, hi], xStep, yStep（跨度 → 間距）, fmt（刻度字，預設整數百分比）, yPad（y 刻度字離繪圖區）,
+//   zero（0 那條用基準線）, clip（clipPath 的 id）, xTitle, yTitle, yTitleAt（"corner" 左上角橫寫；預設左側旋轉） }
+// 回傳 { g, sx, sy }：g 是 clipPath＋格線＋刻度字＋軸標題，sx／sy 是值 → 座標
+function axes(s) {
+  const { W, H, m } = s, [x0, x1] = s.x, [y0, y1] = s.y, fmt = s.fmt || (v => pct(v, 0)), pad = s.yPad ?? CHART.tickPad;
+  const sx = v => m.l + (v - x0) / (x1 - x0 || 1) * (W - m.l - m.r), sy = v => H - m.b - (v - y0) / (y1 - y0 || 1) * (H - m.t - m.b);
+  const gl = v => s.zero && Math.abs(v) < 1e-9 ? CHART.base.stroke : CHART.grid, xs = s.xStep(x1 - x0), ys = s.yStep(y1 - y0);
+  let g = s.clip ? `<clipPath id="${s.clip}"><rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}"/></clipPath>` : "";
+  for (let v = Math.ceil(y0 / ys - 1e-9) * ys; v <= y1 + 1e-9; v += ys)
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="${gl(v)}"/><text x="${m.l - pad}" y="${sy(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+  for (let v = Math.ceil(x0 / xs - 1e-9) * xs; v <= x1 + 1e-9; v += xs)
+    g += `<line y1="${m.t}" y2="${H - m.b}" x1="${sx(v)}" x2="${sx(v)}" stroke="${gl(v)}"/><text x="${sx(v)}" y="${H - m.b + CHART.xTickDy}" text-anchor="middle">${fmt(v)}</text>`;
+  if (s.xTitle) g += `<text x="${(m.l + W - m.r) / 2}" y="${H - CHART.titleDy}" text-anchor="middle">${s.xTitle}</text>`;
+  if (s.yTitle) g += s.yTitleAt === "corner" ? `<text x="${m.l + 6}" y="${m.t + 12}">${s.yTitle}</text>` : `<text transform="translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle">${s.yTitle}</text>`;
+  return { g, sx, sy };
+}
+// 參考線（拿來比的線：基準十字、划算線、以為的 N 倍）：畫在點的上面、不接滑鼠，底下墊同寬的背景色線，虛線的空隙才不透出點（DESIGN「圖表規格」）
+// list 每條 { x1, y1, x2, y2, stroke, dash, width, opacity }；先畫全部的底線再畫線
+function refLines(list, clip) {
+  const ln = (o, bg) => `<line x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="${bg ? "var(--panel)" : o.stroke}"${o.width ? ` stroke-width="${o.width}"` : ""}${!bg && o.dash ? ` stroke-dasharray="${o.dash}"` : ""}${!bg && o.opacity != null ? ` opacity="${o.opacity}"` : ""}/>`;
+  return `<g${clip ? ` clip-path="url(#${clip})"` : ""} pointer-events="none">${list.map(o => ln(o, true)).join("")}${list.map(o => ln(o)).join("")}</g>`;
+}
+// 空狀態：圖中央一行字（大小照 viewBox）
+function emptyState(svg, text) { const v = svg.viewBox.baseVal; svg.innerHTML = `<text x="${v.width / 2}" y="${v.height / 2}" text-anchor="middle">${text}</text>`; }
+
 // ── 總覽散布圖
 function drawChart(rows, B) {
   const svg = $("chart"), Wd = 900, H = 420, m = { l: 56, r: 16, t: 14, b: 40 };
-  if (!rows.length) { scState = null; svg.innerHTML = `<text x="450" y="210" text-anchor="middle">沒有符合篩選的 ETF</text>`; return; }   // scState 清掉：縮放、拖曳才不會拿上一輪的點重畫
+  if (!rows.length) { scState = null; emptyState(svg, "沒有符合篩選的 ETF"); return; }   // scState 清掉：縮放、拖曳才不會拿上一輪的點重畫
   const xs = rows.map(r => r.m.mdd), ys = rows.map(r => r.m.cagr);
   // 預設範圍包住所有點；縮放／拖曳後用 scView 的範圍（換期間或篩選不重設，按「重設」才回預設）
   const base0 = { x0: Math.min(-0.1, Math.floor(Math.min(...xs, B.mdd) * 10) / 10), x1: 0,
     y0: Math.floor(Math.min(...ys, B.cagr, 0) * 10) / 10, y1: Math.ceil(Math.max(...ys, B.cagr, 0.1) * 10) / 10 };
   if (scView) scView = clampSc(scView, base0);
   const { x0, x1, y0, y1 } = scView || base0;
-  const sx = v => m.l + (v - x0) / (x1 - x0) * (Wd - m.l - m.r), sy = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+  const A = axes({ W: Wd, H, m, x: [x0, x1], y: [y0, y1], xStep: pctStep, yStep: pctStep, clip: "scClip", xTitle: "最大回撤", yTitle: "年化報酬" }), { sx, sy } = A;
   scState = { rows, B, base0, x0, x1, y0, y1, m, Wd, H };
-  const nice = r => [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1].find(s => r / s <= 8) || 1;
-  const xstep = nice(x1 - x0), ystep = nice(y1 - y0);
-  let g = `<clipPath id="scClip"><rect x="${m.l}" y="${m.t}" width="${Wd - m.l - m.r}" height="${H - m.t - m.b}"/></clipPath>`;
-  for (let v = Math.ceil(y0 / ystep - 1e-9) * ystep; v <= y1 + 1e-9; v += ystep)
-    g += `<line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${m.l - 6}" y="${sy(v) + 4}" text-anchor="end">${pct(v, 0)}</text>`;
-  for (let v = Math.ceil(x0 / xstep - 1e-9) * xstep; v <= x1 + 1e-9; v += xstep)
-    g += `<line y1="${m.t}" y2="${H - m.b}" x1="${sx(v)}" x2="${sx(v)}" stroke="var(--line)"/><text x="${sx(v)}" y="${H - m.b + 16}" text-anchor="middle">${pct(v, 0)}</text>`;
-  g += `<text x="${(m.l + Wd - m.r) / 2}" y="${H - 6}" text-anchor="middle">最大回撤</text><text transform="translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle">年化報酬</text>`;
+  let g = A.g;
   g += `<g clip-path="url(#scClip)"><rect x="${sx(B.mdd)}" y="${sy(y1 + 10)}" width="${Math.max(0, sx(x1 + 10) - sx(B.mdd))}" height="${Math.max(0, sy(B.cagr) - sy(y1 + 10))}" fill="var(--quad)"/>`;
   const negB = !(B.rr > 0);   // 基準年化 ≤ 0：划算線改成基準回撤這條直線，畫成綠色
   $("negnote").hidden = !negB;
-  let refL = `<line x1="${sx(B.mdd)}" x2="${sx(B.mdd)}" y1="${m.t}" y2="${H - m.b}" stroke="${negB ? "var(--calmar)" : "var(--fg)"}" stroke-dasharray="${negB ? "6 5" : "4 4"}" stroke-width="${negB ? 1.6 : 1}" opacity="${negB ? 1 : .55}"/><line x1="${m.l}" x2="${Wd - m.r}" y1="${sy(B.cagr)}" y2="${sy(B.cagr)}" stroke="var(--fg)" stroke-dasharray="4 4" opacity=".55"/>`;
+  // 基準的十字（直線在基準年化 ≤ 0 時兼當划算線）
+  const refs = [{ x1: sx(B.mdd), y1: m.t, x2: sx(B.mdd), y2: H - m.b, ...(negB ? { ...CHART.good, width: 1.6, opacity: 1 } : { ...CHART.ref, width: 1 }) },
+    { x1: m.l, y1: sy(B.cagr), x2: Wd - m.r, y2: sy(B.cagr), ...CHART.ref }];
   // 和基準一樣划算的線：年化 = 基準的報酬／回撤 × 回撤幅度；線上方比基準划算
   if (B.rr > 0) {
-    refL += `<line x1="${sx(-2)}" y1="${sy(B.rr * 2)}" x2="${sx(0)}" y2="${sy(0)}" stroke="var(--calmar)" stroke-dasharray="6 5" stroke-width="1.4"/>`;
+    refs.push({ x1: sx(-2), y1: sy(B.rr * 2), x2: sx(0), y2: sy(0), ...CHART.good, width: 1.4 });
     // 線名標在線進入畫面的那一端（左邊或上緣）
     let xl = Math.max(x0, -y1 / B.rr) + (x1 - x0) * 0.06;
     // 有象限說明時（沒縮放），字至少放在上緣往下 40px 的位置，避開左上角「報酬更高、跌得更深」
@@ -112,8 +143,7 @@ function drawChart(rows, B) {
       : `<circle cx="${cx}" cy="${cy}" r="5" fill="${colorOf(r.cat)}" fill-opacity=".85" data-c="${r.x.c}" data-tip="${tipText}"></circle>`;
   });
   g += `</g>`;
-  // 參考線（基準的十字虛線、划算線）畫在點的上面，底下墊同寬的背景色線（DESIGN「圖表規格」，2026-11-17）；不接滑鼠
-  g += `<g clip-path="url(#scClip)" pointer-events="none">${refL.replace(/ stroke-dasharray="[^"]*"| opacity="[^"]*"/g, "").replace(/stroke="[^"]*"/g, 'stroke="var(--panel)"')}${refL}</g>`;
+  g += refLines(refs, "scClip");   // 參考線畫在點的上面（DESIGN「圖表規格」，2026-11-17）
   // 基準不另畫方框標籤（靶心本身就是基準；JC 不要圖中間出現基準的代號）
   const boxes = [];
   g += markLabels(rows.filter(r => marks.has(r.x.c) && r.x.c !== BN).map(r => ({ c: r.x.c, x: sx(r.m.mdd), y: sy(r.m.cagr) })), boxes, { x0: m.l, y0: m.t, x1: Wd - m.r, y1: H - m.b });

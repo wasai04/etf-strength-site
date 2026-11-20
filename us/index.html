@@ -389,7 +389,7 @@ try { const z = +localStorage.getItem("etf-fz"); if (z >= 0.5 && z <= 1.5) docum
   <div class="row" style="gap:8px"><button type="button" class="btn" id="tourEnd">結束</button><span style="margin-left:auto"></span><button type="button" class="btn" id="tourPrev">上一步</button><button type="button" class="btn btn-fill" id="tourNext">下一步</button></div></div>
 
 <script src="../assets/core.js?v=20261120"></script>   <!-- 兩頁共用的計算核心（2026-11-17）；改了 core.js 就把 ?v= 換成當天日期 -->
-<script src="../assets/chart.js?v=20261120"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
+<script src="../assets/chart.js?v=20261120b"></script>   <!-- 兩頁共用的圖表程式（2026-11-17）；改了 chart.js 就把 ?v= 換成當天日期 -->
 <script src="../assets/table.js?v=20261120"></script>   <!-- 兩頁共用的表格程式（2026-11-17）；改了 table.js 就把 ?v= 換成當天日期 -->
 
 <script>
@@ -1483,18 +1483,14 @@ function lvScatter(r, x, L, U, last) {
   const base0 = { x0: bx0, x1: bx1, y0: by0, y1: by1 }, V = lvView ? (lvView = clampSc(lvView, base0)) : base0;
   const xlo = V.x0, xhi = V.x1, ylo = V.y0, yhi = V.y1;
   lvState = { key, args: [r, x, L, U, last], x0: xlo, x1: xhi, y0: ylo, y1: yhi, m: F, Wd: W, H: FH };
-  const px = v => F.l + (v - xlo) / (xhi - xlo || 1) * (W - F.l - F.r), py = v => F.t + (yhi - Math.max(v, lvView ? -Infinity : ylo)) / (yhi - ylo || 1) * (FH - F.t - F.b);
   const tick = span => span > 4 ? 1 : span > 2 ? 0.5 : span > 0.8 ? 0.2 : span > 0.4 ? 0.1 : 0.05;
-  let g = `<clipPath id="lvClip"><rect x="${F.l}" y="${F.t}" width="${W - F.l - F.r}" height="${FH - F.t - F.b}"/></clipPath>`; const sxs = tick(xhi - xlo), sys = tick(yhi - ylo);
-  for (let v = Math.ceil(ylo / sys) * sys; v <= yhi + 1e-9; v += sys) { const z = Math.abs(v) < 1e-9; g += `<line x1="${F.l}" x2="${W - F.r}" y1="${py(v)}" y2="${py(v)}" stroke="${z ? "var(--fg)" : "var(--line)"}"/><text x="${F.l - 8}" y="${py(v) + 4}" text-anchor="end">${pct(v, 0)}</text>`; }
-  for (let v = Math.ceil(xlo / sxs) * sxs; v <= xhi + 1e-9; v += sxs) { const z = Math.abs(v) < 1e-9; g += `<line x1="${px(v)}" x2="${px(v)}" y1="${F.t}" y2="${FH - F.b}" stroke="${z ? "var(--fg)" : "var(--line)"}"/><text x="${px(v)}" y="${FH - F.b + 16}" text-anchor="middle">${pct(v, 0)}</text>`; }
-  g += `<text x="${(F.l + W - F.r) / 2}" y="${FH - 6}" text-anchor="middle">原型 ${x.u} 持有 ${hl}的報酬</text><text x="${F.l + 6}" y="${F.t + 12}">${x.c} 實際報酬 ↑</text>`;
+  const A = axes({ W, H: FH, m: F, x: [xlo, xhi], y: [ylo, yhi], xStep: tick, yStep: tick, yPad: 8, zero: true, clip: "lvClip", xTitle: `原型 ${x.u} 持有 ${hl}的報酬`, yTitle: `${x.c} 實際報酬 ↑`, yTitleAt: "corner" });
+  const px = A.sx, py = v => A.sy(Math.max(v, lvView ? -Infinity : ylo));   // 沒縮放時，以為的 N 倍低於 −100% 的部分夾在底線
+  let g = A.g;
   const below = p => p.l < x.x * p.u;
-  g += `<g clip-path="url(#lvClip)">` + pts.map(p => `<circle cx="${px(p.u).toFixed(1)}" cy="${py(p.l).toFixed(1)}" r="3" fill="${below(p) ? "var(--dn)" : "var(--up)"}" fill-opacity=".55" data-tip="${iso(RAW.dates[p.i])} 起持有 ${hl}：${x.u} ${pct(p.u)}，以為 ${x.x} 倍 ${pct(x.x * p.u)}，實際 ${x.c} ${pct(p.l)}"></circle>`).join("");
-  // 「以為的 N 倍」：y = 倍數 × x；低於 −100% 的部分夾在底線（實際上會歸零）。畫在點的上面（點很密時會蓋住線，JC 2026-11-17），
-  // 底下墊一條同寬的背景色線，虛線的空隙不透出點（JC：不要比原線寬）；不接滑鼠，點的提示照常
-  g += `<g pointer-events="none"><line x1="${px(xlo)}" y1="${py(x.x * xlo)}" x2="${px(xhi)}" y2="${py(x.x * xhi)}" stroke="var(--panel)" stroke-width="1.6"/>`
-    + `<line x1="${px(xlo)}" y1="${py(x.x * xlo)}" x2="${px(xhi)}" y2="${py(x.x * xhi)}" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="6 4"/></g></g>`;
+  g += `<g clip-path="url(#lvClip)">` + pts.map(p => `<circle cx="${px(p.u).toFixed(1)}" cy="${py(p.l).toFixed(1)}" r="3" fill="${below(p) ? "var(--dn)" : "var(--up)"}" fill-opacity=".55" data-tip="${iso(RAW.dates[p.i])} 起持有 ${hl}：${x.u} ${pct(p.u)}，以為 ${x.x} 倍 ${pct(x.x * p.u)}，實際 ${x.c} ${pct(p.l)}"></circle>`).join("") + `</g>`;
+  // 「以為的 N 倍」：y = 倍數 × x；低於 −100% 的部分夾在底線（實際上會歸零）。畫在點的上面（點很密時會蓋住線，JC 2026-11-17）
+  g += refLines([{ x1: px(xlo), y1: py(x.x * xlo), x2: px(xhi), y2: py(x.x * xhi), stroke: CHART.ref.stroke, width: 1.6, dash: "6 4" }], "lvClip");
   $("lvSc").innerHTML = g;
   const nb = pts.filter(below).length, flat = pts.filter(p => Math.abs(p.u) <= 0.1), fb = flat.filter(below).length;
   $("lvHead2").innerHTML = `${pts.length} 個起點裡，${pct(nb / pts.length, 0)} 實際報酬低於「${x.u} × ${x.x}」` + (flat.length >= 10 ? `；${x.u} 漲跌在 ±10% 以內的時候（盤整），${pct(fb / flat.length, 0)} 低於。` : "。")
