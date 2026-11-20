@@ -360,7 +360,7 @@ function epTip(k, near) {
 function bindEpCursor() { lineCursor($("epchart"), { state: () => epState, focus: epFocus, tip: epTip }); }
 // 懸浮框的一列：色票＋名稱＋數字格；state 是 ep-on（突顯）／ep-dim（淡化）／空字串；cells 每格 [上色 class, 文字, 前綴]（空頭、槓桿頁走勢圖共用）
 function tipRow(state, col, label, cells) {
-  return `<span class="${state}"><span class="swatch" style="--c:${col}"></span> ${label}` + cells.map(([cls, txt, pre]) => `　${pre || ""}<span class="${cls}" style="font-family:var(--f-num)">${txt}</span>`).join("") + "</span>";
+  return `<span class="tiprow ${state}"><span class="swatch" style="--c:${col}"></span> ${label}` + cells.map(([cls, txt, pre]) => `　${pre || ""}<span class="${cls}" style="font-family:var(--f-num)">${txt}</span>`).join("") + "</span>";
 }
 // 目前開著懸浮框的走勢圖（el）和收起它的方法（leave）。觸控時「點圖外面收起」、捲動時連十字線一起收，都靠這個，新的走勢圖照用 hoverOpen／hoverClose 就好
 let hoverOwner = null;
@@ -376,7 +376,8 @@ function bindHoverDismiss() {
 function tipAt(e) {
   clearTimeout(hideTip.t);   // 剛離開某個說明元素時 hideSoon 排了收起，不清掉懸浮框會被收走（稽核 2026-11-17）
   if (tipFor) { tipFor.removeAttribute("aria-describedby"); tipFor = null; }   // 說明框改給走勢圖用，原本的元素不再指向它
-  tip.style.maxWidth = Math.min(300, innerWidth - 24) + "px";   // 和 showTip 同一個上限，寬度才不看先前開過什麼
+  // 寬度上限：走勢圖每列（名稱、數字）不換行，框跟著內容變寬，最多到視窗寬（2026-11-20 JC：槓桿那列的回撤會掉到下一行）；先移到左邊再量，寬度才不受上次位置限制
+  tip.style.maxWidth = (innerWidth - 24) + "px"; tip.style.left = "0px";
   tip.hidden = false;
   const w = tip.getBoundingClientRect().width, h = tip.getBoundingClientRect().height;
   tip.style.left = (e.clientX + 16 + w > innerWidth - 8 ? e.clientX - w - 16 : e.clientX + 16) + "px";

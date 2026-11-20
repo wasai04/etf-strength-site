@@ -429,6 +429,7 @@ tr.empty .linkbtn { margin-left: 8px; }
 .epl.dim, #eplegend .dim { opacity: .18; }
 #eplegend .on { font-weight: 600; }
 .ep-dim { opacity: .45; } .ep-on { font-weight: 600; }
+@media (min-width: 481px) { .tip .tiprow { white-space: nowrap; } }   /* 走勢圖懸浮框的每一列不換行（手機太窄時才讓它換行） */
 .beta { display: inline-block; vertical-align: middle; font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--hl); color: var(--hl); margin-left: 6px; }
 /* 觀察頁：一則一張卡，按鈕把總覽／空頭頁設成那則說的狀況 */
 .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
