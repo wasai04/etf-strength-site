@@ -149,14 +149,13 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
-  deploy:
+  # 組網站、上傳和發布分成兩個 job（2026-11-26）：放在同一個 job 時，上傳完不到一秒就發布，
+  # GitHub 的 artifact 清單偶爾還查不到剛上傳的檔，發布失敗（2026-11-17、11-26 都發生過；重跑同一個 run 會撞到兩份 artifact，要另跑 redeploy）。
+  build:
     needs: data
     # 資料更新成功、push、手動 redeploy 時發布；資料更新失敗、或這週已經更新過（重試日跳過）就不發布
     if: always() && (needs.data.result == 'skipped' || (needs.data.result == 'success' && needs.data.outputs.skip != 'true'))
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.pages.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -183,5 +182,14 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+  deploy:
+    needs: build
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
       - id: pages
         uses: actions/deploy-pages@v4
