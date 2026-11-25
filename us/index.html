@@ -1039,9 +1039,7 @@ const BN_LABEL = "基準";   // 說明文字裡怎麼稱呼基準（台股寫 00
 const ZONES = ["股票", "債券", "原物料", "加密貨幣", "槓桿"];
 // 各分區的門檻預設（JC 2026-11-16）：依基準的年化波動和 SPY（約 16%）的比例縮放後取整。債券 AGG 約 6%、加密貨幣 IBIT 約 50%；
 // 原物料 GLD 約 19%、槓桿區的基準也是 SPY，照股票區。沒列的用 data.json 的 defaults。換分區時拉桿回到該區的預設
-// 各分區門檻預設：資料檔的 zone_defaults（資料腳本 ZONE_DEFAULTS，2026-11-16 起）優先；ZDEF 是舊版資料檔沒有這欄時的備援，
-// 2026-11-21 那版資料上線後可以拿掉。
-const ZDEF = { "債券": { tie: 0.005, near_dd: 0.01, burst: 0.025, hv: 0.02, epth: 0.08, crash: 0.08 }, "加密貨幣": { tie: 0.02, near_dd: 0.04, burst: 0.25, hv: 0.15, epth: 0.20 } };   // crash：舊資料檔的 crash_bond 還是 10%，備援時一起蓋掉
+// 各分區門檻預設來自資料檔的 zone_defaults（資料腳本 ZONE_DEFAULTS）；頁面裡的備援 ZDEF 在 2026-11-20 那版資料上線後拿掉（2026-11-26）。
 const ZONE_PICKS = { "股票": ["QQQ", "XLK", "SMH", "SCHD"], "債券": ["TLT", "BND", "SHY", "LQD"], "原物料": ["SLV", "USO", "DBC"],
   "加密貨幣": ["FBTC", "ETHA", "BITO"], "槓桿": ["TQQQ", "SSO", "SOXL", "TMF"] };
 // 價格存成整數差值（資料檔 enc="d1"，有 pk）：累加後除以 10^pk 還原；舊格式（沒有 pk）不動（2026-11-17，傳輸量約少 28%）
@@ -1072,7 +1070,7 @@ function zoneD(Z, rate) {
   const list = RAW.etfs.filter(x => x.z === Z).map(x => ({ ...x, p: cut(full(x.c)), ...(Z === "槓桿" && x.u && BYC[x.u] ? { up: cut(full(x.u)) } : {}) })).filter(x => x.p.some(v => v != null));
   if (!list.some(x => x.c === bn)) list.unshift({ c: bn, n: (BYC[bn] && BYC[bn].n) || bn, z: Z, t: "基準", r: "美國", p: cut(bp) });
   return { ...RAW, dates: cut(RAW.dates), bench_p: cut(bp), market_p: cut(full("SPY")), etfs: list,
-    defaults: { ...RAW.defaults, crash: Z === "債券" ? RAW.defaults.crash_bond : RAW.defaults.crash, ...((RAW.zone_defaults || ZDEF)[Z] || {}) } };
+    defaults: { ...RAW.defaults, crash: Z === "債券" ? RAW.defaults.crash_bond : RAW.defaults.crash, ...((RAW.zone_defaults || {})[Z] || {}) } };
 }
 function buildView(keepSel) {
   const rate = TAX ? (RAW.defaults.tax ?? 0.3) : 0;
@@ -1317,7 +1315,7 @@ fetch("data.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); r
   rticks("vmax", [0.5, 1, 1.5, 2, 2.5, 3], v => v === 3 ? "不限" : v); rticks("hv", [1, 5, 10, 15, 20, 25], v => v + "%");
   rticks("epth", [5, 10, 15, 20, 25, 30], v => v + "%");
   rticks("weeks", [1, 2, 3, 4], v => v + " 週");
-  // 側欄「預設 …」的數字：data.json 的 defaults，再套分區的門檻（zone_defaults，舊資料用 ZDEF；zoneSliders）
+  // 側欄「預設 …」的數字：data.json 的 defaults，再套分區的門檻（zone_defaults；zoneSliders）
   zoneSliders(); $("epthN").textContent = episodes(D, D.defaults.epth ?? 0.15).length;
   ["weeks", "burst", "tie", "vmax", "hv", "hvx"].forEach(id => $(id).addEventListener("input", render));
   $("epth").addEventListener("input", () => { epCache = null; epSel = null; epView = null; render(); });
