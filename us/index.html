@@ -2,6 +2,19 @@
 <html lang="zh-Hant">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>
+// 跨頁轉場做不成時（要在第一個畫面前掛上，所以放最前面；例如舊頁在背景、來不及截圖）瀏覽器會丟出 promise 錯誤；照常顯示即可，把錯誤接住
+const vtQuiet = e => { const t = e.viewTransition; if (t) { t.ready.catch(() => {}); t.finished.catch(() => {}); t.updateCallbackDone.catch(() => {}); } };
+addEventListener("pagereveal", vtQuiet); addEventListener("pageswap", vtQuiet);
+// 主題在任何樣式表之前套上，配合下面的底色：Firefox 核心（Zen）換頁時，新頁在外部樣式表到之前就可能先畫一個空白畫面，
+// 沒有這一行和下面的 <style>會先用瀏覽器預設的白底（或錯的主題）畫，看起來整頁閃一下（2026-11-26）
+try { const t = localStorage.getItem("etf-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>/* 第一個畫面就用網站底色（值要和 site.css 的 --bg 一致） */
+html { background: #eef1f2; color-scheme: light; }
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) { background: #1b1c1e; color-scheme: dark; } }
+html[data-theme="dark"] { background: #1b1c1e; color-scheme: dark; }</style>
 <title>美股 ETF 強度檔</title>
 <meta name="description" content="美股 ETF 和基準比報酬與回撤：五種類別、空頭時各檔跌多少，門檻都可以自己調。">
 <meta property="og:title" content="美股 ETF 強度檔">
@@ -75,10 +88,6 @@ body:not(:is([data-page="overview"], [data-page="bear"])) .hdtax { display: none
 // 主題（跟系統／亮／暗）與全頁字級，存在這個瀏覽器；先套用再畫面，避免閃爍
 // 資料算好前先把內容藏起來（:root.booting），畫完或出錯時拿掉；萬一卡住 30 秒後也拿掉。和下面側欄用的 .loading 是兩回事
 document.documentElement.classList.add("booting"); setTimeout(() => document.documentElement.classList.remove("booting"), 30000);
-// 跨頁轉場做不成時（例如舊頁在背景、來不及截圖）瀏覽器會丟出 promise 錯誤；照常顯示即可，把錯誤接住
-const vtQuiet = e => { const t = e.viewTransition; if (t) { t.ready.catch(() => {}); t.finished.catch(() => {}); t.updateCallbackDone.catch(() => {}); } };
-addEventListener("pagereveal", vtQuiet); addEventListener("pageswap", vtQuiet);
-try { const t = localStorage.getItem("etf-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
 // 美股版預設綠漲紅跌；和台股版同網域，偏好另存 etf-ud-us（存的是「改回紅漲」）
 try { if (localStorage.getItem("etf-ud-us") !== "tw") document.documentElement.dataset.ud = "us"; } catch (e) { document.documentElement.dataset.ud = "us"; }
 document.documentElement.classList.add("loading");   // 資料讀進來前側欄不能點（點了也沒反應）
